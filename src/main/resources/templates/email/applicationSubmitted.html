@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<table width="100%" cellpadding="0" cellspacing="0" style="padding:20px 0;">
+    <tr>
+        <td align="center">
+            <table width="600" style="background:#FFFFFF; border-radius:8px;">
+                <tr>
+                    <td style="background:#0A9BF0; padding:24px; text-align:center;">
+                        <h1 style="color:#FFFFFF; margin:0;">Your application has been submitted</h1>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding:32px; color:#1F2937;">
+                        <p>Hi <strong th:text="${firstname}"></strong>,</p>
+                        <p>
+                            Your application for the volunteering project below has been
+                            <strong>submitted</strong>:
+                        </p>
+
+                        <div style="background:#F6F9FC; padding:16px; border-left:4px solid #0A9BF0;">
+                            <strong>Project: <span th:text="${projectName}"></span></strong><br>
+                            <strong>Organisation: <span th:text="${organizationName}"></span></strong><br>
+                            <strong>Location: <span th:text="${address}"></span></strong>
+                        </div>
+                        <p style="margin-top:16px;">
+                            Please exercise patience as your application is being reviewed
+                        </p>
+                        <p style="font-size:14px; color:#4B5563;">
+                            You will be notified on your application status shortly
+                        </p>
+                        <p>— <strong>The Givr Nigeria Team</strong></p>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="background:#F6F9FC; text-align:center; padding:16px; font-size:12px;"
+                        th:text="|© ${#dates.year(#dates.createNow())} Givr Nigeria|"
+                    >
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+</table>
+</body>
+</html>

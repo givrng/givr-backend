@@ -23,15 +23,20 @@ public class OrganizationDto {
     @NotBlank
     private String name;
 
-    private List<ProjectDto> activeProjects;
+    private int numOfActiveProjects;
 
     @NotBlank
-    private String category;
+    private List<String> category;
 
     @NotNull
     private LocationDto location;
 
+    private Boolean profileCompleted;
+    private String cacRegNumber;
+
+    private String profileUrl;
     private VerificationStatus status;
     private String description;
     private String website;
+    private String address;
 }

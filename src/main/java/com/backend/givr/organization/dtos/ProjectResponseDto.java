@@ -1,7 +1,8 @@
 package com.backend.givr.organization.dtos;
 
-import com.backend.givr.shared.Location;
+import com.backend.givr.organization.entity.AttendanceHours;
 import com.backend.givr.shared.enums.ProjectStatus;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSetter;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -9,46 +10,31 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Set;
 
 @Getter
 @Setter
-public class ProjectDto {
+public class ProjectResponseDto {
     Long id;
-    
-    @NotBlank
     private String title;
 
-    @NotBlank
+    private OrganizationDto organization;
     private String description;
-
-    @NotNull
     private List<String> categories;
-
-    @Min(value = 1, message = "Cannot create a project for no volunteer")
     private Integer maxVolunteers;
-
-    @NotNull
     private LocationDto location;
-
-    @NotNull
     private String startDate;
-    @NotNull
     private String endDate;
-    @NotNull
     private String applicationDeadline;
-
-    @NotBlank
-    private String attendanceHours;
-
-    @NotNull
-    private List<String> requiredSkills;
-
-    private LocationDto locationDto;
-
+    private AttendanceHours attendanceHours;
+    private Set<String> requiredSkills;
     private String specialRequirements;
-
+    private int totalApplicants;
     private ProjectStatus status;
+    private ZonedDateTime createdAt;
+    private ZonedDateTime updatedAt;
 
     @JsonSetter(value = "category")
     private void setCat(String category){

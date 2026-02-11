@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Welcome to Givr Nigeria</title>
+</head>
+<body>
+<table width="100%" cellpadding="0" cellspacing="0" style="padding:20px 0;">
+    <tr>
+        <td align="center">
+            <table width="600" style="background:#FFFFFF; border-radius:8px; overflow:hidden;">
+
+                <!-- Header -->
+                <tr>
+                    <td style="background:#16a34a; padding:24px; text-align:center;">
+                        <h1 style="color:#FFFFFF; margin:0;">
+                            Welcome to Givr Nigeria 🎉
+                        </h1>
+                        <p style="color:#EAF6FF; margin-top:8px;">
+                            Build projects. Mobilize volunteers. Create real impact.
+                        </p>
+                    </td>
+                </tr>
+
+                <!-- Body -->
+                <tr>
+                    <td style="padding:32px; color:#1F2937;">
+                        <p>
+                            Hello <strong th:text="${organizationName}"></strong>,
+                        </p>
+
+                        <p>
+                            Welcome to <strong>Givr Nigeria</strong> — a platform designed to help
+                            organizations like yours create structured volunteering projects
+                            and connect with purpose-driven volunteers.
+                        </p>
+
+                        <p>
+                            As an organization on Givr, you can:
+                        </p>
+
+                        <ul style="padding-left:18px; color:#374151;">
+                            <li>Create and manage volunteering projects</li>
+                            <li>Attract volunteers aligned with your mission</li>
+                            <li>Track participation and project progress</li>
+                            <li>Build credibility through transparent impact</li>
+                        </ul>
+
+                        <p>
+                            Getting started is simple — create your first project and
+                            start engaging volunteers who care about your cause.
+                        </p>
+
+                        <!-- CTA -->
+                        <div style="text-align:center; margin:32px 0;">
+                            <a th:href="${clientAppUrl}"
+                               style="background:#16a34a; color:white; padding:14px 28px;
+                                      text-decoration:none; border-radius:6px; font-weight:bold;">
+                                Create Your First Project →
+                            </a>
+                        </div>
+
+                        <p style="font-size:14px; color:#4B5563;">
+                            Structured volunteering leads to measurable impact — and
+                            that’s exactly what Givr is built for.
+                        </p>
+
+                        <p>
+                            — <strong>The Givr Nigeria Team</strong>
+                        </p>
+                    </td>
+                </tr>
+
+                <!-- Footer -->
+                <tr>
+                    <td style="background:#F6F9FC; text-align:center; padding:16px;
+                               font-size:12px; color:#6B7280;"
+                        th:text="|© ${#dates.year(#dates.createNow())} Givr Nigeria|">
+                    </td>
+                </tr>
+
+            </table>
+        </td>
+    </tr>
+</table>
+</body>
+</html>

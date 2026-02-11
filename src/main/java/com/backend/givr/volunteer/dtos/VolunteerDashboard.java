@@ -1,16 +1,12 @@
 package com.backend.givr.volunteer.dtos;
 
-import com.backend.givr.organization.entity.ProjectApplication;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
-import lombok.RequiredArgsConstructor;
-
+import com.backend.givr.organization.dtos.ProjectApplicationDto;
 import java.util.List;
 
-@RequiredArgsConstructor
-public class VolunteerDashboard {
-    @JsonManagedReference
-    private final String firstname;
+public record VolunteerDashboard(
+        String firstname,
+        Boolean profileCompleted,
+        List<ProjectApplicationDto> projectApplications
+) {
 
-    @JsonManagedReference
-    private final List<ProjectApplication> projectApplications;
 }

@@ -1,4 +1,4 @@
-package com.backend.givr.volunteer.controllers;
+package com.backend.givr.shared.controller;
 
 import com.backend.givr.organization.entity.Organization;
 import com.backend.givr.organization.security.OrganizationDetails;
@@ -11,6 +11,8 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
@@ -18,16 +20,25 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.io.IOException;
 import java.time.Duration;
 import java.util.Objects;
 
+@RestController
+@RequestMapping("/${api.version}/api/auth")
 public class RefreshController {
     private final TokenIdService service;
     private final JwtUtil util;
+
+    @Value("${api.version}")
+    private String apiVersion;
+
     @PersistenceContext
     private EntityManager manager;
+
     RefreshController(TokenIdService tokenService, JwtUtil util){
         service = tokenService;
         this.util = util;
@@ -43,8 +54,8 @@ public class RefreshController {
                 refreshToken = cookie.getValue();
                 break;
             }
-
         }
+
         if(!StringUtils.hasText(refreshToken))
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
 
@@ -84,14 +95,14 @@ public class RefreshController {
                     .path("/")
                     .secure(true)
                     .httpOnly(true)
-                    .sameSite("Strict")
+                    .sameSite("None")
                     .build();
             ResponseCookie refreshCookie = ResponseCookie.from("RefreshToken").value(refreshToken)
                     .maxAge(JwtUtil.REFRESHEXPIRATION)
-                    .path("/auth")
+                    .path(String.format("/%s/api/auth", apiVersion))
                     .secure(true)
                     .httpOnly(true)
-                    .sameSite("Strict")
+                    .sameSite("None")
                     .build();
             HttpHeaders headers = new HttpHeaders();
             headers.add(HttpHeaders.SET_COOKIE, accessCookie.toString());
@@ -100,27 +111,4 @@ public class RefreshController {
         }
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }
-
-    @GetMapping("/logout")
-    ResponseEntity<Void> logout(@AuthenticationPrincipal SecurityDetails authUser) {
-
-        HttpHeaders headers = new HttpHeaders();
-
-        headers.add(HttpHeaders.SET_COOKIE, ResponseCookie.from("RefreshToken")
-                .sameSite("None")
-                .httpOnly(true)
-                .secure(true)
-                .path("/auth")
-                .maxAge(Duration.ZERO)
-                .build().toString());
-        headers.add(HttpHeaders.SET_COOKIE, ResponseCookie.from("AccessToken")
-                .sameSite("None")
-                .httpOnly(true)
-                .secure(true)
-                .path("/")
-                .maxAge(Duration.ZERO)
-                .build().toString());
-
-        return ResponseEntity.ok().headers(headers).build();
-    }
-    }
+}

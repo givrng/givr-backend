@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8">
+    <title>Notification</title>
+</head>
+<body>
+<table width="100%" cellpadding="0" cellspacing="0" style="padding:20px 0;">
+    <tr>
+        <td align="center">
+            <table width="600" style="background:#FFFFFF; border-radius:8px; overflow:hidden;">
+
+                <!-- Header -->
+                <tr>
+                    <td style="background:#16a34a; padding:24px; text-align:center;">
+                        <h1 style="color:#FFFFFF; margin:0;">
+                            Givr Nigeria
+                        </h1>
+                    </td>
+                </tr>
+
+                <!-- Body -->
+                <tr>
+                    <td style="padding:32px; color:#1F2937;">
+                        <p>
+                            Hello <strong th:text="${firstname}"></strong>,
+                        </p>
+
+                        <p>
+                            <strong>An attempt to update your account password was made.</strong> This account was created using Google sign in. Sign in with Google to gain access to your account.
+                            <br>
+                            <i>Ignore if you did not initiate this request</i>
+                        </p>
+
+                        <p>
+                            — <strong>The Givr Nigeria Team</strong>
+                        </p>
+                    </td>
+                </tr>
+
+                <!-- Footer -->
+                <tr>
+                    <td style="background:#F6F9FC; text-align:center; padding:16px;
+                               font-size:12px; color:#6B7280;"
+                        th:text="|© ${#dates.year(#dates.createNow())} Givr Nigeria|">
+                    </td>
+                </tr>
+
+            </table>
+        </td>
+    </tr>
+</table>
+
+</body>
+</html>

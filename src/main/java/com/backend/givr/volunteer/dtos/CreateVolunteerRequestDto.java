@@ -32,7 +32,7 @@ public class CreateVolunteerRequestDto {
 
     @NotNull
     private Location location;
-
+    private String profileUrl;
     @NotNull
     private List<String> interests;
     public boolean validatePassword(){

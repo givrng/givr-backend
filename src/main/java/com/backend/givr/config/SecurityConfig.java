@@ -1,18 +1,26 @@
 package com.backend.givr.config;
 
+import com.backend.givr.organization.oauth2.OrganizationOAuthFailureHandler;
+import com.backend.givr.organization.oauth2.OrganizationOAuthService;
+import com.backend.givr.organization.oauth2.OrganizationOauthSuccessHandler;
 import com.backend.givr.organization.security.OrganizationDetailsService;
+import com.backend.givr.shared.jwt.GivrCookie;
 import com.backend.givr.shared.jwt.JwtAuthenticationFilter;
 import com.backend.givr.shared.jwt.JwtUtil;
 import com.backend.givr.shared.jwt.JwtValidationFilter;
 import com.backend.givr.shared.service.TokenIdService;
+import com.backend.givr.volunteer.oauth2.VolunteerOAuthFailureHandler;
+import com.backend.givr.volunteer.oauth2.VolunteerOAuthService;
+import com.backend.givr.volunteer.oauth2.VolunteerOAuthSuccessHandler;
 import com.backend.givr.volunteer.security.VolunteerDetailsService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.ProviderManager;
+import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -31,8 +39,9 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.List;
 
-@EnableWebSecurity
 @Configuration
+@EnableScheduling
+@EnableWebSecurity
 public class SecurityConfig {
 
     @Autowired
@@ -43,40 +52,57 @@ public class SecurityConfig {
     private JwtUtil jwtUtil;
     @Autowired
     private TokenIdService tokenIdService;
+    @Autowired
+    private GivrCookie givrCookie;
+
+    @Value("${api.version}")
+    private String apiVersion;
+    @Value("${givr.allowed.origins}")
+    private List<String> allowedOrigins;
+
+    @Autowired
+    private OrganizationOAuthService organizationOathService;
+    @Autowired
+    private VolunteerOAuthService volunteerOAuthService;
+
+    @Value("${client.app.baseUrl}")
+    private String baseUrl;
 
     @Bean
     PasswordEncoder passwordEncoder(){
         return new BCryptPasswordEncoder();
     }
 
-    AuthenticationManager volunteerAuthManager (VolunteerDetailsService detailsService){
-        DaoAuthenticationProvider provider = new DaoAuthenticationProvider(detailsService);
+    @Bean
+    AuthenticationProvider volunteerDaoAuthProvider(){
+        DaoAuthenticationProvider provider = new DaoAuthenticationProvider(volunteerDetailsService);
         provider.setPasswordEncoder(passwordEncoder());
-        return new ProviderManager(provider);
-    }
-
-    AuthenticationManager organizationAuthManager (OrganizationDetailsService detailsService){
-        DaoAuthenticationProvider provider = new DaoAuthenticationProvider(detailsService);
-        provider.setPasswordEncoder(passwordEncoder());
-        return new ProviderManager(provider);
+        return provider;
     }
 
     @Bean
-    @Order(0)
+    AuthenticationProvider organizationDaoProvider(){
+        DaoAuthenticationProvider provider = new DaoAuthenticationProvider(organizationDetailsService);
+        provider.setPasswordEncoder(passwordEncoder());
+        return provider;
+    }
+
+    @Bean
+    @Order(1)
     SecurityFilterChain volunteerSecurityFilter(HttpSecurity httpSecurity) throws Exception {
-        JwtAuthenticationFilter authFilter = new JwtAuthenticationFilter(jwtUtil, volunteerAuthManager(volunteerDetailsService), tokenIdService);
+        JwtAuthenticationFilter authFilter = new JwtAuthenticationFilter(givrCookie, volunteerDaoAuthProvider(), tokenIdService);
         authFilter.setFilterProcessesUrl("/v1/api/volunteer/auth/login");
         JwtValidationFilter validationFilter = new JwtValidationFilter(jwtUtil, volunteerDetailsService, organizationDetailsService);
 
         return httpSecurity
-            .securityMatcher("/v1/api/volunteer/**")
-            .cors(Customizer.withDefaults())
-            .authorizeHttpRequests(request->{
-            request.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll();
-            request.requestMatchers(HttpMethod.POST, "/v1/api/volunteer/auth/**").permitAll();
-            request.anyRequest().hasAuthority("VOLUNTEER");
-        })
-                .authenticationManager(volunteerAuthManager(volunteerDetailsService))
+                .securityMatcher("/v1/api/volunteer/**")
+                .cors(Customizer.withDefaults())
+                .authorizeHttpRequests(request->{
+                    request.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll();
+                    request.requestMatchers(HttpMethod.POST, "/v1/api/volunteer/auth/**").permitAll();
+                    request.anyRequest().hasAuthority("VOLUNTEER");
+                })
+                .authenticationProvider(volunteerDaoAuthProvider())
                 .addFilter(authFilter)
                 .addFilterBefore(validationFilter, UsernamePasswordAuthenticationFilter.class)
                 .csrf(AbstractHttpConfigurer::disable)
@@ -84,10 +110,34 @@ public class SecurityConfig {
                 .httpBasic(AbstractHttpConfigurer::disable)
                 .build();
     }
+
     @Bean
-    @Order(1)
+    @Order(0)
+    SecurityFilterChain volunteerOAuthSecurityFilter(HttpSecurity http){
+        VolunteerOAuthSuccessHandler successHandler = new VolunteerOAuthSuccessHandler(volunteerDetailsService, baseUrl, givrCookie);
+        VolunteerOAuthFailureHandler failureHandler = new VolunteerOAuthFailureHandler(baseUrl);
+        return http.securityMatcher("/v1/api/volunteer/oauth2/**")
+                .authorizeHttpRequests(req->req.anyRequest().authenticated())
+                .oauth2Login(oauth->{
+                    oauth.redirectionEndpoint(redirect->redirect.baseUri("/v1/api/volunteer/oauth2/code/*"))
+                            .userInfoEndpoint(userInfo->{
+                                userInfo.oidcUserService(volunteerOAuthService);
+                            })
+                            .authorizationEndpoint(auth->{
+                                auth.baseUri("/v1/api/volunteer/oauth2/authorization");
+                            })
+                            .successHandler(successHandler)
+                            .failureHandler(failureHandler);
+                })
+                .csrf(AbstractHttpConfigurer::disable)
+                .sessionManagement(s->s.sessionCreationPolicy(SessionCreationPolicy.ALWAYS))
+                .build();
+    }
+
+    @Bean
+    @Order(3)
     SecurityFilterChain organizationSecurityFilter(HttpSecurity httpSecurity) throws Exception {
-        JwtAuthenticationFilter authFilter = new JwtAuthenticationFilter(jwtUtil, organizationAuthManager(organizationDetailsService), tokenIdService);
+        JwtAuthenticationFilter authFilter = new JwtAuthenticationFilter(givrCookie, organizationDaoProvider(), tokenIdService);
         authFilter.setFilterProcessesUrl("/v1/api/organization/auth/login");
         JwtValidationFilter validationFilter = new JwtValidationFilter(jwtUtil, volunteerDetailsService, organizationDetailsService);
 
@@ -99,8 +149,9 @@ public class SecurityConfig {
                     request.requestMatchers(HttpMethod.POST, "/v1/api/organization/auth/**").permitAll();
                     request.anyRequest().hasAuthority("ORGANIZATION");
                 })
-                .authenticationManager(organizationAuthManager(organizationDetailsService))
+                .authenticationProvider(organizationDaoProvider())
                 .addFilter(authFilter)
+                .sessionManagement(sm->sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(validationFilter, UsernamePasswordAuthenticationFilter.class)
                 .csrf(AbstractHttpConfigurer::disable)
                 .formLogin(AbstractHttpConfigurer::disable)
@@ -110,9 +161,35 @@ public class SecurityConfig {
 
     @Bean
     @Order(2)
+    SecurityFilterChain organizationSecurityOAuthFilter(HttpSecurity httpSecurity){
+        OrganizationOauthSuccessHandler successHandler = new OrganizationOauthSuccessHandler(organizationDetailsService, givrCookie, baseUrl);
+        OrganizationOAuthFailureHandler failureHandler = new OrganizationOAuthFailureHandler(baseUrl);
+
+        return httpSecurity.securityMatcher("/v1/api/organization/oauth2/**")
+                .authorizeHttpRequests(auth->auth.anyRequest().authenticated())
+                .oauth2Login(oauth->{
+                    oauth.redirectionEndpoint(redirect->redirect.baseUri("/v1/api/organization/oauth2/code/*"))
+                            .userInfoEndpoint(userInfo->{
+                                userInfo.oidcUserService(organizationOathService);
+                            })
+                            .authorizationEndpoint(auth->{
+                                auth.baseUri("/v1/api/organization/oauth2/authorization");
+                            })
+                            .successHandler(successHandler)
+                            .failureHandler(failureHandler);
+                })
+                .csrf(AbstractHttpConfigurer::disable)
+                .sessionManagement(sm->sm.sessionCreationPolicy(SessionCreationPolicy.ALWAYS))
+                .build();
+    }
+
+
+    @Bean
+    @Order(4)
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
-                .securityMatcher("/**")
+                .securityMatcher("/v1/api/**")
+                .csrf(AbstractHttpConfigurer::disable)
                 .cors(Customizer.withDefaults())
                 .authorizeHttpRequests(auth->auth.anyRequest().permitAll())
                 .sessionManagement(SessionManagementConfigurer->{
@@ -125,7 +202,7 @@ public class SecurityConfig {
     CorsConfigurationSource corsConfigurationSource(){
         CorsConfiguration config = new CorsConfiguration();
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        config.setAllowedOrigins(List.of("http://localhost:5174", "http://127.0.0.1:5174", "http://127.0.0.1:5173", "http://localhost:5173"));
+        config.setAllowedOrigins(allowedOrigins);
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", HttpMethod.PATCH.name(), "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);

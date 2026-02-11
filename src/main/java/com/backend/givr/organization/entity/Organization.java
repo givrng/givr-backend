@@ -1,19 +1,17 @@
 package com.backend.givr.organization.entity;
 
 import com.backend.givr.shared.Location;
-import com.backend.givr.shared.enums.OrganizationType;
 import com.backend.givr.shared.enums.ProjectStatus;
 import com.backend.givr.shared.enums.VerificationStatus;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import org.hibernate.validator.constraints.URL;
 
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -21,24 +19,23 @@ import java.util.Set;
 @Getter
 @ToString
 @Setter
+@NoArgsConstructor
 public class Organization {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private String organizationId;
 
     @NotBlank
+    @Column(nullable = false)
     private String contactFirstname;
 
     private String contactMiddleName;
     @NotBlank
+    @Column(nullable = false)
     private String contactLastname;
 
-    @NotBlank
-    @Column(nullable = false)
     private String phoneNumber;
 
-    @NotBlank
-    @Column(nullable = false)
     private String organizationName;
 
     private String organizationType;
@@ -46,27 +43,27 @@ public class Organization {
     @Column(unique = true)
     private String cacRegNumber;
 
-    @NotBlank
-    private String driversLicenseNumber;
-
-    @NotNull
     @ManyToOne
-    @JoinColumn(name = "location_id", nullable = false)
+    @JoinColumn(name = "location_id")
     private Location location;
+
+    private String address;
+
+    @Column(length = 500)
     private String description;
 
-    @URL
     private String website;
+    @URL
+    private String profileUrl;
 
     @Enumerated(EnumType.STRING)
     private VerificationStatus status;
 
-    @OneToMany(fetch = FetchType.LAZY, mappedBy = "organization", orphanRemoval = true, cascade = CascadeType.ALL)
-    private final Set<Project> projects;
+    private Boolean emailVerified;
 
-    public Organization(){
-        this.projects = new HashSet<>();
-    }
+    private Boolean profileCompleted;
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "organization", orphanRemoval = true, cascade = CascadeType.ALL)
+    private Set<Project> projects;
 
     public void addProject(Project project){
         project.setStatus(ProjectStatus.DRAFT);
@@ -75,7 +72,11 @@ public class Organization {
     }
     //    Get recently created projects
     public List<Project> getProjects(){
-        return this.projects.stream().sorted(Comparator.comparingInt(p -> p.getCreatedAt().getNano())).toList();
+        return this.projects.stream().sorted(Comparator.comparing(Project::getCreatedAt)).toList();
     }
 
+    @Transient
+    public int getNumOfActiveProjects(){
+        return projects == null? 0: projects.stream().filter(p->p.getStatus()==ProjectStatus.OPEN || p.getStatus() == ProjectStatus.ONGOING).toList().size();
+    }
 }

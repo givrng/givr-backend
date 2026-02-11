@@ -1,0 +1,59 @@
+api:
+  version: v1
+server:
+  forward-headers-strategy: framework
+  servlet:
+    session:
+      cookie:
+        secure: true
+spring:
+  application:
+    name: givr
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+    hibernate:
+      dialect: org.hibernate.dialect.PostgreSQLDialect
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+
+  security:
+    oauth2:
+      client:
+        registration:
+          google-org:
+            provider: google
+            client-id: ${GOOGLE_CLIENT_ID}
+            client-secret: ${GOOGLE_CLIENT_SECRET}
+            scope:
+              - openid
+              - profile
+              - email
+            redirect-uri: "{baseUrl}/v1/api/organization/oauth2/code/google"
+          google-volunteer:
+            provider: google
+            client-id: ${GOOGLE_CLIENT_ID}
+            client-secret: ${GOOGLE_CLIENT_SECRET}
+            scope:
+              - openid
+              - profile
+              - email
+            redirect-uri: "{baseUrl}/v1/api/volunteer/oauth2/code/google"
+givr:
+  allowed:
+    origins: ${ALLOWED_ORIGINS}
+springdoc:
+  api-docs:
+    path: api-docs
+client:
+  app:
+    baseUrl: ${CLIENT_BASE_URL}
+jwt:
+  secret: ${JWT_SECRET}
+OTP:
+  SECRETS: ${OTP_SECRET}
+RESEND_API_TOKEN: ${RESEND_API_KEY}

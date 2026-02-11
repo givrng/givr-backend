@@ -1,4 +1,4 @@
-package com.backend.givr.shared;
+package com.backend.givr.shared.dtos;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;

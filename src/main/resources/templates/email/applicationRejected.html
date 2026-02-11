@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8">
+    <title>Application rejected</title>
+</head>
+<body>
+<table width="100%" cellpadding="0" cellspacing="0" style="padding:20px 0;">
+    <tr>
+        <td align="center">
+
+            <table width="600" style="background:#FFFFFF; border-radius:8px;">
+                <tr>
+                    <td style="background:#0A9BF0; padding:24px; text-align:center;">
+                        <h1 style="color:#FFFFFF; margin:0;">Application Update</h1>
+                        <p style="color:#EAF6FF;">Thank you for applying through Givr Nigeria</p>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td style="padding:32px; color:#1F2937;">
+                        <p>Hi <strong th:text="${fistName}"></strong>,</p>
+                        <p>
+                            Thank you for applying to volunteer for the project below on <strong>Givr Nigeria</strong>.
+                            After careful review, you were <strong>not selected</strong> for this opportunity at this time.
+                        </p>
+                        <div style="background:#F6F9FC; padding:16px; border-left:4px solid #0A9BF0; margin:20px 0;">
+                            <strong>Project: <span th:text="${projectName}"></span></strong><br>
+                            <strong>Organisation: <span th:text="${organizationName}"></span></strong>
+                        </div>
+
+                        <p>
+                            Please don’t be discouraged — many volunteering projects receive more applications than available slots.
+                            This decision does not reflect your willingness or ability to make an impact.
+                        </p>
+
+                        <p>
+                            We encourage you to keep exploring other opportunities that align with your interests and availability.
+                            New projects are added regularly.
+                        </p>
+                </tr>
+            </table>
+        </td>
+    </tr>
+</table>
+</body>
+</html>

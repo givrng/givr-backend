@@ -7,8 +7,7 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
+
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
@@ -16,16 +15,14 @@ import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.*;
-import java.util.stream.Collectors;
-
 
 @Service
 public class JwtUtil {
     @Value("${jwt.secret}")
     private String token;
     SecretKey secretKey;
-    public static Duration ACCESSEXPIRATION = Duration.ofMinutes(60);// 15 minutes
-    public static Duration REFRESHEXPIRATION = Duration.ofDays(1); // 24 hours
+    public static Duration ACCESSEXPIRATION = Duration.ofMinutes(15);// 15 minutes
+    public static Duration REFRESHEXPIRATION = Duration.ofHours(4); // 4 hours
     public static String generateJti(){
         return UUID.randomUUID().toString();
     }
@@ -57,14 +54,12 @@ public class JwtUtil {
                 .getSubject();
     }
     public String extractRoles(String token) throws JsonProcessingException {
-        String role = Jwts.parser()
+        return Jwts.parser()
                 .verifyWith(secretKey)
                 .build()
                 .parseSignedClaims(token)
                 .getPayload()
                 .get("role", String.class);
-
-        return role;
     }
 
     public String extractUserId(String token){

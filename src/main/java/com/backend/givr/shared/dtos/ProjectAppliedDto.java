@@ -1,13 +1,12 @@
-package com.backend.givr.shared;
+package com.backend.givr.shared.dtos;
 
-import com.backend.givr.organization.entity.Project;
 import com.backend.givr.organization.entity.ProjectApplication;
 import com.backend.givr.shared.enums.ApplicationStatus;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.ZonedDateTime;
-import java.util.Date;
+
 @NoArgsConstructor
 @Getter
 public class ProjectAppliedDto {

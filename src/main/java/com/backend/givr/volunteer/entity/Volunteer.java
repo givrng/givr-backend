@@ -5,6 +5,7 @@ import com.backend.givr.shared.Skill;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.validator.constraints.URL;
 
 import java.time.ZonedDateTime;
 import java.util.HashSet;
@@ -24,13 +25,20 @@ public class Volunteer {
 
     private String phoneNumber;
     @ManyToOne
-    @JoinColumn(name = "location_id", nullable = false)
+    @JoinColumn(name = "location_id")
     private Location location;
+
+    private Boolean emailIsVerified;
+    private Boolean phoneIsVerified;
+    @URL
+    private String profileUrl;
+    private double rating = 0.0;
 
     @ManyToMany(cascade = CascadeType.MERGE)
     @JoinTable(name = "volunteer_skills", joinColumns = @JoinColumn(name = "volunteer_id"), inverseJoinColumns = @JoinColumn(name = "skill_id"))
     private Set<Skill> skills = new HashSet<>();
 
+    private Boolean profileCompleted;
     private ZonedDateTime createdAt;
     private ZonedDateTime updatedAt;
 

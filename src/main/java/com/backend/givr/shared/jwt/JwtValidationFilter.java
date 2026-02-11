@@ -1,6 +1,7 @@
 package com.backend.givr.shared.jwt;
 
 import com.backend.givr.organization.security.OrganizationDetailsService;
+import com.backend.givr.shared.exceptions.InvalidTokenException;
 import com.backend.givr.shared.interfaces.SecurityDetails;
 import com.backend.givr.volunteer.security.VolunteerDetailsService;
 import io.jsonwebtoken.JwtException;
@@ -31,10 +32,11 @@ public class JwtValidationFilter extends OncePerRequestFilter {
     }
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-        if(request.getCookies()== null){
+        if(request.getCookies()== null || request.getServletPath().endsWith("/auth/login")){
             filterChain.doFilter(request, response);
             return;
         }
+
         try{
             Cookie[] cookies = request.getCookies();
             String accessToken = null;
@@ -53,15 +55,20 @@ public class JwtValidationFilter extends OncePerRequestFilter {
                     user = organizationDetailsService.loadUserByUsername(jwtUtil.extractUsername(accessToken));
 
                 if (jwtUtil.isTokenValid(accessToken, user)) {
-
                     UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
                     SecurityContextHolder.getContext().setAuthentication(token);
+                }else{
+                    throw new InvalidTokenException("Invalid token");
                 }
+            }else{
+                filterChain.doFilter(request, response);
+                return;
             }
-            filterChain.doFilter(request, response);
-        } catch (JwtException e){
-            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Expired or Invalid token");
-        }
 
+        } catch (JwtException | InvalidTokenException e){
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, e.getLocalizedMessage());
+            return;
+        }
+        filterChain.doFilter(request, response);
     }
 }

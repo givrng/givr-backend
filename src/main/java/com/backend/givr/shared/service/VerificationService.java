@@ -4,7 +4,7 @@ import com.backend.givr.organization.dtos.OrganizationUpdateDto;
 import com.backend.givr.organization.entity.Organization;
 import com.backend.givr.shared.entity.OrganizationVerificationSession;
 import com.backend.givr.shared.repo.OrganizationVerificationSessionRepo;
-import com.backend.givr.shared.notification.EmailService;
+import com.backend.givr.shared.email.EmailService;
 import com.backend.givr.shared.enums.ReviewStatus;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.Nullable;

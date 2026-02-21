@@ -1,5 +1,7 @@
 package com.backend.givr.shared.email;
 
+import com.backend.givr.shared.enums.ReviewStatus;
+import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.context.Context;
@@ -61,9 +63,32 @@ public class EmailTemplateService {
         return engine.process("email/applicationRejected", context);
     }
 
+    public String projectCompleted(String firstname, String projectName,String organizationName){
+        Context context = new Context();
+        context.setVariable("firstname", firstname);
+        context.setVariable("projectName", projectName);
+        context.setVariable("organizationName", organizationName);
+        return engine.process("email/projectCompletion", context);
+    }
+
+    public String participationRejected(String firstname, String projectName,String organizationName){
+        Context context = new Context();
+        context.setVariable("firstname", firstname);
+        context.setVariable("projectName", projectName);
+        context.setVariable("organizationName", organizationName);
+        return engine.process("email/participationRejected", context);
+    }
     public String notificationForAuthUser() {
         Context context = new Context();
         context.setVariable("firstname", "User");
         return engine.process("email/oauthNotification", context);
+    }
+
+    public String verificationUpdate(@NotBlank String contactFirstname, ReviewStatus reviewStatus, String reason) {
+        Context context = new Context();
+        context.setVariable("firstname", contactFirstname);
+        context.setVariable("status", reviewStatus);
+        context.setVariable("reason", reason);
+        return engine.process("email/verificationUpdate", context);
     }
 }

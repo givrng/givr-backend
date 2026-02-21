@@ -13,7 +13,7 @@ import com.backend.givr.admin.repos.ReviewRepo;
 import com.backend.givr.organization.entity.Organization;
 import com.backend.givr.organization.service.OrganizationService;
 import com.backend.givr.shared.dtos.VerificationSessionDto;
-import com.backend.givr.shared.notification.EmailService;
+import com.backend.givr.shared.email.EmailService;
 import com.backend.givr.shared.entity.OrganizationVerificationSession;
 import com.backend.givr.shared.enums.AccountType;
 import com.backend.givr.shared.enums.OtpPurpose;

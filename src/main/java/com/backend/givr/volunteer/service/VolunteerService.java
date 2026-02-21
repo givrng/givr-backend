@@ -11,7 +11,7 @@ import com.backend.givr.shared.entity.Skill;
 import com.backend.givr.shared.dtos.ParticipationDto;
 import com.backend.givr.shared.dtos.PasswordUpdateDto;
 import com.backend.givr.shared.dtos.ProjectApplicationForm;
-import com.backend.givr.shared.notification.EmailService;
+import com.backend.givr.shared.email.EmailService;
 import com.backend.givr.shared.enums.AccountType;
 import com.backend.givr.shared.enums.OtpPurpose;
 import com.backend.givr.shared.enums.ProjectStatus;

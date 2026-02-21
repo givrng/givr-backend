@@ -4,7 +4,7 @@ import com.backend.givr.organization.entity.Organization;
 import com.backend.givr.organization.repo.OrganizationRepo;
 import com.backend.givr.organization.security.OrganizationDetails;
 import com.backend.givr.organization.security.OrganizationDetailsRepo;
-import com.backend.givr.shared.notification.EmailService;
+import com.backend.givr.shared.email.EmailService;
 import com.backend.givr.shared.enums.VerificationStatus;
 import com.backend.givr.shared.exceptions.DuplicateAccountException;
 import com.backend.givr.shared.enums.AuthProviderType;

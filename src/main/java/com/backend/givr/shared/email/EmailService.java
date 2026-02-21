@@ -1,8 +1,9 @@
 package com.backend.givr.shared.email;
 
 import com.backend.givr.shared.enums.AccountType;
-import com.backend.givr.shared.enums.OTPStatus;
 import com.backend.givr.shared.enums.OtpPurpose;
+import com.backend.givr.shared.enums.ParticipationStatus;
+import com.backend.givr.shared.enums.ReviewStatus;
 import com.backend.givr.shared.exceptions.FailedToSendOTPException;
 import com.backend.givr.shared.otp.OTP;
 import com.backend.givr.shared.otp.OTPGenerator;
@@ -12,14 +13,13 @@ import com.resend.core.exception.ResendException;
 import com.resend.services.emails.model.CreateEmailOptions;
 import com.resend.services.emails.model.CreateEmailResponse;
 import jakarta.annotation.PostConstruct;
+import jakarta.validation.constraints.NotBlank;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Slf4j
@@ -108,5 +108,20 @@ public class EmailService {
         } catch (ResendException e) {
             logger.error("Error while sending email to {}, {}", recipient, e.getLocalizedMessage());
         }
+    }
+
+    public void sendVerificationStatusUpdate(@NotBlank String contactFirstname, String email, ReviewStatus reviewStatus, String reason) {
+        String html = emailTemplateService.verificationUpdate(contactFirstname, reviewStatus, reason);
+        sendEmail(html, email, "Account verification update");
+    }
+
+    public void sendParticipationUpdate(String firstname, String projectName, String email, String organizationName, ParticipationStatus status){
+        String html = switch (status){
+            case COMPLETED -> emailTemplateService.projectCompleted(firstname, projectName, organizationName);
+            case REJECTED -> emailTemplateService.participationRejected(firstname, projectName, organizationName);
+            case null, default -> null;
+        };
+        String subject = status== ParticipationStatus.COMPLETED? "Congratulations on completing a project": "Project participation Update";
+        sendEmail(html, email, subject );
     }
 }

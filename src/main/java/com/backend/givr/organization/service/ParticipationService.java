@@ -8,19 +8,15 @@ import com.backend.givr.organization.repo.ParticipationRepo;
 import com.backend.givr.shared.enums.ApplicationStatus;
 import com.backend.givr.shared.enums.ParticipationStatus;
 import com.backend.givr.shared.exceptions.IllegalOperationException;
-import com.backend.givr.shared.notification.EmailService;
+import com.backend.givr.shared.email.EmailService;
 import com.backend.givr.volunteer.entity.Volunteer;
-import com.backend.givr.volunteer.security.VolunteerDetails;
 import com.backend.givr.volunteer.security.VolunteerDetailsService;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Duration;
-import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class ParticipationService {

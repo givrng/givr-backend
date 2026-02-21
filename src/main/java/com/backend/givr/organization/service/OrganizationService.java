@@ -10,7 +10,7 @@ import com.backend.givr.organization.security.OrganizationDetails;
 import com.backend.givr.organization.security.OrganizationDetailsService;
 import com.backend.givr.shared.dtos.PasswordUpdateDto;
 import com.backend.givr.shared.dtos.VolunteerApplicationDto;
-import com.backend.givr.shared.notification.EmailService;
+import com.backend.givr.shared.email.EmailService;
 import com.backend.givr.shared.entity.OrganizationVerificationSession;
 import com.backend.givr.shared.enums.*;
 import com.backend.givr.shared.exceptions.DuplicateAccountException;

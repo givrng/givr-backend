@@ -1,6 +1,6 @@
 package com.backend.givr.shared.service;
 
-import com.backend.givr.shared.Skill;
+import com.backend.givr.shared.entity.Skill;
 import com.backend.givr.shared.repo.SkillRepo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

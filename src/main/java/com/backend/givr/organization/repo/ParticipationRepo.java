@@ -1,5 +1,6 @@
 package com.backend.givr.organization.repo;
 
+import com.backend.givr.organization.entity.Organization;
 import com.backend.givr.organization.entity.Participation;
 import com.backend.givr.volunteer.entity.Volunteer;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -13,4 +14,7 @@ public interface ParticipationRepo extends JpaRepository<Participation, Long> {
     Optional<Participation> findByIdAndVolunteer(Long participationId, Volunteer volunteer);
 
     Optional<Participation> deleteByIdAndVolunteer(Long participationId, Volunteer volunteer);
+
+    List<Participation> findAllByOrganization(Organization organization);
+
 }

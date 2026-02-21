@@ -1,6 +1,6 @@
 package com.backend.givr.organization.entity;
 
-import com.backend.givr.shared.Location;
+import com.backend.givr.shared.entity.Location;
 import com.backend.givr.shared.enums.ProjectStatus;
 import com.backend.givr.shared.enums.VerificationStatus;
 import jakarta.persistence.*;
@@ -30,8 +30,9 @@ public class Organization {
     private String contactFirstname;
 
     private String contactMiddleName;
-    @NotBlank
-    @Column(nullable = false)
+
+//    @NotBlank
+//    @Column(nullable = false)
     private String contactLastname;
 
     private String phoneNumber;

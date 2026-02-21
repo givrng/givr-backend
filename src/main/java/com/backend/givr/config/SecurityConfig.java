@@ -1,5 +1,7 @@
 package com.backend.givr.config;
 
+import com.backend.givr.admin.enums.AdminRole;
+import com.backend.givr.admin.service.AdminDetailsService;
 import com.backend.givr.organization.oauth2.OrganizationOAuthFailureHandler;
 import com.backend.givr.organization.oauth2.OrganizationOAuthService;
 import com.backend.givr.organization.oauth2.OrganizationOauthSuccessHandler;
@@ -49,6 +51,8 @@ public class SecurityConfig {
     @Autowired
     private OrganizationDetailsService organizationDetailsService;
     @Autowired
+    private AdminDetailsService adminDetailsService;
+    @Autowired
     private JwtUtil jwtUtil;
     @Autowired
     private TokenIdService tokenIdService;
@@ -92,7 +96,7 @@ public class SecurityConfig {
     SecurityFilterChain volunteerSecurityFilter(HttpSecurity httpSecurity) throws Exception {
         JwtAuthenticationFilter authFilter = new JwtAuthenticationFilter(givrCookie, volunteerDaoAuthProvider(), tokenIdService);
         authFilter.setFilterProcessesUrl("/v1/api/volunteer/auth/login");
-        JwtValidationFilter validationFilter = new JwtValidationFilter(jwtUtil, volunteerDetailsService, organizationDetailsService);
+        JwtValidationFilter validationFilter = new JwtValidationFilter(jwtUtil, volunteerDetailsService, organizationDetailsService, adminDetailsService);
 
         return httpSecurity
                 .securityMatcher("/v1/api/volunteer/**")
@@ -139,7 +143,7 @@ public class SecurityConfig {
     SecurityFilterChain organizationSecurityFilter(HttpSecurity httpSecurity) throws Exception {
         JwtAuthenticationFilter authFilter = new JwtAuthenticationFilter(givrCookie, organizationDaoProvider(), tokenIdService);
         authFilter.setFilterProcessesUrl("/v1/api/organization/auth/login");
-        JwtValidationFilter validationFilter = new JwtValidationFilter(jwtUtil, volunteerDetailsService, organizationDetailsService);
+        JwtValidationFilter validationFilter = new JwtValidationFilter(jwtUtil, volunteerDetailsService, organizationDetailsService, adminDetailsService);
 
         return httpSecurity
                 .securityMatcher("/v1/api/organization/**")
@@ -186,6 +190,26 @@ public class SecurityConfig {
 
     @Bean
     @Order(4)
+    SecurityFilterChain adminSecurityFilterChain(HttpSecurity http) throws Exception{
+        JwtValidationFilter validationFilter = new JwtValidationFilter(jwtUtil, volunteerDetailsService, organizationDetailsService, adminDetailsService);
+        AdminRole role = AdminRole.SUPER_ADMIN;
+        return http
+                .securityMatcher("/v1/api/admin/**")
+                .cors(Customizer.withDefaults())
+                .authorizeHttpRequests(request->{
+                    request.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll();
+                    request.requestMatchers(HttpMethod.POST, "/v1/api/admin/auth/**").permitAll();
+                    request.anyRequest().hasAuthority(role.name());
+                })
+                .sessionManagement(sm->sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .addFilterBefore(validationFilter, UsernamePasswordAuthenticationFilter.class)
+                .csrf(AbstractHttpConfigurer::disable)
+                .formLogin(AbstractHttpConfigurer::disable)
+                .httpBasic(AbstractHttpConfigurer::disable)
+                .build();
+    }
+    @Bean
+    @Order(5)
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
                 .securityMatcher("/v1/api/**")
@@ -197,6 +221,7 @@ public class SecurityConfig {
                 })
                 .build();
     }
+
 
     @Bean
     CorsConfigurationSource corsConfigurationSource(){

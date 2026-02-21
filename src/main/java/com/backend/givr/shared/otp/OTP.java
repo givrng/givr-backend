@@ -85,7 +85,7 @@ public class OTP {
         this.status = OTPStatus.SENT;
         this.resendEmailId = resendEmailId;
     }
-    public boolean isSent(){
+        public boolean isSent(){
         return status == OTPStatus.SENT;
     }
 }

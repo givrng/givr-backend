@@ -1,7 +1,6 @@
 package com.backend.givr.volunteer.dtos;
 
 import com.backend.givr.organization.dtos.LocationDto;
-import com.backend.givr.shared.Location;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

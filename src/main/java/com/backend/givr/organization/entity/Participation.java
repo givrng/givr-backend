@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 
@@ -25,14 +26,27 @@ public class Participation {
     private ParticipationStatus participationStatus;
 
     @Setter
-    @ManyToOne()
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "project_id", nullable = false)
     private Project project;
 
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "application_id")
+    @Setter
+    private ProjectApplication projectApplication;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "organization_id", nullable = false)
+    @Setter
+    private Organization organization;
     @ManyToOne(optional = false)
     @Setter
     @JoinColumn(name = "volunteer_id")
     private Volunteer volunteer;
+
+    @Transient
+    private Boolean reviewable;
+
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -44,5 +58,9 @@ public class Participation {
     @PreUpdate
     private  void setUpdatedAt(){
         this.updatedAt = LocalDateTime.now(ZoneId.of("Africa/Lagos"));
+    }
+    @PostLoad
+    private void setReviewable(){
+        this.reviewable = project.getReviewable();
     }
 }

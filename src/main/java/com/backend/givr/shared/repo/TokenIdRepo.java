@@ -1,6 +1,6 @@
 package com.backend.givr.shared.repo;
 
-import com.backend.givr.shared.TokenId;
+import com.backend.givr.shared.entity.TokenId;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;

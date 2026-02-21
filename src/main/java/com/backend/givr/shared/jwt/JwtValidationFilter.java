@@ -1,5 +1,6 @@
 package com.backend.givr.shared.jwt;
 
+import com.backend.givr.admin.service.AdminDetailsService;
 import com.backend.givr.organization.security.OrganizationDetailsService;
 import com.backend.givr.shared.exceptions.InvalidTokenException;
 import com.backend.givr.shared.interfaces.SecurityDetails;
@@ -24,11 +25,12 @@ public class JwtValidationFilter extends OncePerRequestFilter {
     private final JwtUtil jwtUtil;
     private final VolunteerDetailsService volunteerDetailsService;
     private final OrganizationDetailsService organizationDetailsService;
-    public JwtValidationFilter(JwtUtil util, VolunteerDetailsService volunteerDetailsService, OrganizationDetailsService organizationDetailsService){
+    private final AdminDetailsService adminDetailsService;
+    public JwtValidationFilter(JwtUtil util, VolunteerDetailsService volunteerDetailsService, OrganizationDetailsService organizationDetailsService, AdminDetailsService adminDetailsService){
         jwtUtil =util;
         this.volunteerDetailsService = volunteerDetailsService;
         this.organizationDetailsService = organizationDetailsService;
-
+        this.adminDetailsService = adminDetailsService;
     }
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
@@ -51,8 +53,11 @@ public class JwtValidationFilter extends OncePerRequestFilter {
                 SecurityDetails user;
                 if(role.equals("VOLUNTEER"))
                     user = volunteerDetailsService.loadUserByUsername(jwtUtil.extractUsername(accessToken));
-                else
+                else if (role.equals("ORGANIZATION"))
                     user = organizationDetailsService.loadUserByUsername(jwtUtil.extractUsername(accessToken));
+                else{
+                    user = adminDetailsService.loadUserByUsername(jwtUtil.extractUsername(accessToken));
+                }
 
                 if (jwtUtil.isTokenValid(accessToken, user)) {
                     UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());

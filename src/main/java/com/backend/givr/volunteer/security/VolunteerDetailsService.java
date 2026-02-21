@@ -1,5 +1,6 @@
 package com.backend.givr.volunteer.security;
 
+import com.backend.givr.volunteer.entity.Volunteer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -20,6 +21,9 @@ public class VolunteerDetailsService implements UserDetailsService {
         return repo.findByEmail(username).orElseThrow(()->new UsernameNotFoundException("Invalid credentials"));
     }
 
+    public String getEmail(Volunteer volunteer){
+        return repo.findByVolunteer(volunteer).orElseThrow().getUsername();
+    }
     public Optional<VolunteerDetails> getDetails(String username){
         return repo.findByEmail(username);
     }

@@ -25,7 +25,7 @@ public class OTPService {
 
     public OTP generateOtp(String email, String token, AccountType accountType, OtpPurpose purpose){
         Optional<OTP> existing = repo.findByEmailAndAccountTypeAndPurpose(email, accountType, purpose);
-        if(existing.isPresent() && existing.get().getExpiresAt().isAfter(LocalDateTime.now()))
+        if(existing.isPresent() && existing.get().getExpiresAt().isAfter(LocalDateTime.now()) && !existing.get().getIsUsed() )
             return existing.get();
 
         existing.ifPresent(repo::delete);

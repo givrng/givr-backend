@@ -1,5 +1,6 @@
 package com.backend.givr.organization.security;
 
+import com.backend.givr.organization.entity.Organization;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -11,4 +12,5 @@ public interface OrganizationDetailsRepo extends JpaRepository<OrganizationDetai
 
     boolean existsByEmail(String email);
 
+    OrganizationDetails findByOrganization(Organization organization);
 }

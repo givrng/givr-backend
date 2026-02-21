@@ -2,15 +2,16 @@ package com.backend.givr.organization.service;
 
 import com.backend.givr.organization.dtos.*;
 import com.backend.givr.organization.entity.Organization;
+import com.backend.givr.shared.dtos.ParticipationDto;
 import com.backend.givr.organization.entity.Project;
 import com.backend.givr.organization.mappings.OrganizationMapper;
 import com.backend.givr.organization.repo.OrganizationRepo;
 import com.backend.givr.organization.security.OrganizationDetails;
 import com.backend.givr.organization.security.OrganizationDetailsService;
-import com.backend.givr.shared.Location;
 import com.backend.givr.shared.dtos.PasswordUpdateDto;
 import com.backend.givr.shared.dtos.VolunteerApplicationDto;
-import com.backend.givr.shared.email.EmailService;
+import com.backend.givr.shared.notification.EmailService;
+import com.backend.givr.shared.entity.OrganizationVerificationSession;
 import com.backend.givr.shared.enums.*;
 import com.backend.givr.shared.exceptions.DuplicateAccountException;
 import com.backend.givr.shared.exceptions.IllegalOperationException;
@@ -20,6 +21,7 @@ import com.backend.givr.shared.enums.AuthProviderType;
 import com.backend.givr.shared.otp.OTPService;
 import com.backend.givr.shared.service.LocationService;
 import com.backend.givr.shared.service.SkillService;
+import com.backend.givr.shared.service.VerificationService;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.ConstraintViolationException;
@@ -49,6 +51,8 @@ public class OrganizationService {
     @Autowired
     private ApplicationService applicationService;
     @Autowired
+    private ParticipationService participationService;
+    @Autowired
     private ProjectService projectService;
     @Autowired
     private PasswordEncoder encoder;
@@ -56,6 +60,8 @@ public class OrganizationService {
     private LocationService locationService;
     @Autowired
     private EmailService emailService;
+    @Autowired
+    private VerificationService verificationService;
     @Autowired
     private OTPService otpService;
     @Autowired
@@ -103,8 +109,8 @@ public class OrganizationService {
 
         if(!org.getProfileCompleted())
             throw new IllegalOperationException("Profile not complete, cannot create project");
-        
-        Project project = projectService.createProject(projectRequestDto, org);
+
+        projectService.createProject(projectRequestDto, org);
 
         return projectMapper.toDtos(projectService.getProjectByOrganizationAndStatus(org, ProjectStatus.DRAFT));
     }
@@ -117,6 +123,13 @@ public class OrganizationService {
         applicationService.changeApplicationStatus(applicationId, ApplicationStatus.REJECTED);
     }
 
+    public List<ParticipationDto> getProjectParticipants(SecurityDetails details){
+        Organization organization = repo.findById(details.getId()).orElseThrow();
+        return projectMapper.toParticipationDto(participationService.getParticipantsByOrganization(organization));
+    }
+    public void updateVolunteerParticipation(UpdateParticipantDto payload){
+        participationService.changeParticipationStatus(payload.id(), payload.status());
+    }
     public List<VolunteerApplicationDto> getProjectApplications (SecurityDetails details){
         Organization organization = repo.findById(details.getId()).orElseThrow();
         return applicationService.getProjectsApplications(organization);
@@ -165,7 +178,7 @@ public class OrganizationService {
 
         ApplicationStats stats = applicationService.getVolunteerStats(organization);
 
-        return new OrganizationDashboard(organization.getOrganizationName(), projectDtoMap, 5.0, stats ,!organization.getProfileCompleted());
+        return new OrganizationDashboard(organization.getOrganizationName(), projectDtoMap, 5.0, stats ,!(organization.getStatus() == VerificationStatus.VERIFIED));
     }
 
     public List<Project> getProjects(SecurityDetails details){
@@ -228,15 +241,30 @@ public class OrganizationService {
         }
 
         mapper.updateOrganization(organizationDto, organization);
-        Location location = locationService.createLocation(organizationDto.getLocation());
-        organization.setLocation(location);
-        organization.setProfileCompleted(orgProfileComplete(organization));
+        boolean createdVerificationSession = verificationService.createVerificationSession(organization, organizationDto);
 
+        if(createdVerificationSession)
+            emailService.sendVerificationStatusUpdate(organization.getContactFirstname(), details.getUsername(), ReviewStatus.Pending, null);
         return toProfile(organization, details);
+    }
+
+    public void updateOrganizationDetails (OrganizationVerificationSession session, Organization organization){
+        organization.setStatus(VerificationStatus.VERIFIED);
+        organization.setProfileCompleted(true);
+        organization.setOrganizationType(session.getClaimedType());
+        organization.setOrganizationName(session.getClaimedOrgName());
+        organization.setCacRegNumber(session.getClaimedCACRegNumber());
+        organization.setLocation(session.getClaimedLocation());
+        organization.setAddress(session.getClaimedAddress().address());
+    }
+
+    public String getOrganizationEmail(Organization organization){
+        return service.getEmail(organization);
     }
 
     private OrganizationProfileDto toProfile(Organization organization, SecurityDetails details){
         OrganizationDto orgDto = mapper.toOrganizationDto(organization);
+
         OrganizationContactDto orgContact = mapper.toOrganizationContact(organization);
         orgContact.setEmail(details.getUsername());
         orgContact.setEmailEditable(details.getProviderType() == AuthProviderType.LOCAL);

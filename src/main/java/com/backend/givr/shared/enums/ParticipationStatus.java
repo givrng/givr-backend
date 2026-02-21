@@ -1,5 +1,5 @@
 package com.backend.givr.shared.enums;
 
 public enum ParticipationStatus {
-    IN_PROGRESS, COMPLETED
+    IN_PROGRESS, COMPLETED, REJECTED
 }

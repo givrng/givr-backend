@@ -1,6 +1,6 @@
 package com.backend.givr.shared.service;
 
-import com.backend.givr.shared.TokenId;
+import com.backend.givr.shared.entity.TokenId;
 import com.backend.givr.shared.repo.TokenIdRepo;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;

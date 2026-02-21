@@ -1,7 +1,7 @@
 package com.backend.givr.organization.entity;
 
-import com.backend.givr.shared.Location;
-import com.backend.givr.shared.Skill;
+import com.backend.givr.shared.entity.Location;
+import com.backend.givr.shared.entity.Skill;
 import com.backend.givr.shared.enums.ProjectStatus;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
@@ -12,10 +12,7 @@ import lombok.Setter;
 import lombok.ToString;
 import org.hibernate.annotations.SQLRestriction;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
+import java.time.*;
 import java.util.Set;
 
 @Entity
@@ -57,6 +54,8 @@ public class Project {
     @Column(nullable = false)
     private LocalDate deadline;
 
+    @Transient
+    private Boolean reviewable;
     @Embedded
     private AttendanceHours attendanceHours;
 
@@ -109,5 +108,9 @@ public class Project {
 
     public void markOrgNotifiedOfDeadline(){
         this.orgNotifiedOfDeadline = true;
+    }
+
+    public boolean getReviewable(){
+        return LocalDate.now().plusDays(7).isAfter(this.getEndDate());
     }
 }

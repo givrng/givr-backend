@@ -1,13 +1,14 @@
 package com.backend.givr.volunteer.dtos;
 
 import com.backend.givr.organization.dtos.LocationDto;
-import com.backend.givr.shared.Location;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.net.URL;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @NoArgsConstructor
@@ -28,5 +29,5 @@ public class VolunteerProfile {
     private boolean emailEditable;
     private boolean emailIsVerified;
     private boolean phoneIsVerified;
-
+    private LocalDateTime createdAt;
 }

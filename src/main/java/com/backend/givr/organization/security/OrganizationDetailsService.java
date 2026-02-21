@@ -1,5 +1,6 @@
 package com.backend.givr.organization.security;
 
+import com.backend.givr.organization.entity.Organization;
 import com.backend.givr.shared.exceptions.IllegalOperationException;
 import com.backend.givr.shared.enums.AuthProviderType;
 import jakarta.validation.constraints.Email;
@@ -47,5 +48,9 @@ public class OrganizationDetailsService implements UserDetailsService {
 
     public Optional<OrganizationDetails> getDetails(String email) {
         return repo.findByEmail(email);
+    }
+
+    public String getEmail(Organization organization) {
+        return repo.findByOrganization(organization).getUsername();
     }
 }

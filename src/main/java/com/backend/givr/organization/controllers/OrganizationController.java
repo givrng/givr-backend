@@ -4,9 +4,9 @@ import com.backend.givr.organization.dtos.*;
 
 import com.backend.givr.organization.service.ApplicationService;
 import com.backend.givr.organization.service.OrganizationService;
+import com.backend.givr.shared.dtos.ParticipationDto;
 import com.backend.givr.shared.dtos.PasswordUpdateDto;
 import com.backend.givr.shared.dtos.VolunteerApplicationDto;
-import com.backend.givr.shared.enums.ApplicationStatus;
 import com.backend.givr.shared.enums.OtpPurpose;
 import com.backend.givr.shared.interfaces.SecurityDetails;
 import com.backend.givr.shared.mapper.ProjectMapper;
@@ -65,6 +65,16 @@ public class OrganizationController {
     @GetMapping("/projects")
     public ResponseEntity<List<ProjectResponseDto>> getOrganizationProjects(@AuthenticationPrincipal SecurityDetails details){
         return ResponseEntity.ok(mapper.toDtos(service.getProjects(details)));
+    }
+
+    @GetMapping("/projects/participants")
+    public ResponseEntity<List<ParticipationDto>> getProjectParticipants(@AuthenticationPrincipal SecurityDetails details){
+        return ResponseEntity.ok(service.getProjectParticipants(details));
+    }
+    @PatchMapping("/projects/participant")
+    public ResponseEntity<Void> updateParticipation(@RequestBody UpdateParticipantDto payload){
+        service.updateVolunteerParticipation(payload);
+        return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/projects")

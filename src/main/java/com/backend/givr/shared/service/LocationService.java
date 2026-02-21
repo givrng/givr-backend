@@ -1,7 +1,7 @@
 package com.backend.givr.shared.service;
 
 import com.backend.givr.organization.dtos.LocationDto;
-import com.backend.givr.shared.Location;
+import com.backend.givr.shared.entity.Location;
 import com.backend.givr.shared.repo.LocationRepo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

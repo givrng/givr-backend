@@ -25,6 +25,12 @@ public interface ProjectRepo extends JpaRepository<Project, Long> {
     List<Project> findExpiredProjects(LocalDate today);
 
     @Query("""
+            SELECT p from Project p
+            WHERE :weekFromToday >  p.endDate
+            """)
+    List<Project> findClosingProjects(LocalDate weekFromToday);
+
+    @Query("""
     SELECT p
     FROM Project p
     WHERE p.location.state = :state

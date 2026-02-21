@@ -1,5 +1,7 @@
 package com.backend.givr.shared.controller;
 
+import com.backend.givr.admin.entity.Admin;
+import com.backend.givr.admin.entity.AdminDetails;
 import com.backend.givr.organization.entity.Organization;
 import com.backend.givr.organization.security.OrganizationDetails;
 import com.backend.givr.shared.interfaces.SecurityDetails;
@@ -76,10 +78,12 @@ public class RefreshController {
                 Volunteer volunteer = manager.getReference(Volunteer.class, userId);
                 userDetails = new VolunteerDetails(username, null, volunteer);
                 userDetails.setAuthorities();
-            }else{
+            }else if(Objects.equals(authority, "ORGANIZATION" )){
                 Organization organization = manager.getReference(Organization.class, userId);
                 userDetails = new OrganizationDetails(username, null, organization);
                 userDetails.setAuthorities();
+            }else{
+                userDetails = new AdminDetails(username, userId, authority);
             }
 
             String refreshId = JwtUtil.generateJti();
@@ -89,20 +93,20 @@ public class RefreshController {
             refreshToken = util.generateToken(userDetails, refreshId, JwtUtil.REFRESHEXPIRATION.toMillis());
 
             service.createToken(refreshId, username, JwtUtil.REFRESHEXPIRATION.toMillis()); // saves token to db
-
+            
             ResponseCookie accessCookie = ResponseCookie.from("AccessToken").value(accessToken)
                     .maxAge(JwtUtil.ACCESSEXPIRATION)
                     .path("/")
                     .secure(true)
                     .httpOnly(true)
-                    .sameSite("None")
+                    .sameSite("Lax")
                     .build();
             ResponseCookie refreshCookie = ResponseCookie.from("RefreshToken").value(refreshToken)
                     .maxAge(JwtUtil.REFRESHEXPIRATION)
-                    .path(String.format("/%s/api/auth", apiVersion))
+                    .path("/")
                     .secure(true)
                     .httpOnly(true)
-                    .sameSite("None")
+                    .sameSite("Lax")
                     .build();
             HttpHeaders headers = new HttpHeaders();
             headers.add(HttpHeaders.SET_COOKIE, accessCookie.toString());

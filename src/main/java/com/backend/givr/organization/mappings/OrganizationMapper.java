@@ -2,10 +2,10 @@ package com.backend.givr.organization.mappings;
 
 import com.backend.givr.organization.dtos.*;
 import com.backend.givr.organization.entity.Organization;
+import com.backend.givr.shared.entity.OrganizationVerificationSession;
 import com.backend.givr.organization.entity.Project;
-import com.backend.givr.organization.entity.ProjectApplication;
-import com.backend.givr.shared.Location;
-import com.backend.givr.shared.Skill;
+import com.backend.givr.shared.entity.Location;
+import com.backend.givr.shared.entity.Skill;
 import com.backend.givr.shared.mapper.SkillMapper;
 import com.backend.givr.volunteer.mappings.VolunteerMapper;
 import org.mapstruct.*;
@@ -15,10 +15,10 @@ import java.text.SimpleDateFormat;
 
 import java.util.Date;
 import java.util.List;
-import java.util.Locale;
 import java.util.Set;
+import java.util.stream.Collectors;
 
-@Mapper(componentModel = "spring", uses = {VolunteerMapper.class, SkillMapper.class}, nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+@Mapper(componentModel = "spring", uses = {VolunteerMapper.class, SkillMapper.class, }, nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
 public interface OrganizationMapper {
 
     Organization toOrganization(CreateOrganizationDto organizationDto);
@@ -28,9 +28,23 @@ public interface OrganizationMapper {
         projectDto.setTotalApplicants(project.getVolunteerCount());
     }
 
-    @Mapping(target = "id", source = "organizationId")
     @Mapping(target = "name", source = "organizationName")
     OrganizationDto toOrganizationDto (Organization organization);
+
+    @Mapping(target = "name", source = "claimedOrgName")
+    @Mapping(target = "cacRegNumber", source = "claimedCACRegNumber")
+    @Mapping(target = "location", source = "claimedLocation")
+    @Mapping(target = "address", ignore = true)
+    OrganizationDto toOrganizationDto (OrganizationVerificationSession verificationSession);
+
+    @AfterMapping
+    default void updateOrganizationDtoAddress(OrganizationVerificationSession verificationSession, @MappingTarget OrganizationDto organizationDto){
+        organizationDto.setAddress(verificationSession.getClaimedAddress().address());
+        LocationDto locationDto = new LocationDto();
+        locationDto.setLga(verificationSession.getClaimedAddress().LGA());
+        locationDto.setState(verificationSession.getClaimedAddress().state());
+        organizationDto.setLocation(locationDto);
+    }
 
     @AfterMapping
     default void updateActiveProjectCount(Organization organization, @MappingTarget OrganizationDto organizationDto){
@@ -48,6 +62,7 @@ public interface OrganizationMapper {
         SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
         return format.parse(date);
     }
+
     default Set<Skill> toSet(List<Skill> skills){
         return Set.copyOf(skills);
     }
@@ -57,9 +72,11 @@ public interface OrganizationMapper {
 
     // name -> organizationName;
     // category -> organizationType;
-    @Mapping(source = "name", target = "organizationName")
     @Mapping(target = "organizationType", ignore = true)
     @Mapping(target = "location", ignore = true)
+    @Mapping(target = "cacRegNumber", ignore = true)
+    @Mapping(target = "organizationName", ignore = true)
+    @Mapping(target = "address", ignore = true)
     void updateOrganization(OrganizationUpdateDto organizationDto, @MappingTarget Organization organization);
 
     @AfterMapping
@@ -67,4 +84,5 @@ public interface OrganizationMapper {
         if(organizationUpdateDto.getCategory() != null)
             organization.setOrganizationType(organizationUpdateDto.getCategory().getFirst());
     }
+
 }

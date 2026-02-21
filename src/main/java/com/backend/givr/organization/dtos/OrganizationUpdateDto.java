@@ -27,7 +27,7 @@ public class OrganizationUpdateDto {
     private String description;
     private String website;
     private String address;
-
+    private String cacDocUrl;
     // Organization Contact specific-information
     @Email
     private String email;

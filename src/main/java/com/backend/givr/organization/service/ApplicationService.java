@@ -7,7 +7,7 @@ import com.backend.givr.organization.entity.ProjectApplication;
 import com.backend.givr.organization.repo.ProjectApplicationRepo;
 import com.backend.givr.shared.dtos.ProjectApplicationForm;
 import com.backend.givr.shared.dtos.VolunteerApplicationDto;
-import com.backend.givr.shared.email.EmailService;
+import com.backend.givr.shared.notification.EmailService;
 import com.backend.givr.shared.enums.ApplicationStatus;
 import com.backend.givr.shared.exceptions.IllegalOperationException;
 import com.backend.givr.shared.exceptions.MaxApplicantsReachedException;
@@ -91,7 +91,7 @@ public class ApplicationService {
             throw new IllegalOperationException("Cannot change status to applied");
 
         if(status == ApplicationStatus.APPROVED)
-            participationService.createParticipation(project, application.getVolunteer());
+            participationService.createParticipation(project, application);
 
         application.setStatus(status);
         repo.save(application);

@@ -1,6 +1,6 @@
 package com.backend.givr.shared.repo;
 
-import com.backend.givr.shared.Location;
+import com.backend.givr.shared.entity.Location;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

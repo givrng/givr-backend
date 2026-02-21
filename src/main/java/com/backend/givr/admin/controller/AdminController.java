@@ -16,7 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.User;
+
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
@@ -41,7 +41,7 @@ public class AdminController {
 
     @PostMapping("/auth/request-otp")
     public ResponseEntity<Void> requestOtp(@RequestBody AdminAuthDto payload){
-        if(allowedAdmins.contains(payload.email())) {
+        if(allowedAdmins.contains(payload.email().toLowerCase())) {
 
             // Checks that an admin account doesn't exist before creating
             if(!service.adminExists(payload.email()))

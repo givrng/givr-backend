@@ -77,6 +77,8 @@ public class Project {
     @SQLRestriction(value = "status = 'APPROVED'")
     private Set<ProjectApplication> approvedList;
 
+    private String segmentId;
+
     private ZonedDateTime createdAt;
     private ZonedDateTime modifiedAt;
 

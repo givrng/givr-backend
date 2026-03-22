@@ -11,14 +11,20 @@ import com.backend.givr.shared.exceptions.IllegalOperationException;
 import com.backend.givr.shared.email.EmailService;
 import com.backend.givr.volunteer.entity.Volunteer;
 import com.backend.givr.volunteer.security.VolunteerDetailsService;
+import com.resend.core.exception.ResendException;
 import jakarta.persistence.EntityNotFoundException;
+import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 @Service
+@Slf4j
 public class ParticipationService {
 
     @Autowired
@@ -28,6 +34,8 @@ public class ParticipationService {
     @Autowired
     private EmailService emailService;
 
+    private final Logger logger = LoggerFactory.getLogger(ParticipationService.class);
+
     public void createParticipation(Project project, ProjectApplication application){
         Participation participation = new Participation();
         participation.setVolunteer(application.getVolunteer());
@@ -35,7 +43,22 @@ public class ParticipationService {
         participation.setProject(project);
         participation.setOrganization(project.getOrganization());
         participation.setParticipationStatus(ParticipationStatus.IN_PROGRESS);
-        repo.save(participation);
+
+        createContact(repo.save(participation), project.getSegmentId());
+    }
+
+    @Async
+    private void createContact(Participation participation, String segmentId){
+        Volunteer volunteer = participation.getVolunteer();
+        try{
+            String contactId = emailService.createContact(volunteer.getEmail(), volunteer.getFirstname(), volunteer.getLastname());
+            emailService.addContactToSegment(segmentId, contactId);
+            participation.setContactId(contactId);
+            participation.setIsUnSubscribed(false);
+            repo.save(participation);
+        } catch (ResendException e) {
+            logger.error("Failed to create contact, {}", e.getLocalizedMessage());
+        }
     }
 
     public List<Participation> getVolunteerParticipation(Volunteer volunteer){
@@ -66,6 +89,13 @@ public class ParticipationService {
 
         if(status == ParticipationStatus.REJECTED){
             participation.getProjectApplication().setStatus(ApplicationStatus.REJECTED);
+            participation.setIsUnSubscribed(true);
+            participation.setContactId(null);
+            try{
+                emailService.removeParticipantFromSegment(participation.getVolunteer().getEmail(), project.getSegmentId());
+            } catch (ResendException e) {
+                logger.error("Failed to removed contact from segment, {}", e.getLocalizedMessage());
+            }
         }
     }
 

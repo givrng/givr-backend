@@ -16,6 +16,7 @@ import java.util.UUID;
 @Entity
 @NoArgsConstructor
 @Getter
+@Table(indexes = {@Index(unique = true, name = "ind_merchant", columnList = "merchantRefId")})
 public class VerificationPayment {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -33,15 +34,12 @@ public class VerificationPayment {
     @Setter
     private BigDecimal amountPaid;
 
-    @Setter
-    private BigDecimal amountSettled;
-
     private LocalDateTime createdAt;
 
     private String description;
 
     @Setter
-    private String merchantId;
+    private String merchantRefId;
 
     @Column(nullable = false)
     private String transactionRef;
@@ -70,7 +68,7 @@ public class VerificationPayment {
         this.status = TransactionStatus.PENDING;
         this.amount = amount;
         this.description = description;
-        this.merchant = Merchant.MONNIFY;
+        this.merchant = Merchant.PAYSTACK;
         this.organization = organization;
         this.transactionRef = UUID.randomUUID().toString();
     }

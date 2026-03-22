@@ -5,6 +5,7 @@ import com.backend.givr.organization.dtos.ProjectResponseDto;
 import com.backend.givr.organization.entity.Organization;
 import com.backend.givr.organization.entity.Project;
 import com.backend.givr.organization.repo.ProjectRepo;
+import com.backend.givr.shared.email.EmailService;
 import com.backend.givr.shared.entity.Location;
 import com.backend.givr.shared.enums.ProjectStatus;
 import com.backend.givr.shared.exceptions.IllegalOperationException;
@@ -13,8 +14,13 @@ import com.backend.givr.shared.mapper.ProjectMapper;
 import com.backend.givr.shared.service.LocationService;
 import com.backend.givr.shared.service.SkillService;
 import com.backend.givr.volunteer.entity.Volunteer;
+import com.resend.core.exception.ResendException;
 import jakarta.persistence.EntityNotFoundException;
+import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,6 +30,7 @@ import java.util.Comparator;
 import java.util.List;
 
 @Service
+@Slf4j
 public class ProjectService {
     @Autowired
     private ProjectRepo repo;
@@ -32,7 +39,11 @@ public class ProjectService {
     @Autowired
     private SkillService skillService;
     @Autowired
+    private EmailService emailService;
+    @Autowired
     private LocationService locationService;
+
+    private Logger logger = LoggerFactory.getLogger(ProjectService.class);
 
     public List<ProjectResponseDto> getAllProjects(){
         return mapper.toDtos(repo.findAll());
@@ -75,7 +86,20 @@ public class ProjectService {
         Project project = mapper.toProject(projectRequestDto);
         handleProject(project, projectRequestDto);
         project.setOrganization(organization);
-        return repo.save(project);
+        Project savedProject = repo.save(project);
+        createProjectSegment(savedProject);
+        return  project;
+    }
+
+    @Async
+    private void createProjectSegment(Project project){
+        try{
+            String segmentId = emailService.createProjectSegment(project.getTitle());
+            project.setSegmentId(segmentId);
+            repo.save(project);
+        } catch (ResendException e) {
+            logger.error("Failed to create segment for project {}", e.getLocalizedMessage());
+        }
     }
 
     @Transactional

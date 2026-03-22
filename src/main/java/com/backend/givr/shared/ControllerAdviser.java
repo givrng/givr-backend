@@ -1,6 +1,7 @@
 package com.backend.givr.shared;
 
 import com.backend.givr.shared.exceptions.*;
+import com.resend.core.exception.ResendException;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,6 +16,11 @@ public class ControllerAdviser {
     @ExceptionHandler(EntityNotFoundException.class)
     public ResponseEntity<String>  handleEntityNotFoundException(EntityNotFoundException e){
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(String.format("Entity does not exist %s", e.getLocalizedMessage()));
+    }
+
+    @ExceptionHandler(BroadcastFailedException.class)
+    public ResponseEntity<String> handleResendException(BroadcastFailedException e){
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(String.format("Failed to broadcast email %s", e.getLocalizedMessage()));
     }
 
     @ExceptionHandler(UsernameNotFoundException.class)

@@ -12,6 +12,7 @@ import com.backend.givr.shared.interfaces.SecurityDetails;
 import com.backend.givr.shared.mapper.ProjectMapper;
 import com.backend.givr.shared.otp.OtpDto;
 import com.backend.givr.shared.service.LogoutService;
+import com.resend.core.exception.ResendException;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -19,6 +20,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.URI;
 import java.util.List;
 
 @RestController
@@ -52,10 +54,15 @@ public class OrganizationController {
         return ResponseEntity.ok(service.getOrganizationProfile(details));
     }
 
+    @PostMapping("/verification/initiate")
+    public ResponseEntity<CheckoutResponse> initiateOrganizationVerification(@RequestBody OrganizationUpdateDto organizationDto, @AuthenticationPrincipal SecurityDetails details){
+        return ResponseEntity.ok(service.initiateOrganizationVerification(organizationDto, details));
+    }
+
     @PatchMapping("/profile")
     @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<OrganizationProfileDto> updateOrganizationProfile(@RequestBody OrganizationUpdateDto organizationDto, @AuthenticationPrincipal SecurityDetails details){
-        return ResponseEntity.ok(service.updateOrganization(organizationDto, details));
+        return ResponseEntity.ok(service.updateEmail(organizationDto, details));
     }
 
     @GetMapping("/profile/email/exists")
@@ -74,6 +81,12 @@ public class OrganizationController {
     @PatchMapping("/projects/participant")
     public ResponseEntity<Void> updateParticipation(@RequestBody UpdateParticipantDto payload){
         service.updateVolunteerParticipation(payload);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/projects/broadcast")
+    public ResponseEntity<Void> createBroadcastMessageToParticipants(@AuthenticationPrincipal SecurityDetails details, @RequestBody BroadcastMsgDto payload)  {
+        service.sendBroadcast(details, payload.projectId(), payload.message());
         return ResponseEntity.noContent().build();
     }
 

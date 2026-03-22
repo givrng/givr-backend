@@ -37,6 +37,7 @@ public class Organization {
 
     private String phoneNumber;
 
+    private String email;
     private String organizationName;
 
     private String organizationType;

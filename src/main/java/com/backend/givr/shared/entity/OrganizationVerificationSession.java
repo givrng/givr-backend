@@ -3,7 +3,9 @@ package com.backend.givr.shared.entity;
 import com.backend.givr.organization.dtos.OrganizationUpdateDto;
 import com.backend.givr.organization.entity.Organization;
 import com.backend.givr.organization.service.verify.Address;
+import com.backend.givr.shared.enums.IDType;
 import com.backend.givr.shared.enums.ReviewStatus;
+import com.backend.givr.shared.enums.VerificationStatus;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
@@ -11,6 +13,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.validator.constraints.URL;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -23,7 +26,7 @@ public class OrganizationVerificationSession {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long sessionId;
 
-    @ManyToOne
+    @OneToOne
     @JoinColumn(name = "organization_id")
     private Organization organization;
 
@@ -35,7 +38,20 @@ public class OrganizationVerificationSession {
     @NotBlank
     @URL
     private String cacDocUrl;
+    // Contact person verification information
+    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
+    private IDType idType;
+    @Column(nullable = false)
+    private String idNumber;
+    @URL
+    @Column
+    private String usrImgUrl;
 
+    private String remark;
+    private String contactFirstname;
+    private String contactLastname;
+    private LocalDate dateOfBirth;
     @Setter
     private String review;
     @Setter
@@ -46,7 +62,8 @@ public class OrganizationVerificationSession {
     @Enumerated(EnumType.STRING)
     @Setter
     private ReviewStatus reviewStatus;
-
+    @Enumerated(EnumType.STRING)
+    private VerificationStatus verificationStatus;
 
     private LocalDateTime createdAt;
     @PrePersist
@@ -62,5 +79,15 @@ public class OrganizationVerificationSession {
         this.reviewStatus = ReviewStatus.Pending;
         this.claimedType = updateDto.getCategory().getFirst();
         this.cacDocUrl = updateDto.getCacDocUrl();
+        this.idType = updateDto.getContactVerification().idType();
+        this.idNumber = updateDto.getContactVerification().idNumber();
+        this.usrImgUrl = updateDto.getContactVerification().usrImgUrl();
+        this.verificationStatus = VerificationStatus.AUTOMATIC_VERIFICATION_PENDING;
+        this.setContactFirstname(updateDto.getContactFirstname());
+        this.setContactLastname(updateDto.getContactLastname());
+
+        if(updateDto.getDateOfBirth() != null){
+            this.setDateOfBirth( LocalDate.parse(updateDto.getDateOfBirth()));
+        }
     }
 }

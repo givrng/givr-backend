@@ -8,10 +8,18 @@ import com.backend.givr.shared.exceptions.FailedToSendOTPException;
 import com.backend.givr.shared.otp.OTP;
 import com.backend.givr.shared.otp.OTPGenerator;
 import com.backend.givr.shared.otp.OTPService;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.resend.Resend;
 import com.resend.core.exception.ResendException;
+import com.resend.services.broadcasts.model.CreateBroadcastOptions;
+import com.resend.services.broadcasts.model.RemoveBroadcastResponseSuccess;
+import com.resend.services.contacts.model.*;
 import com.resend.services.emails.model.CreateEmailOptions;
 import com.resend.services.emails.model.CreateEmailResponse;
+import com.resend.services.segments.model.CreateSegmentOptions;
+import com.resend.services.segments.model.CreateSegmentResponseSuccess;
+import com.resend.services.segments.model.RemoveSegmentResponseSuccess;
 import jakarta.annotation.PostConstruct;
 import jakarta.validation.constraints.NotBlank;
 import lombok.extern.slf4j.Slf4j;
@@ -19,6 +27,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -33,6 +42,9 @@ public class EmailService {
 
     @Autowired
     private EmailTemplateService emailTemplateService;
+    @Autowired
+    private ObjectMapper mapper;
+
     private Resend resend;
 
     private final Logger logger = LoggerFactory.getLogger(EmailService.class);
@@ -110,6 +122,7 @@ public class EmailService {
         }
     }
 
+    @Async
     public void sendVerificationStatusUpdate(@NotBlank String contactFirstname, String email, ReviewStatus reviewStatus, String reason) {
         String html = emailTemplateService.verificationUpdate(contactFirstname, reviewStatus, reason);
         sendEmail(html, email, "Account verification update");
@@ -123,5 +136,66 @@ public class EmailService {
         };
         String subject = status== ParticipationStatus.COMPLETED? "Congratulations on completing a project": "Project participation Update";
         sendEmail(html, email, subject );
+    }
+
+    /**
+     * Creates a conversation segment for a project
+     * Allowing an organization broadcast to users within the segment
+     * @return segment ID */
+    public String createProjectSegment(String projectName) throws ResendException {
+        CreateSegmentOptions options = CreateSegmentOptions.builder()
+                .name(projectName)
+                .build();
+        CreateSegmentResponseSuccess response = resend.segments().create(options);
+        return response.getId();
+    }
+
+    /**
+     * Creates a recipient for organization broadcasts
+     * @return Contact ID*/
+    public String createContact(String email, String firstname, String lastname) throws ResendException {
+        CreateContactOptions params = CreateContactOptions.builder()
+                .email(email)
+                .firstName(firstname)
+                .lastName(lastname)
+                .unsubscribed(false)
+                .build();
+
+        CreateContactResponseSuccess data = resend.contacts().create(params);
+        return  data.getId();
+    }
+
+    @Async
+    public  void addContactToSegment(String segmentId, String contactId) throws ResendException {
+        AddContactToSegmentOptions options = AddContactToSegmentOptions.builder()
+                .segmentId(segmentId)
+                .id(contactId)
+                .build();
+        resend.contacts().segments().add(options);
+    }
+
+    @Async
+    public void broadcastToParticipants(String message, String segmentId, String organizationName) throws ResendException {
+        CreateBroadcastOptions options = CreateBroadcastOptions.builder()
+                .segmentId(segmentId)
+                .from("Givr Notification <no-reply@notifications.givr.ng>")
+                .subject(String.format("%s notification", organizationName))
+                .text(message)
+                .build();
+
+        resend.broadcasts().create(options);
+    }
+
+    public void removeParticipantFromSegment(String email, String segmentId) throws ResendException {
+        RemoveContactFromSegmentOptions options = RemoveContactFromSegmentOptions.builder()
+                .email(email)
+                .segmentId(segmentId)
+                .build();
+
+        resend.contacts().segments().remove(options);
+    }
+
+    public void deleteSegment(String segmentId) throws ResendException {
+       resend.segments().remove(segmentId);
     }
 }

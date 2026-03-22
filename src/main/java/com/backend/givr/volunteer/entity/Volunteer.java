@@ -24,7 +24,7 @@ public class Volunteer {
     private String firstname;
     private String middleName;
     private String lastname;
-
+    private String email;
     private String phoneNumber;
     @ManyToOne
     @JoinColumn(name = "location_id")

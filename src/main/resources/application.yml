@@ -44,16 +44,22 @@ spring:
               - email
             redirect-uri: "{baseUrl}/v1/api/volunteer/oauth2/code/google"
 givr:
+  verification:
+    amount: 2000.00
   allowed:
     origins: ${ALLOWED_ORIGINS}
     admins: ${ALLOWED_ADMINS}
-  monnify:
-    api:
-      key: ${MONNIFY_API_KEY}
-    secret:
-      key: ${MONNIFY_SECRET_KEY}
-    base:
-      url: ${MONNIFY_BASE_URL}
+paystack:
+  key:
+    secret: ${PAYSTACK_SECRET_KEY}
+  base:
+    url: ${PAYSTACK_BASE_URL}
+qore:
+  api:
+    baseUrl: ${QOREID_BASE_URL}
+  id:
+    clientId: ${QOREID_CLIENT_ID}
+    clientSecret: ${QOREID_CLIENT_SECRET}
 springdoc:
   api-docs:
     path: api-docs

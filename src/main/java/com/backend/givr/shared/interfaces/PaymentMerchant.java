@@ -14,6 +14,6 @@ public interface PaymentMerchant {
 
     /**
      * Open a transaction with the merchant**/
-    public PaymentInitResponse initializePayment(String clientNumber, @Email String email, VerificationPayment verificationPayment) throws BadRequestException;
+    public String initializePayment( @Email String email, VerificationPayment verificationPayment);
 
 }

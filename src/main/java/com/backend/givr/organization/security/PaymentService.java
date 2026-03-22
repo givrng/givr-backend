@@ -1,31 +1,51 @@
 package com.backend.givr.organization.security;
+import com.backend.givr.organization.entity.Organization;
 import com.backend.givr.organization.entity.VerificationPayment;
 import com.backend.givr.organization.repo.VerificationPaymentRepo;
 import com.backend.givr.shared.dtos.TransactionStatus;
+import com.backend.givr.shared.email.EmailService;
 import com.backend.givr.shared.entity.GivrTransaction;
+import com.backend.givr.shared.enums.ReviewStatus;
 import com.backend.givr.shared.enums.TransactionType;
+import com.backend.givr.shared.enums.VerificationStatus;
 import com.backend.givr.shared.repo.GivrTransactionRepo;
+import com.backend.givr.shared.repo.OrganizationVerificationSessionRepo;
+import com.backend.givr.shared.service.VerificationWorker;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 
-@Service
+
 /**
- * Payment service handles collection and disbursement of payment to monnify and from monnify to verifyMe*/
+ * Payment service handles verification of payment to PayStack, initiates verifications, and notifies users*/
+@Service
+@Slf4j
 public class PaymentService {
 
+    private final Logger logger = LoggerFactory.getLogger(PaymentService.class);
     @Autowired
     private ObjectMapper mapper;
+    @Autowired
+    private OrganizationDetailsService detailsService;
+    @Autowired
+    private EmailService emailService;
 
+    @Autowired
+    private VerificationWorker verificationWorker;
     @Autowired
     private VerificationPaymentRepo repo;
     @Autowired
     private GivrTransactionRepo givrTransactionRepo;
+    @Autowired
+    private OrganizationVerificationSessionRepo verificationSessionRepo;
 
     private void handleSuccessfulTransaction(){
 
@@ -38,19 +58,25 @@ public class PaymentService {
     /**
      * Organization payment was successful*/
     @Transactional
-    private void handleSuccessfulPaymentCollection(String payload) throws JsonProcessingException {
+    public void handleSuccessfulPaymentCollection(String payload) throws JsonProcessingException {
         JsonNode node = mapper.readTree(payload);
+        JsonNode eventData = node.path("data");
+        String transactionRef = eventData.path("reference").asText().trim();
+        double amountPaid = eventData.path("amount").asDouble();
+        logger.info("MerchantId {}", transactionRef);
+        VerificationPayment payment = repo.findByMerchantRefId(transactionRef).orElseThrow();
+        Organization organization = payment.getOrganization();
+        organization.setStatus(VerificationStatus.PENDING);
+        String email = detailsService.getEmail(payment.getOrganization());
 
-        JsonNode eventData = node.path("eventData");
-        String transactionRef = eventData.path("transactionReference").toString();
-        double amountPaid = eventData.path("amountPaid").asDouble();
-        double settledAmount = eventData.path("settledAmount").asDouble();
-
-        VerificationPayment payment = repo.findByMerchant(transactionRef).orElseThrow();
         payment.updateStatus(TransactionStatus.SUCCESSFUL);
         payment.setAmountPaid(new BigDecimal(amountPaid));
-        payment.setAmountSettled(new BigDecimal(settledAmount));
         createGivrTransaction(payment, TransactionType.ORGANIZATION_PAYMENT);
+
+        emailService.sendVerificationStatusUpdate(email, email, ReviewStatus.Pending, "");
+        var session = verificationSessionRepo.findByOrganization(organization);
+
+        session.ifPresent(verificationSession -> verificationWorker.verifyContactPersonInformation(verificationSession));
     }
 
     /**
@@ -66,7 +92,7 @@ public class PaymentService {
     }
 
     private void createGivrTransaction(VerificationPayment payment, TransactionType type){
-        GivrTransaction transaction = new GivrTransaction(payment.getMerchant(), payment.getTransactionRef(), payment.getAmountPaid(), payment.getAmountSettled(), type);
+        GivrTransaction transaction = new GivrTransaction(payment.getMerchant(), payment.getTransactionRef(), payment.getAmountPaid(), type);
         givrTransactionRepo.save(transaction);
     }
 }

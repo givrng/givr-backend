@@ -104,6 +104,7 @@ public class VolunteerService {
         volunteer.setEmailIsVerified(false);
         volunteer.setProfileCompleted(true);
         volunteer.setPhoneIsVerified(false);
+        volunteer.setEmail(volunteerDto.getEmail());
         return updateSkills(volunteer, volunteerDto.getInterests());
     }
 
@@ -152,6 +153,7 @@ public class VolunteerService {
         if(updatedVolunteerDto.getEmail() != null && !updatedVolunteerDto.getEmail().equals(details.getUsername())){
             if(details.getProviderType() == AuthProviderType.LOCAL){
                 VolunteerDetails volunteerDetails = detailsService.loadUserByUsername(details.getUsername());
+                volunteer.setEmail(updatedVolunteerDto.getEmail());
                 volunteerDetails.setEmail(updatedVolunteerDto.getEmail());
             }else{
                 throw new IllegalOperationException("Social media login, cannot modify email");

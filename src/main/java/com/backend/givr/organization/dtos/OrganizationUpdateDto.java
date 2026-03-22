@@ -1,5 +1,6 @@
 package com.backend.givr.organization.dtos;
 
+import com.backend.givr.shared.enums.IDType;
 import com.backend.givr.shared.enums.VerificationStatus;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Size;
@@ -17,10 +18,13 @@ public class OrganizationUpdateDto {
     // name -> organizationName;
     // category -> organizationType;
 
+    public static record ContactVerification (IDType idType, String idNumber, String usrImgUrl) {
+
+    }
+
     private String name;
     private List<String> category;
     private LocationDto location;
-
     private String profileUrl;
     private VerificationStatus status;
     private String cacRegNumber;
@@ -34,7 +38,9 @@ public class OrganizationUpdateDto {
     private String contactFirstname;
     private String contactLastname;
     private String contactMiddleName;
-
+    private String dateOfBirth;
     @Size(min = 11, max = 13, message = "Invalid phone number")
     private String phoneNumber;
+
+    private ContactVerification contactVerification;
 }

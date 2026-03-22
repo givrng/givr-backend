@@ -39,6 +39,7 @@ public class Participation {
     @JoinColumn(name = "organization_id", nullable = false)
     @Setter
     private Organization organization;
+
     @ManyToOne(optional = false)
     @Setter
     @JoinColumn(name = "volunteer_id")
@@ -47,6 +48,10 @@ public class Participation {
     @Transient
     private Boolean reviewable;
 
+    @Setter
+    private String contactId;
+    @Setter
+    private Boolean isUnSubscribed;
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

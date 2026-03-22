@@ -13,6 +13,7 @@ import com.backend.givr.shared.dtos.VolunteerApplicationDto;
 import com.backend.givr.shared.email.EmailService;
 import com.backend.givr.shared.entity.OrganizationVerificationSession;
 import com.backend.givr.shared.enums.*;
+import com.backend.givr.shared.exceptions.BroadcastFailedException;
 import com.backend.givr.shared.exceptions.DuplicateAccountException;
 import com.backend.givr.shared.exceptions.IllegalOperationException;
 import com.backend.givr.shared.interfaces.SecurityDetails;
@@ -22,6 +23,7 @@ import com.backend.givr.shared.otp.OTPService;
 import com.backend.givr.shared.service.LocationService;
 import com.backend.givr.shared.service.SkillService;
 import com.backend.givr.shared.service.VerificationService;
+import com.resend.core.exception.ResendException;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.ConstraintViolationException;
@@ -231,20 +233,25 @@ public class OrganizationService {
         return toProfile(organization, details);
     }
 
+    /**
+     * Organization profile update optionally initiates a verification process. This multistep procedure includes
+     * 1. Save organization claims temporarily
+     * 2. Initialize payment and returns checkout url*/
     @Transactional
-    public OrganizationProfileDto updateOrganization(OrganizationUpdateDto organizationDto, SecurityDetails details) {
+    public CheckoutResponse initiateOrganizationVerification(OrganizationUpdateDto organizationDto, SecurityDetails details) {
         Organization organization = em.getReference(Organization.class, details.getId());
+        return verificationService.createVerificationSession(organization, organizationDto);
+    }
 
+    /**
+     * Updates organization email*/
+    public OrganizationProfileDto updateEmail(OrganizationUpdateDto organizationDto, SecurityDetails details){
+        Organization organization = em.getReference(Organization.class, details.getId());
+        // To be removed to a dedicated method for email update
         if((organizationDto.getEmail()!= null) && !Objects.equals(organizationDto.getEmail(), details.getUsername())) {
             organization.setEmailVerified(false);
             service.updateEmail(organizationDto.getEmail(), details.getUsername());
         }
-
-        mapper.updateOrganization(organizationDto, organization);
-        boolean createdVerificationSession = verificationService.createVerificationSession(organization, organizationDto);
-
-        if(createdVerificationSession)
-            emailService.sendVerificationStatusUpdate(organization.getContactFirstname(), details.getUsername(), ReviewStatus.Pending, null);
         return toProfile(organization, details);
     }
 
@@ -280,5 +287,15 @@ public class OrganizationService {
 
     public EmailExists emailExists(String email, SecurityDetails details) {
         return new EmailExists(email, !Objects.equals(email, details.getUsername()) && service.emailExist(email));
+    }
+
+    public void sendBroadcast(SecurityDetails details, Long projectId, String message) {
+        Project project = projectService.findProjectById(projectId);
+        Organization organization = repo.findById(details.getId()).get();
+        try{
+            emailService.broadcastToParticipants(message, project.getSegmentId(), organization.getOrganizationName());
+        }catch (ResendException e){
+            throw new BroadcastFailedException(e.getLocalizedMessage());
+        }
     }
 }

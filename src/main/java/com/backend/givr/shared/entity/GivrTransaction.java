@@ -22,8 +22,6 @@ public class GivrTransaction {
     private String transactionRef;
     private BigDecimal amount;
 
-    private BigDecimal settledAmount;
-
     @Enumerated(EnumType.STRING)
     private TransactionType transactionType;
 
@@ -34,11 +32,11 @@ public class GivrTransaction {
         this.createdAt = LocalDateTime.now(ZoneId.of("Africa/Lagos"));
     }
 
-    public GivrTransaction(Merchant merchant, String transactionRef, BigDecimal amount, BigDecimal settledAmount, TransactionType transactionType){
+    public GivrTransaction(Merchant merchant, String transactionRef, BigDecimal amount, TransactionType transactionType){
         this.merchant = merchant;
         this.transactionRef = transactionRef;
         this.amount = amount;
-        this.settledAmount = settledAmount;
+
         this.transactionType = transactionType;
     }
 }

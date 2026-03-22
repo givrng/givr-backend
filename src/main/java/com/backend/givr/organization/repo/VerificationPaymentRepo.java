@@ -8,5 +8,5 @@ import java.util.Optional;
 
 @Repository
 public interface VerificationPaymentRepo extends JpaRepository<VerificationPayment, Long> {
-    Optional<VerificationPayment> findByMerchant(String transactionRef);
+    Optional<VerificationPayment> findByMerchantRefId(String transactionRef);
 }

@@ -44,7 +44,7 @@ public class ParticipationService {
         participation.setOrganization(project.getOrganization());
         participation.setParticipationStatus(ParticipationStatus.IN_PROGRESS);
 
-        createContact(repo.save(participation), project.getSegmentId());
+        createContact(participation, project.getSegmentId());
     }
 
     @Async
@@ -58,6 +58,9 @@ public class ParticipationService {
             repo.save(participation);
         } catch (ResendException e) {
             logger.error("Failed to create contact, {}", e.getLocalizedMessage());
+            System.err.println(e.getLocalizedMessage());
+        }finally {
+            repo.save(participation);
         }
     }
 

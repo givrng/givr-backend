@@ -26,7 +26,8 @@ public class ProjectRequestDto {
 
     @NotNull
     private LocationDto location;
-
+    @NotNull
+    private String address;
     @NotNull
     private String startDate;
     @NotNull

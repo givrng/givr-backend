@@ -25,7 +25,6 @@ public interface ProjectMapper {
     @Mapping(target = "endDate", ignore = true)
     @Mapping(target = "deadline", ignore = true)
     @Mapping(target = "category", ignore = true)
-
     Project toProject (ProjectRequestDto projectRequestDto);
 
     @AfterMapping

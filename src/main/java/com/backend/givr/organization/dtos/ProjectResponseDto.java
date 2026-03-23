@@ -35,6 +35,7 @@ public class ProjectResponseDto {
     private ProjectStatus status;
     private ZonedDateTime createdAt;
     private ZonedDateTime updatedAt;
+    private String address;
 
     @JsonSetter(value = "category")
     private void setCat(String category){

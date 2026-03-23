@@ -42,8 +42,8 @@ public class ApplicationService {
             throw new ProjectDeadlinePastException("Cannot apply for a project past it's application period");
 
         var application = new ProjectApplication(project, volunteer, email);
-        application.setApplicationReason(application.getApplicationReason());
-        application.setAvailableDays(application.getAvailableDays());
+        application.setApplicationReason(applicationForm.reason());
+        application.setAvailableDays(applicationForm.availableDays());
         try{
             var projectApplication =  repo.save(application);
 

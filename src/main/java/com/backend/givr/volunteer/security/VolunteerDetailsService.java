@@ -1,40 +1,32 @@
 package com.backend.givr.volunteer.security;
 
 import com.backend.givr.volunteer.entity.Volunteer;
+import com.backend.givr.volunteer.repo.VolunteerRepo;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.NoSuchElementException;
 import java.util.Optional;
 
 @Service
 public class VolunteerDetailsService implements UserDetailsService {
     @Autowired
-    private VolunteerDetailsRepo repo;
+    private VolunteerRepo repo;
 
     @Override
-    public VolunteerDetails loadUserByUsername(String username) {
-        return repo.findByEmail(username).orElseThrow(()->new UsernameNotFoundException("Invalid credentials"));
+    public @NotNull VolunteerDetails loadUserByUsername(String username) {
+        var volunteer = repo.findByEmail(username).orElseThrow(()->new UsernameNotFoundException("Invalid credentials"));
+        return new VolunteerDetails(volunteer);
     }
 
-    public String getEmail(Volunteer volunteer){
-        return repo.findByVolunteer(volunteer).orElseThrow().getUsername();
-    }
-    public Optional<VolunteerDetails> getDetails(String username){
+    public Optional<Volunteer> getDetails(String username){
         return repo.findByEmail(username);
-    }
-    public void save(VolunteerDetails details){
-        if(details==null)
-            return;
-        repo.save(details);
     }
 
     public void updatePassword(String password, String email){
-        VolunteerDetails volunteerDetails = loadUserByUsername(email);
+        Volunteer volunteerDetails = repo.findByEmail(email).orElseThrow();
         volunteerDetails.setPassword(password);
         repo.save(volunteerDetails);
     }

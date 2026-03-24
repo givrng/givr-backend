@@ -15,27 +15,19 @@ import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import java.util.Collection;
 import java.util.List;
 
-@Entity
 @NoArgsConstructor
 public class VolunteerDetails implements SecurityDetails {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
     @Setter
-    @Email(message = "Invalid email format")
     private String email;
 
     @Setter
     private String password;
     private Collection<GrantedAuthority> roles = List.of(new SimpleGrantedAuthority("VOLUNTEER"));
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "volunteer_id")
     @Getter
     private Volunteer volunteer;
     @Getter
-    @Enumerated(EnumType.STRING)
+
     private AuthProviderType authProvider;
     @Getter
     private String providerId;
@@ -46,13 +38,14 @@ public class VolunteerDetails implements SecurityDetails {
         this.volunteer = volunteer;
         this.authProvider = AuthProviderType.LOCAL;
     }
-    public VolunteerDetails(Volunteer volunteer, OidcUser user, AuthProviderType type){
-        this.email = user.getEmail();
-        this.authProvider = type;
-        this.providerId = user.getSubject();
+
+    public VolunteerDetails(Volunteer volunteer){
+        this.email = volunteer.getEmail();
+        this.authProvider = volunteer.getAuthProvider();
+        this.providerId = volunteer.getProviderId();
+        this.password = volunteer.getPassword();
         this.volunteer = volunteer;
     }
-
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return roles;

@@ -104,7 +104,7 @@ public class VolunteerService {
         volunteer.setEmailIsVerified(false);
         volunteer.setProfileCompleted(true);
         volunteer.setPhoneIsVerified(false);
-        volunteer.setEmail(volunteerDto.getEmail());
+        volunteer.setUsernamePasswordDetails(volunteerDto.getEmail(), encoder.encode(volunteerDto.getPassword()));
         return updateSkills(volunteer, volunteerDto.getInterests());
     }
 
@@ -117,16 +117,15 @@ public class VolunteerService {
     public VolunteerProfile getVolunteerProfile(String volunteerId){
         return mapper.toProfile(getVolunteer(volunteerId));
     }
-    public void createAuthPrincipal (CreateVolunteerRequestDto volunteerDto, Volunteer volunteer){
-        VolunteerDetails details = new VolunteerDetails(volunteerDto.getEmail(), encoder.encode(volunteerDto.getPassword()), volunteer);
-        detailsService.save(details);
-    }
+//    public void createAuthPrincipal (CreateVolunteerRequestDto volunteerDto, Volunteer volunteer){
+//        VolunteerDetails details = new VolunteerDetails(volunteerDto.getEmail(), encoder.encode(volunteerDto.getPassword()), volunteer);
+//        detailsService.save(details);
+//    }
 
 
     public Volunteer createAccount(CreateVolunteerRequestDto volunteerDto){
         try{
             var volunteer = createVolunteer(volunteerDto);
-            createAuthPrincipal(volunteerDto, volunteer);
             emailService.sendWelcomeEmail(volunteerDto.getFirstname(),String.format("%s/signin/volunteer", clientAppBaseUrl) , volunteerDto.getEmail());
             return volunteer;
         }catch (IllegalStateException e){
@@ -174,9 +173,9 @@ public class VolunteerService {
 
     @Async
     public void requestOtp(String email, OtpPurpose purpose) {
-        Optional<VolunteerDetails> volunteer = detailsService.getDetails(email);
+        Optional<Volunteer> volunteer = detailsService.getDetails(email);
         if(volunteer.isPresent()){
-            VolunteerDetails details = volunteer.get();
+            Volunteer details = volunteer.get();
             if(details.getAuthProvider() != AuthProviderType.GOOGLE)
                 emailService.sendOtpTo(email, AccountType.VOLUNTEER, purpose);
             else

@@ -13,7 +13,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.resend.Resend;
 import com.resend.core.exception.ResendException;
 import com.resend.services.broadcasts.model.CreateBroadcastOptions;
+import com.resend.services.broadcasts.model.CreateBroadcastResponseSuccess;
 import com.resend.services.broadcasts.model.RemoveBroadcastResponseSuccess;
+import com.resend.services.broadcasts.model.SendBroadcastOptions;
 import com.resend.services.contacts.model.*;
 import com.resend.services.emails.model.CreateEmailOptions;
 import com.resend.services.emails.model.CreateEmailResponse;
@@ -153,7 +155,9 @@ public class EmailService {
     /**
      * Creates a recipient for organization broadcasts
      * @return Contact ID*/
+
     public String createContact(String email, String firstname, String lastname) throws ResendException {
+        System.out.printf("%s %s %s", firstname, lastname, email);
         CreateContactOptions params = CreateContactOptions.builder()
                 .email(email)
                 .firstName(firstname)
@@ -178,12 +182,18 @@ public class EmailService {
     public void broadcastToParticipants(String message, String segmentId, String organizationName) throws ResendException {
         CreateBroadcastOptions options = CreateBroadcastOptions.builder()
                 .segmentId(segmentId)
+                .name(organizationName)
                 .from("Givr Notification <no-reply@notifications.givr.ng>")
                 .subject(String.format("%s notification", organizationName))
                 .text(message)
                 .build();
 
-        resend.broadcasts().create(options);
+        CreateBroadcastResponseSuccess data = resend.broadcasts().create(options);
+
+        SendBroadcastOptions params = SendBroadcastOptions.builder()
+                .scheduledAt("in 1 min")
+                .build();
+        resend.broadcasts().send(params, data.getId());
     }
 
     public void removeParticipantFromSegment(String email, String segmentId) throws ResendException {

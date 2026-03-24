@@ -52,7 +52,7 @@ public class ApplicationService {
 
             return projectApplication;
         }catch (DataIntegrityViolationException ignored){
-            throw new DataIntegrityViolationException("Cannot apply to a project more than once");
+            throw new IllegalOperationException("Cannot apply to a project more than once");
         }
     }
 

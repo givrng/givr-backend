@@ -1,6 +1,7 @@
 package com.backend.givr.organization.entity;
 
 import com.backend.givr.shared.entity.Location;
+import com.backend.givr.shared.entity.OrganizationVerificationSession;
 import com.backend.givr.shared.enums.ProjectStatus;
 import com.backend.givr.shared.enums.VerificationStatus;
 import jakarta.persistence.*;
@@ -61,6 +62,9 @@ public class Organization {
     @Enumerated(EnumType.STRING)
     private VerificationStatus status;
 
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "verification_session")
+    private OrganizationVerificationSession session;
     private Boolean emailVerified;
 
     private Boolean profileCompleted;

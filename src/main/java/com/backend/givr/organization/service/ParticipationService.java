@@ -5,6 +5,7 @@ import com.backend.givr.organization.entity.Participation;
 import com.backend.givr.organization.entity.Project;
 import com.backend.givr.organization.entity.ProjectApplication;
 import com.backend.givr.organization.repo.ParticipationRepo;
+import com.backend.givr.organization.repo.ProjectApplicationRepo;
 import com.backend.givr.shared.enums.ApplicationStatus;
 import com.backend.givr.shared.enums.ParticipationStatus;
 import com.backend.givr.shared.exceptions.IllegalOperationException;
@@ -30,37 +31,38 @@ public class ParticipationService {
     @Autowired
     private ParticipationRepo repo;
     @Autowired
+    private ProjectApplicationRepo applicationRepo;
+    @Autowired
     private VolunteerDetailsService detailsService;
     @Autowired
     private EmailService emailService;
 
     private final Logger logger = LoggerFactory.getLogger(ParticipationService.class);
 
+    @Async
     public void createParticipation(Project project, ProjectApplication application){
         Participation participation = new Participation();
-        participation.setVolunteer(application.getVolunteer());
+        Volunteer volunteer = application.getVolunteer();
+        String email = volunteer.getEmail();
+        String segmentId = project.getSegmentId();
+
+        participation.setVolunteer(volunteer);
         participation.setProjectApplication(application);
         participation.setProject(project);
         participation.setOrganization(project.getOrganization());
         participation.setParticipationStatus(ParticipationStatus.IN_PROGRESS);
 
-        createContact(participation, project.getSegmentId());
-    }
-
-    @Async
-    private void createContact(Participation participation, String segmentId){
-        Volunteer volunteer = participation.getVolunteer();
         try{
-            String contactId = emailService.createContact(volunteer.getEmail(), volunteer.getFirstname(), volunteer.getLastname());
+            String contactId = emailService.createContact(email, volunteer.getFirstname(), volunteer.getLastname());
             emailService.addContactToSegment(segmentId, contactId);
             participation.setContactId(contactId);
             participation.setIsUnSubscribed(false);
             repo.save(participation);
         } catch (ResendException e) {
             logger.error("Failed to create contact, {}", e.getLocalizedMessage());
-            System.err.println(e.getLocalizedMessage());
-        }finally {
-            repo.save(participation);
+            System.err.printf("Failed to create participant because contact was not created. Contact was not created because %S", e.getLocalizedMessage());
+            application.setStatus(ApplicationStatus.APPLIED);
+            applicationRepo.save(application);
         }
     }
 
@@ -88,12 +90,10 @@ public class ParticipationService {
 
         // Send notification to volunteer
         emailService.sendParticipationUpdate(volunteer.getFirstname(), project.getTitle(),
-                detailsService.getEmail(volunteer), project.getOrganization().getOrganizationName(), status);
+                volunteer.getEmail(), project.getOrganization().getOrganizationName(), status);
 
         if(status == ParticipationStatus.REJECTED){
-            participation.getProjectApplication().setStatus(ApplicationStatus.REJECTED);
-            participation.setIsUnSubscribed(true);
-            participation.setContactId(null);
+            repo.delete(participation);
             try{
                 emailService.removeParticipantFromSegment(participation.getVolunteer().getEmail(), project.getSegmentId());
             } catch (ResendException e) {

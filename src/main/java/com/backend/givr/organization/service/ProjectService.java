@@ -5,6 +5,7 @@ import com.backend.givr.organization.dtos.ProjectResponseDto;
 import com.backend.givr.organization.entity.Organization;
 import com.backend.givr.organization.entity.Project;
 import com.backend.givr.organization.repo.ProjectRepo;
+import com.backend.givr.organization.security.ProjectServiceWorker;
 import com.backend.givr.shared.email.EmailService;
 import com.backend.givr.shared.entity.Location;
 import com.backend.givr.shared.enums.ProjectStatus;
@@ -42,6 +43,8 @@ public class ProjectService {
     private EmailService emailService;
     @Autowired
     private LocationService locationService;
+    @Autowired
+    private ProjectServiceWorker worker;
 
     private Logger logger = LoggerFactory.getLogger(ProjectService.class);
 
@@ -87,20 +90,10 @@ public class ProjectService {
         handleProject(project, projectRequestDto);
         project.setOrganization(organization);
         Project savedProject = repo.save(project);
-        createProjectSegment(savedProject);
+        worker.createProjectSegment(savedProject);
         return  project;
     }
 
-    @Async
-    private void createProjectSegment(Project project){
-        try{
-            String segmentId = emailService.createProjectSegment(project.getTitle());
-            project.setSegmentId(segmentId);
-            repo.save(project);
-        } catch (ResendException e) {
-            logger.error("Failed to create segment for project {}", e.getLocalizedMessage());
-        }
-    }
 
     @Transactional
     public Project updateProject(Long projectId, ProjectRequestDto projectRequestDto){

@@ -2,10 +2,13 @@ package com.backend.givr.volunteer.entity;
 
 import com.backend.givr.shared.entity.Location;
 import com.backend.givr.shared.entity.Skill;
+import com.backend.givr.shared.enums.AuthProviderType;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.validator.constraints.URL;
+import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -24,8 +27,17 @@ public class Volunteer {
     private String firstname;
     private String middleName;
     private String lastname;
-    private String email;
     private String phoneNumber;
+
+    // Security information
+    @Email(message = "Invalid email format")
+    @Column(unique = true, nullable = false)
+    private String email;
+    private String password;
+    @Enumerated(EnumType.STRING)
+    private AuthProviderType authProvider;
+    private String providerId;
+    //--- end ---
     @ManyToOne
     @JoinColumn(name = "location_id")
     private Location location;
@@ -44,6 +56,17 @@ public class Volunteer {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
+    public void setOAuthDetails(OidcUser user, AuthProviderType type){
+        this.email = user.getEmail();
+        this.authProvider = type;
+        this.providerId = user.getSubject();
+    }
+
+    public void setUsernamePasswordDetails(String email, String password){
+        this.email = email;
+        this.password = password;
+        this.authProvider = AuthProviderType.LOCAL;
+    }
     @PrePersist
     private void setCreatedAt(){
         this.createdAt = LocalDateTime.now(ZoneId.of("Africa/Lagos"));

@@ -5,8 +5,7 @@ import com.backend.givr.shared.exceptions.DuplicateAccountException;
 import com.backend.givr.shared.enums.AuthProviderType;
 import com.backend.givr.volunteer.entity.Volunteer;
 import com.backend.givr.volunteer.repo.VolunteerRepo;
-import com.backend.givr.volunteer.security.VolunteerDetails;
-import com.backend.givr.volunteer.security.VolunteerDetailsRepo;
+import com.backend.givr.volunteer.security.VolunteerDetailsService;
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -23,7 +22,7 @@ import java.util.Optional;
 @Service
 public class VolunteerOAuthService implements OAuth2UserService<OidcUserRequest, OidcUser> {
     @Autowired
-    private VolunteerDetailsRepo detailsRepo;
+    private VolunteerDetailsService service;
     @Autowired
     private VolunteerRepo volunteerRepo;
     @Autowired
@@ -36,9 +35,9 @@ public class VolunteerOAuthService implements OAuth2UserService<OidcUserRequest,
     @Override
     public OidcUser loadUser(OidcUserRequest userRequest) throws OAuth2AuthenticationException {
         OidcUser user = delegate.loadUser(userRequest);
-        Optional<VolunteerDetails> volunteerDetails = detailsRepo.findByEmail(user.getEmail());
+        boolean accountExists = service.userExistsByEmail(user.getEmail());
 
-        if(volunteerDetails.isEmpty()){
+        if(!accountExists){
             createVolunteer(user);
             emailService.sendWelcomeEmail(user.getGivenName(), String.format("%s/signin/volunteer", clientBaseUrl), user.getEmail());
         }
@@ -53,11 +52,9 @@ public class VolunteerOAuthService implements OAuth2UserService<OidcUserRequest,
         volunteer.setEmailIsVerified(user.getEmailVerified());
         volunteer.setProfileUrl(user.getPicture());
         volunteer.setProfileCompleted(false);
-
+        volunteer.setOAuthDetails(user, AuthProviderType.GOOGLE);
         try{
-            Volunteer savedVolunteer = volunteerRepo.save(volunteer);
-            VolunteerDetails volunteerDetails = new VolunteerDetails(savedVolunteer, user, AuthProviderType.GOOGLE);
-            detailsRepo.save(volunteerDetails);
+            volunteerRepo.save(volunteer);
         }catch (DataIntegrityViolationException | ConstraintViolationException ignored){
             throw new DuplicateAccountException("Volunteer account creation violates constraints");
         }

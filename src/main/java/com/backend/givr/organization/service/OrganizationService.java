@@ -263,6 +263,8 @@ public class OrganizationService {
         organization.setCacRegNumber(session.getClaimedCACRegNumber());
         organization.setLocation(session.getClaimedLocation());
         organization.setAddress(session.getClaimedAddress().address());
+        organization.setContactFirstname(session.getContactFirstname());
+        organization.setContactLastname(session.getContactLastname());
     }
 
     public String getOrganizationEmail(Organization organization){

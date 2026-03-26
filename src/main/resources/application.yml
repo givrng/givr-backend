@@ -6,6 +6,11 @@ server:
     session:
       cookie:
         secure: true
+springdoc:
+  swagger-ui:
+    path: /docs
+  api-docs:
+    path: /api-docs
 spring:
   application:
     name: givr
@@ -60,9 +65,6 @@ qore:
   id:
     clientId: ${QOREID_CLIENT_ID}
     clientSecret: ${QOREID_CLIENT_SECRET}
-springdoc:
-  api-docs:
-    path: api-docs
 client:
   app:
     baseUrl: ${CLIENT_BASE_URL}

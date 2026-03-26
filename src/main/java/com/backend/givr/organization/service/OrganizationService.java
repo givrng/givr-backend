@@ -180,7 +180,7 @@ public class OrganizationService {
 
         ApplicationStats stats = applicationService.getVolunteerStats(organization);
 
-        return new OrganizationDashboard(organization.getOrganizationName(), projectDtoMap, 5.0, stats ,!(organization.getStatus() == VerificationStatus.VERIFIED));
+        return new OrganizationDashboard(organization.getOrganizationName(), projectDtoMap, 5.0, stats ,organization.getStatus());
     }
 
     public List<Project> getProjects(SecurityDetails details){

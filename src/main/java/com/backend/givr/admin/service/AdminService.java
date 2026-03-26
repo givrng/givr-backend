@@ -17,6 +17,7 @@ import com.backend.givr.shared.email.EmailService;
 import com.backend.givr.shared.entity.OrganizationVerificationSession;
 import com.backend.givr.shared.enums.AccountType;
 import com.backend.givr.shared.enums.OtpPurpose;
+import com.backend.givr.shared.exceptions.DuplicateAccountException;
 import com.backend.givr.shared.interfaces.SecurityDetails;
 import com.backend.givr.shared.otp.OTPService;
 import com.backend.givr.shared.service.VerificationService;
@@ -26,6 +27,7 @@ import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.constraints.Email;
 import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -101,7 +103,11 @@ public class AdminService {
 
         switch (status){
             case Approved -> {
-                organizationService.updateOrganizationDetails(session, organization);
+                try{
+                    organizationService.updateOrganizationDetails(session, organization);
+                }catch (DataIntegrityViolationException e){
+                    throw new DuplicateAccountException(e.getLocalizedMessage());
+                }
                 emailService.sendVerificationStatusUpdate(organization.getContactFirstname(), email, ReviewStatus.Approved, review.getReview());
             }
             case Rejected -> {

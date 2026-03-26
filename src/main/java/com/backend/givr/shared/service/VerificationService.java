@@ -4,10 +4,12 @@ import com.backend.givr.organization.dtos.CheckoutResponse;
 import com.backend.givr.organization.dtos.OrganizationUpdateDto;
 import com.backend.givr.organization.entity.Organization;
 import com.backend.givr.organization.entity.VerificationPayment;
+import com.backend.givr.organization.repo.OrganizationRepo;
 import com.backend.givr.organization.repo.VerificationPaymentRepo;
 import com.backend.givr.organization.security.OrganizationDetailsService;
 import com.backend.givr.organization.security.PaymentService;
 import com.backend.givr.shared.entity.OrganizationVerificationSession;
+import com.backend.givr.shared.exceptions.DuplicateAccountException;
 import com.backend.givr.shared.mapper.VerificationMapper;
 import com.backend.givr.shared.repo.OrganizationVerificationSessionRepo;
 import com.backend.givr.shared.email.EmailService;
@@ -46,6 +48,8 @@ public class VerificationService {
     @Autowired
     private OrganizationDetailsService detailsService;
     @Autowired
+    private OrganizationRepo organizationRepo;
+    @Autowired
     private VerificationPaymentRepo paymentRepo;
     @Autowired
     private OrganizationVerificationSessionRepo verificationSessionRepo;
@@ -78,6 +82,10 @@ public class VerificationService {
     public CheckoutResponse createVerificationSession(Organization organization, OrganizationUpdateDto organizationUpdateDto){
         if(organizationUpdateDto.getLocation() == null || organizationUpdateDto.getCacRegNumber() == null || organizationUpdateDto.getCacDocUrl() ==null || organizationUpdateDto.getContactVerification() == null)
             return null;
+
+        String claimedCacRegNumber = organizationUpdateDto.getCacRegNumber().trim().toUpperCase();
+        if(organizationRepo.existsByCacRegNumber(claimedCacRegNumber))
+            throw new DuplicateAccountException("An account with this CAC details exist");
 
         Optional<OrganizationVerificationSession> verificationSession = verificationSessionRepo.findByOrganization(organization);
 

@@ -37,7 +37,7 @@ public class Organization {
     private String contactLastname;
 
     private String phoneNumber;
-
+    @Column(unique = true)
     private String email;
     private String organizationName;
 

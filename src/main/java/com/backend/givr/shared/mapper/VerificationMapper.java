@@ -18,7 +18,7 @@ public interface VerificationMapper {
 
     @AfterMapping
     default void updateVerificationSess(OrganizationUpdateDto updateDto, @MappingTarget OrganizationVerificationSession verificationSession){
-        verificationSession.setIdNumber(updateDto.getContactVerification().idNumber());
+        verificationSession.setIdNumber(updateDto.getContactVerification().idNumber().trim().toUpperCase());
         verificationSession.setUsrImgUrl(updateDto.getContactVerification().usrImgUrl());
         verificationSession.setIdType(updateDto.getContactVerification().idType());
         verificationSession.setClaimedType(updateDto.getCategory().getFirst());

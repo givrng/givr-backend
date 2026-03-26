@@ -79,7 +79,7 @@ public class Project {
     private Set<ProjectApplication> approvedList;
 
     private String segmentId;
-
+    private Boolean broadcastEnabled;
     private ZonedDateTime createdAt;
     private ZonedDateTime modifiedAt;
 

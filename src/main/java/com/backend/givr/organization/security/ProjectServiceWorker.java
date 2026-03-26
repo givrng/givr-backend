@@ -24,6 +24,8 @@ public class ProjectServiceWorker {
             backoff = @Backoff(delay = 2000)
     )
     public void createProjectSegment(Project project){
+        if(!project.getBroadcastEnabled())
+            return;
         try{
             String segmentId = emailService.createProjectSegment(project.getTitle());
             project.setSegmentId(segmentId);

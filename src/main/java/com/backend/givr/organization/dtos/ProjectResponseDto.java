@@ -36,7 +36,7 @@ public class ProjectResponseDto {
     private ZonedDateTime createdAt;
     private ZonedDateTime updatedAt;
     private String address;
-
+    private Boolean broadcastEnabled;
     @JsonSetter(value = "category")
     private void setCat(String category){
         this.categories = List.of(category.trim());

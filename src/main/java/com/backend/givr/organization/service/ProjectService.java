@@ -89,6 +89,7 @@ public class ProjectService {
         Project project = mapper.toProject(projectRequestDto);
         handleProject(project, projectRequestDto);
         project.setOrganization(organization);
+        project.setBroadcastEnabled(repo.count() <= 3);
         Project savedProject = repo.save(project);
         worker.createProjectSegment(savedProject);
         return  project;
@@ -108,8 +109,10 @@ public class ProjectService {
         var endDateBeforeNow = project.getEndDate().isAfter(LocalDate.now(ZoneId.of("Africa/Lagos")));
         var deadlineBeforeStart = project.getDeadline().isBefore(project.getStartDate());
         var startBeforeEndDate = project.getStartDate().isBefore(project.getEndDate());
-
-        return startBeforeEndDate && endDateBeforeNow && deadlineBeforeStart && startDateBeforeNow;
+        var startEqualsEndDate = project.getStartDate().isEqual(project.getEndDate());
+        if(startEqualsEndDate)
+            project.setReviewable(true);
+        return startBeforeEndDate && endDateBeforeNow && deadlineBeforeStart && (startDateBeforeNow || startEqualsEndDate);
     }
     public  Project findProjectById(Long projectId){
         return repo.findById(projectId).orElseThrow(()-> new EntityNotFoundException(String.format("Project with id [%s] does not exist", projectId)));

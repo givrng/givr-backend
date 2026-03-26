@@ -212,7 +212,7 @@ public class SecurityConfig {
     @Order(5)
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
-                .securityMatcher("/v1/api/**")
+    
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(Customizer.withDefaults())
                 .authorizeHttpRequests(auth->auth.anyRequest().permitAll())

@@ -25,8 +25,8 @@ spring:
       dialect: org.hibernate.dialect.PostgreSQLDialect
   jpa:
     hibernate:
-      ddl-auto: update
-    show-sql: false
+      ddl-auto: ${DDL_AUTO}
+    show-sql: ${SHOW_SQL}
 
   security:
     oauth2:

@@ -17,8 +17,6 @@ import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.stereotype.Service;
 
-import java.util.Optional;
-
 @Service
 public class VolunteerOAuthService implements OAuth2UserService<OidcUserRequest, OidcUser> {
     @Autowired

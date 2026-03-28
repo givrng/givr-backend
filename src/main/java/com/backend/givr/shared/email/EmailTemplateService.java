@@ -8,6 +8,7 @@ import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 
 import java.time.Duration;
+import java.time.LocalDate;
 
 @Service
 @RequiredArgsConstructor
@@ -69,6 +70,16 @@ public class EmailTemplateService {
         context.setVariable("projectName", projectName);
         context.setVariable("organizationName", organizationName);
         return engine.process("email/projectCompletion", context);
+    }
+
+    public String projectCompleteAdminUpdate(String email, String projectName, String fullName){
+        Context context = new Context();
+        context.setVariable("volunteerFullName", fullName);
+        context.setVariable("volunteerEmail", email);
+        context.setVariable("projectName", projectName);
+        context.setVariable("completionDate", LocalDate.now());
+
+        return engine.process("email/adminUpdate", context);
     }
 
     public String participationRejected(String firstname, String projectName,String organizationName){

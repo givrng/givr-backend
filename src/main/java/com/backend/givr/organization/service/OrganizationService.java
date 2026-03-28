@@ -21,6 +21,7 @@ import com.backend.givr.shared.mapper.ProjectMapper;
 import com.backend.givr.shared.enums.AuthProviderType;
 import com.backend.givr.shared.otp.OTPService;
 import com.backend.givr.shared.service.LocationService;
+import com.backend.givr.shared.service.RatingService;
 import com.backend.givr.shared.service.SkillService;
 import com.backend.givr.shared.service.VerificationService;
 import com.resend.core.exception.ResendException;
@@ -66,6 +67,8 @@ public class OrganizationService {
     private VerificationService verificationService;
     @Autowired
     private OTPService otpService;
+    @Autowired
+    private RatingService ratingService;
     @Autowired
     private EntityManager em;
 
@@ -180,7 +183,7 @@ public class OrganizationService {
 
         ApplicationStats stats = applicationService.getVolunteerStats(organization);
 
-        return new OrganizationDashboard(organization.getOrganizationName(), projectDtoMap, 5.0, stats ,organization.getStatus());
+        return new OrganizationDashboard(organization.getOrganizationName(), projectDtoMap, ratingService.getOrganizationRatingScore(organization), stats ,organization.getStatus());
     }
 
     public List<Project> getProjects(SecurityDetails details){

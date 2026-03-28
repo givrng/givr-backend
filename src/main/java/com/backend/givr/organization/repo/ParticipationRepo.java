@@ -2,6 +2,7 @@ package com.backend.givr.organization.repo;
 
 import com.backend.givr.organization.entity.Organization;
 import com.backend.givr.organization.entity.Participation;
+import com.backend.givr.organization.entity.Project;
 import com.backend.givr.volunteer.entity.Volunteer;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -17,4 +18,5 @@ public interface ParticipationRepo extends JpaRepository<Participation, Long> {
 
     List<Participation> findAllByOrganization(Organization organization);
 
+    Optional<Participation> findByVolunteerAndProject(Volunteer volunteer, Project project);
 }

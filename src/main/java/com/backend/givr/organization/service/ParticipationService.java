@@ -6,10 +6,12 @@ import com.backend.givr.organization.entity.Project;
 import com.backend.givr.organization.entity.ProjectApplication;
 import com.backend.givr.organization.repo.ParticipationRepo;
 import com.backend.givr.organization.repo.ProjectApplicationRepo;
+import com.backend.givr.shared.dtos.RatingDTO;
 import com.backend.givr.shared.enums.ApplicationStatus;
 import com.backend.givr.shared.enums.ParticipationStatus;
 import com.backend.givr.shared.exceptions.IllegalOperationException;
 import com.backend.givr.shared.email.EmailService;
+import com.backend.givr.shared.service.RatingService;
 import com.backend.givr.volunteer.entity.Volunteer;
 import com.backend.givr.volunteer.security.VolunteerDetailsService;
 import com.resend.core.exception.ResendException;
@@ -23,6 +25,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @Slf4j
@@ -36,6 +39,8 @@ public class ParticipationService {
     private VolunteerDetailsService detailsService;
     @Autowired
     private EmailService emailService;
+    @Autowired
+    private RatingService ratingService;
 
     private final Logger logger = LoggerFactory.getLogger(ParticipationService.class);
 
@@ -86,11 +91,13 @@ public class ParticipationService {
         if(!participation.getReviewable() && status == ParticipationStatus.COMPLETED)
             return ;
 
+        if(participation.getParticipationStatus() == status)
+            return;
+
         participation.setParticipationStatus(status);
 
         // Send notification to volunteer
-        emailService.sendParticipationUpdate(volunteer.getFirstname(), project.getTitle(),
-                volunteer.getEmail(), project.getOrganization().getOrganizationName(), status);
+        emailService.sendParticipationUpdate(volunteer, project, status);
 
         if(status == ParticipationStatus.REJECTED){
             repo.delete(participation);
@@ -107,7 +114,13 @@ public class ParticipationService {
         repo.delete(participation);
     }
 
-    public void updateReviewable(){
+    public Participation getParticipationByVolunteerAndProject(Volunteer volunteer, Project project){
+        return repo.findByVolunteerAndProject(volunteer, project).orElseThrow(()->new EntityNotFoundException(String.format("Volunteer %s is not a participant of %s project", volunteer.getVolunteerId(), project.getProjectId())));
+    }
 
+    @Async
+    public void createRating(Long participationId, Volunteer volunteer, RatingDTO ratingDTO) {
+        Optional<Participation> participation = repo.findByIdAndVolunteer(participationId, volunteer);
+        participation.ifPresent(part-> ratingService.addOrUpdateRating(volunteer, part.getProject().getProjectId(), ratingDTO.rating()));
     }
 }

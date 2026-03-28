@@ -9,8 +9,10 @@ server:
 springdoc:
   swagger-ui:
     path: /docs
+    enabled: ${SWAGGER_DOCS_ENABLED}
   api-docs:
     path: /api-docs
+    enabled: ${SWAGGER_DOCS_ENABLED}
 spring:
   application:
     name: givr
@@ -24,7 +26,7 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
-    show-sql: true
+    show-sql: false
 
   security:
     oauth2:

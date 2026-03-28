@@ -70,7 +70,6 @@ public interface ProjectMapper {
     List<ProjectApplicationDto> toApplicationsDto(List<ProjectApplication> application);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
-
     @Mapping(target = "requiredSkills", ignore = true)
     @Mapping(target = "location", ignore = true)
     void updateProject(ProjectRequestDto projectRequestDto, @MappingTarget Project project);

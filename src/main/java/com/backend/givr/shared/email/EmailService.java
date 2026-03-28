@@ -1,13 +1,12 @@
 package com.backend.givr.shared.email;
 
-import com.backend.givr.shared.enums.AccountType;
-import com.backend.givr.shared.enums.OtpPurpose;
-import com.backend.givr.shared.enums.ParticipationStatus;
-import com.backend.givr.shared.enums.ReviewStatus;
+import com.backend.givr.organization.entity.Project;
+import com.backend.givr.shared.enums.*;
 import com.backend.givr.shared.exceptions.FailedToSendOTPException;
 import com.backend.givr.shared.otp.OTP;
 import com.backend.givr.shared.otp.OTPGenerator;
 import com.backend.givr.shared.otp.OTPService;
+import com.backend.givr.volunteer.entity.Volunteer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.resend.Resend;
@@ -31,6 +30,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Service
 @Slf4j
@@ -38,6 +40,9 @@ public class EmailService {
 
     @Value("${RESEND_API_TOKEN}")
     private String apiToken;
+
+    @Value("${givr.allowed.admins}")
+    private List<String> admins;
 
     @Autowired
     private OTPService otpService;
@@ -130,16 +135,28 @@ public class EmailService {
         sendEmail(html, email, "Account verification update");
     }
 
-    public void sendParticipationUpdate(String firstname, String projectName, String email, String organizationName, ParticipationStatus status){
+    @Transactional
+    @Async
+    public void sendParticipationUpdate(Volunteer volunteer, Project project, ParticipationStatus status){
         String html = switch (status){
-            case COMPLETED -> emailTemplateService.projectCompleted(firstname, projectName, organizationName);
-            case REJECTED -> emailTemplateService.participationRejected(firstname, projectName, organizationName);
+            case COMPLETED -> {
+                updateGivrAdmin(project, volunteer);
+                yield emailTemplateService.projectCompleted(volunteer.getFirstname(), project.getTitle(), project.getOrganization().getOrganizationName());
+            }
+            case REJECTED -> emailTemplateService.participationRejected(volunteer.getFirstname(), project.getTitle(), project.getOrganization().getOrganizationName());
             case null, default -> null;
         };
         String subject = status== ParticipationStatus.COMPLETED? "Congratulations on completing a project": "Project participation Update";
-        sendEmail(html, email, subject );
+        sendEmail(html, volunteer.getEmail(), subject );
     }
 
+    private void updateGivrAdmin(Project project, Volunteer volunteer){
+        String fullName = String.format("%S, %s", volunteer.getLastname(), volunteer.getFirstname());
+        String html = emailTemplateService.projectCompleteAdminUpdate(volunteer.getEmail(), project.getTitle(), fullName);
+
+        String subject = "Volunteer project completion notification";
+        admins.forEach(admin-> sendEmail(html, admin, subject));
+    }
     /**
      * Creates a conversation segment for a project
      * Allowing an organization broadcast to users within the segment

@@ -3,18 +3,22 @@ package com.backend.givr.volunteer.controllers;
 import com.backend.givr.organization.dtos.OrganizationDto;
 import com.backend.givr.organization.dtos.ProjectResponseDto;
 import com.backend.givr.organization.service.OrganizationService;
+import com.backend.givr.organization.service.ParticipationService;
 import com.backend.givr.organization.service.ProjectService;
 import com.backend.givr.shared.dtos.ParticipationDto;
 import com.backend.givr.shared.dtos.PasswordUpdateDto;
 import com.backend.givr.shared.dtos.ProjectApplicationForm;
+import com.backend.givr.shared.dtos.RatingDTO;
 import com.backend.givr.shared.enums.OtpPurpose;
 import com.backend.givr.shared.interfaces.SecurityDetails;
 import com.backend.givr.shared.enums.AuthProviderType;
 import com.backend.givr.shared.otp.OtpDto;
 import com.backend.givr.shared.service.LogoutService;
 import com.backend.givr.volunteer.dtos.*;
+import com.backend.givr.volunteer.entity.Volunteer;
 import com.backend.givr.volunteer.security.VolunteerDetails;
 import com.backend.givr.volunteer.service.VolunteerService;
+import jakarta.persistence.EntityManager;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -31,9 +35,12 @@ public class VolunteerController {
     private VolunteerService service;
     @Autowired
     private OrganizationService organizationService;
-
+    @Autowired
+    private ParticipationService participationService;
     @Autowired
     private LogoutService logoutService;
+    @Autowired
+    private EntityManager em;
 
     @Autowired
     private ProjectService projectService;
@@ -86,6 +93,15 @@ public class VolunteerController {
     @GetMapping("/volunteering")
     public ResponseEntity<List<ParticipationDto>> getMyVolunteering(@AuthenticationPrincipal SecurityDetails details){
         return ResponseEntity.ok(service.getMyVolunteering(details));
+    }
+
+    /**
+     * Create a review for a project participated in*/
+    @PostMapping("/volunteering/{participationId}/review")
+    public ResponseEntity<Void> createProjectReview(@PathVariable("participationId") Long participationId, @AuthenticationPrincipal SecurityDetails details,@RequestBody RatingDTO payload){
+        Volunteer volunteer = em.getReference(Volunteer.class, details.getId());
+        participationService.createRating(participationId, volunteer, payload);
+        return ResponseEntity.ok().build();
     }
 
     @DeleteMapping("/volunteering/{participationId}")

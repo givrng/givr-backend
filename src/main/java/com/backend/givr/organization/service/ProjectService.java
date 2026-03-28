@@ -13,6 +13,7 @@ import com.backend.givr.shared.exceptions.IllegalOperationException;
 import com.backend.givr.shared.exceptions.InconsistentProjectDatesException;
 import com.backend.givr.shared.mapper.ProjectMapper;
 import com.backend.givr.shared.service.LocationService;
+import com.backend.givr.shared.service.RatingService;
 import com.backend.givr.shared.service.SkillService;
 import com.backend.givr.volunteer.entity.Volunteer;
 import com.resend.core.exception.ResendException;
@@ -77,7 +78,6 @@ public class ProjectService {
         if(!projectDatesValid(project))
             throw new InconsistentProjectDatesException("Cannot start or end a project before current date. Application deadline must be before the project's start date and the project's start date must be before its end date");
 
-        project.setStatus(ProjectStatus.DRAFT);
         Location savedLocation = locationService.createLocation(projectRequestDto.getLocation());
         project.setLocation(savedLocation);
 
@@ -89,6 +89,7 @@ public class ProjectService {
         Project project = mapper.toProject(projectRequestDto);
         handleProject(project, projectRequestDto);
         project.setOrganization(organization);
+        project.setStatus(ProjectStatus.DRAFT);
         project.setBroadcastEnabled(repo.count() <= 3);
         Project savedProject = repo.save(project);
         worker.createProjectSegment(savedProject);
@@ -100,9 +101,11 @@ public class ProjectService {
     public Project updateProject(Long projectId, ProjectRequestDto projectRequestDto){
         Project project = findProjectById(projectId);
         mapper.updateProject(projectRequestDto, project);
-        handleProject(project, projectRequestDto);
 
-        return repo.save(project);
+        if(projectRequestDto.getStatus() != null && projectRequestDto.getStatus() != project.getStatus())
+            project.setStatus(projectRequestDto.getStatus());
+        handleProject(project, projectRequestDto);
+        return project;
     }
     private boolean projectDatesValid(Project project){
         var startDateBeforeNow = project.getStartDate().isAfter(LocalDate.now(ZoneId.of("Africa/Lagos")));
@@ -112,7 +115,7 @@ public class ProjectService {
         var startEqualsEndDate = project.getStartDate().isEqual(project.getEndDate());
         if(startEqualsEndDate)
             project.setReviewable(true);
-        return startBeforeEndDate && endDateBeforeNow && deadlineBeforeStart && (startDateBeforeNow || startEqualsEndDate);
+        return (startBeforeEndDate || startEqualsEndDate) && endDateBeforeNow && deadlineBeforeStart && startDateBeforeNow ;
     }
     public  Project findProjectById(Long projectId){
         return repo.findById(projectId).orElseThrow(()-> new EntityNotFoundException(String.format("Project with id [%s] does not exist", projectId)));

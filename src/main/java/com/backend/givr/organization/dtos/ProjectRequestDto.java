@@ -1,6 +1,7 @@
 package com.backend.givr.organization.dtos;
 
 import com.backend.givr.organization.entity.AttendanceHours;
+import com.backend.givr.shared.enums.ProjectStatus;
 import com.fasterxml.jackson.annotation.JsonSetter;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -41,17 +42,9 @@ public class ProjectRequestDto {
     @NotNull
     private List<String> requiredSkills;
 
-//    private LocationDto locationDto;
-//
-//    private String specialRequirements;
-//
-//    private int totalApplicants;
-//
-//    private ProjectStatus status;
-//
-//    private String organizationId;
-//    private ZonedDateTime createdAt;
-//    private ZonedDateTime updatedAt;
+    private LocationDto locationDto;
+    private String specialRequirements;
+    private ProjectStatus status;
 
     @JsonSetter(value = "category")
     private void setCat(String category){

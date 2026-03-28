@@ -1,6 +1,7 @@
 package com.backend.givr.organization.entity;
 
 import com.backend.givr.shared.entity.Location;
+import com.backend.givr.shared.entity.Rating;
 import com.backend.givr.shared.entity.Skill;
 import com.backend.givr.shared.enums.ProjectStatus;
 import jakarta.persistence.*;
@@ -80,6 +81,9 @@ public class Project {
 
     private String segmentId;
     private Boolean broadcastEnabled;
+
+    private Double rating;
+
     private ZonedDateTime createdAt;
     private ZonedDateTime modifiedAt;
 
@@ -92,7 +96,6 @@ public class Project {
         this.modifiedAt = ZonedDateTime.now(ZoneOffset.UTC);
     }
 
-    @Transient
     public int getVolunteerCount(){
         return approvedList==null? 0 : approvedList.size();
     }

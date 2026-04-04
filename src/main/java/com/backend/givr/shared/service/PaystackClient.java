@@ -48,7 +48,7 @@ public class PaystackClient implements PaymentMerchant {
         Map<String, Object> payload = Map.of(
                 "amount", verificationPayment.getAmount(),
                 "email", email,
-                "channel", List.of("card", "bank", "ussd", "bank_transfer"),
+                "channels", List.of("card", "bank", "ussd", "bank_transfer"),
                 "currency", "NGN"
         );
         ResponseEntity<String> response = fetch(HttpMethod.POST, "/transaction/initialize", payload, String.class);

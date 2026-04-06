@@ -7,6 +7,7 @@ import com.backend.givr.organization.entity.Project;
 import com.backend.givr.shared.entity.Location;
 import com.backend.givr.shared.entity.Skill;
 import com.backend.givr.shared.mapper.SkillMapper;
+import com.backend.givr.volunteer.dtos.OrganizationResponseDTOv;
 import com.backend.givr.volunteer.mappings.VolunteerMapper;
 import org.mapstruct.*;
 
@@ -30,6 +31,11 @@ public interface OrganizationMapper {
 
     @Mapping(target = "name", source = "organizationName")
     OrganizationDto toOrganizationDto (Organization organization);
+
+    @Mapping(target = "name", source = "organizationName")
+    OrganizationResponseDTOv toOrganizationResponseDTOv (Organization organization);
+
+    List<OrganizationResponseDTOv> toOrganizationResponsesDTOv(List<Organization> organizations);
 
     @Mapping(target = "name", source = "claimedOrgName")
     @Mapping(target = "cacRegNumber", source = "claimedCACRegNumber")

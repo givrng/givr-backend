@@ -9,6 +9,7 @@ import com.backend.givr.organization.entity.ProjectApplication;
 import com.backend.givr.organization.mappings.OrganizationMapper;
 import com.backend.givr.shared.dtos.ParticipationDto;
 import com.backend.givr.shared.entity.Skill;
+import com.backend.givr.volunteer.dtos.ProjectResponseDTOv;
 import com.backend.givr.volunteer.mappings.VolunteerMapper;
 import org.mapstruct.*;
 
@@ -52,10 +53,22 @@ public interface ProjectMapper {
     @Mapping(target = "categories", ignore = true)
     ProjectResponseDto toProjectDto (Project project);
 
+    @Mapping(target = "requiredSkills", ignore = true)
+    @Mapping(target = "id", source = "projectId")
+    @Mapping(source = "deadline", target = "applicationDeadline")
+    @Mapping(target = "categories", ignore = true)
+    ProjectResponseDTOv toProjectDtov (Project project);
+
     @AfterMapping
     default void updateVolunteerAndOrganization(Project project, @MappingTarget ProjectResponseDto projectDto){
         projectDto.setTotalApplicants(project.getVolunteerCount());
         projectDto.setCategories(List.of(project.getCategory()));
+    }
+    @AfterMapping
+    default void updateProjectResponseV(Project project, @MappingTarget ProjectResponseDTOv projectDto){
+        projectDto.setTotalApplicants(project.getVolunteerCount());
+        projectDto.setCategories(List.of(project.getCategory()));
+        projectDto.setRequiredSkills(project.getRequiredSkills().stream().map(Skill::toString).collect(Collectors.toSet()));
     }
 
     @AfterMapping
@@ -64,6 +77,8 @@ public interface ProjectMapper {
     }
 
     List<ProjectResponseDto> toDtos(List<Project> projects);
+
+    List<ProjectResponseDTOv> toDtosv(List<Project> projects);
 
     ProjectApplicationDto toApplicationDto(ProjectApplication application);
 

@@ -86,7 +86,7 @@ public class VolunteerController {
     }
 
     @GetMapping("/organizations")
-    public ResponseEntity<List<OrganizationDto>> getOrganizationDtoResponseEntity(){
+    public ResponseEntity<List<OrganizationResponseDTOv>> getOrganizationDtoResponseEntity(){
         return ResponseEntity.ok(organizationService.getOrganizations());
     }
 

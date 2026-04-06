@@ -24,6 +24,7 @@ import com.backend.givr.shared.service.LocationService;
 import com.backend.givr.shared.service.RatingService;
 import com.backend.givr.shared.service.SkillService;
 import com.backend.givr.shared.service.VerificationService;
+import com.backend.givr.volunteer.dtos.OrganizationResponseDTOv;
 import com.resend.core.exception.ResendException;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityNotFoundException;
@@ -194,8 +195,8 @@ public class OrganizationService {
     public ProjectResponseDto updateProject(Long projectId, ProjectRequestDto projectRequestDto) {
         return projectMapper.toProjectDto(projectService.updateProject(projectId, projectRequestDto));
     }
-    public List<OrganizationDto> getOrganizations() {
-        return mapper.toOrganizationDtoList(repo.findAll());
+    public List<OrganizationResponseDTOv> getOrganizations() {
+        return mapper.toOrganizationResponsesDTOv(repo.findAll());
     }
 
     public void deleteProject(Long projectId, String organizationId) {

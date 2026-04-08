@@ -105,6 +105,10 @@ public class EmailService {
         sendEmail(html, recipient, "Project application submitted");
     }
 
+    public void sendApplicationNotificationEmail(String organizationName, String recipient){
+        String html = emailTemplateService.applicationNotificationEmail(organizationName);
+        sendEmail(html, recipient, "Project application notification");
+    }
     public void sendApplicationApproved(String firstname,String projectName, String organizationName, String address, String recipient){
         String html = emailTemplateService.applicationApproved(firstname, projectName, organizationName, address);
         sendEmail(html, recipient, "Project application approved");

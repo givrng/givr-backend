@@ -47,6 +47,12 @@ public class EmailTemplateService {
         return engine.process("email/applicationSubmitted", context);
     }
 
+    public String applicationNotificationEmail(String organizationName){
+        Context context = new Context();
+        context.setVariable("organizationName", organizationName);
+        return engine.process("email/applicationNotification", context);
+    }
+
     public String applicationApproved(String firstname,String projectName, String organizationName, String address){
         Context context = new Context();
         context.setVariable("firstname", firstname);

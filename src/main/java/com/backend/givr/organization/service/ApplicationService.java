@@ -5,6 +5,7 @@ import com.backend.givr.organization.entity.Organization;
 import com.backend.givr.organization.entity.Project;
 import com.backend.givr.organization.entity.ProjectApplication;
 import com.backend.givr.organization.repo.ProjectApplicationRepo;
+import com.backend.givr.organization.security.OrganizationDetailsService;
 import com.backend.givr.shared.dtos.ProjectApplicationForm;
 import com.backend.givr.shared.dtos.VolunteerApplicationDto;
 import com.backend.givr.shared.email.EmailService;
@@ -32,12 +33,16 @@ public class ApplicationService {
     private EntityManager em;
     @Autowired
     private EmailService emailService;
+    @Autowired
+    private OrganizationDetailsService organizationDetailsService;
 
     @Autowired
     private ParticipationService participationService;
 
     public ProjectApplication apply(Volunteer volunteer, ProjectApplicationForm applicationForm, String email){
         Project project = em.getReference(Project.class, applicationForm.projectId());
+        Organization organization = project.getOrganization();
+        String orgEmail = organizationDetailsService.getEmail(organization);
         if(LocalDateTime.now().isAfter(project.getDeadline().atTime(23, 59, 59)))
             throw new ProjectDeadlinePastException("Cannot apply for a project past it's application period");
 
@@ -48,8 +53,9 @@ public class ApplicationService {
             var projectApplication =  repo.save(application);
 
             emailService.sendApplicationSubmittedEmail(volunteer.getFirstname(), project.getTitle(), project.getOrganization().getOrganizationName(),
-                    String.format("%s,%s", project.getLocation().getLga(), project.getLocation().getState()), email);
+                    String.format("%S, %S", project.getAddress(), project.getLocation().getState()), email);
 
+            emailService.sendApplicationNotificationEmail(organization.getOrganizationName(), orgEmail);
             return projectApplication;
         }catch (DataIntegrityViolationException ignored){
             throw new IllegalOperationException("Cannot apply to a project more than once");

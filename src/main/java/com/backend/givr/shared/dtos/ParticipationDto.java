@@ -20,5 +20,6 @@ public class ParticipationDto {
     private OrganizationResponseDTOv organization;
     private VolunteerProfile volunteer;
     private Boolean reviewable;
+    private String reason;
     private LocalDate endDate;
 }

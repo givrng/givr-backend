@@ -92,6 +92,11 @@ public interface ProjectMapper {
     @Mapping(target = "status", source = "participationStatus")
     ParticipationDto toParticipationDto(Participation participation);
 
+    @AfterMapping
+    default void updateParticipationDto(Participation participation, @MappingTarget ParticipationDto participationDto){
+        participationDto.setReason(participation.getProjectApplication().getApplicationReason());
+    }
+
     List<ParticipationDto> toParticipationDto(List<Participation> participationList);
 
     // Organization Participation

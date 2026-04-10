@@ -13,12 +13,14 @@ public class VolunteerApplicationDto {
     private String firstname;
     private String lastname;
     private List<String> skills;
+    private String reason;
     private ProjectAppliedDto projectApplied;
 
     public VolunteerApplicationDto(ProjectApplication application){
         this.firstname = application.getVolunteer().getFirstname();
         this.lastname = application.getVolunteer().getLastname();
         this.skills = application.getVolunteer().getSkills().stream().map(Skill::getName).toList();
+        this.reason = application.getApplicationReason();
         projectApplied = new ProjectAppliedDto(application);
     }
 }

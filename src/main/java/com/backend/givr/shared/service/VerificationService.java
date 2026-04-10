@@ -73,6 +73,9 @@ public class VerificationService {
         return verificationSessionRepo.findByReviewStatus(status, sort);
     }
 
+    public OrganizationVerificationSession getVerificationSession(Long sessionId){
+        return verificationSessionRepo.findById(sessionId).orElseThrow();
+    }
 
     /**
      * This creates a verification session by saving organization claims,

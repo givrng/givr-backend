@@ -99,14 +99,14 @@ public class RefreshController {
                     .path("/")
                     .secure(true)
                     .httpOnly(true)
-                    .sameSite("Lax")
+                    .sameSite("None")
                     .build();
             ResponseCookie refreshCookie = ResponseCookie.from("RefreshToken").value(refreshToken)
                     .maxAge(JwtUtil.REFRESHEXPIRATION)
                     .path("/")
                     .secure(true)
                     .httpOnly(true)
-                    .sameSite("Lax")
+                    .sameSite("None")
                     .build();
             HttpHeaders headers = new HttpHeaders();
             headers.add(HttpHeaders.SET_COOKIE, accessCookie.toString());

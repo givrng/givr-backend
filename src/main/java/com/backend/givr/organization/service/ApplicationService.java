@@ -55,7 +55,7 @@ public class ApplicationService {
             emailService.sendApplicationSubmittedEmail(volunteer.getFirstname(), project.getTitle(), project.getOrganization().getOrganizationName(),
                     String.format("%S, %S", project.getAddress(), project.getLocation().getState()), email);
 
-            emailService.sendApplicationNotificationEmail(organization.getOrganizationName(), orgEmail);
+            emailService.sendApplicationNotificationEmail(organization.getOrganizationName(), project.getTitle(), orgEmail);
             return projectApplication;
         }catch (DataIntegrityViolationException ignored){
             throw new IllegalOperationException("Cannot apply to a project more than once");
@@ -71,7 +71,7 @@ public class ApplicationService {
 
         switch (status){
             case APPROVED -> {
-                String address = String.format("%s, %s", project.getLocation().getLga(), project.getLocation().getState());
+                String address = String.format("%s, %S", project.getAddress(), project.getLocation().getState());
                 emailService.sendApplicationApproved(application.getVolunteer().getFirstname(), project.getTitle(),
                         project.getOrganization().getOrganizationName(),address, application.getEmail());
             }

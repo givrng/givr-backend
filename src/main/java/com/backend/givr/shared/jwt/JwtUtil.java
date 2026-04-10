@@ -21,7 +21,7 @@ public class JwtUtil {
     @Value("${jwt.secret}")
     private String token;
     SecretKey secretKey;
-    public static Duration ACCESSEXPIRATION = Duration.ofMinutes(15);// 15 minutes
+    public static Duration ACCESSEXPIRATION = Duration.ofMinutes(60);// 15 minutes
     public static Duration REFRESHEXPIRATION = Duration.ofHours(4); // 4 hours
     public static String generateJti(){
         return UUID.randomUUID().toString();

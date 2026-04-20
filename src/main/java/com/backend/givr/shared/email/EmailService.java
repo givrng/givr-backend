@@ -7,20 +7,17 @@ import com.backend.givr.shared.otp.OTP;
 import com.backend.givr.shared.otp.OTPGenerator;
 import com.backend.givr.shared.otp.OTPService;
 import com.backend.givr.volunteer.entity.Volunteer;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.resend.Resend;
 import com.resend.core.exception.ResendException;
 import com.resend.services.broadcasts.model.CreateBroadcastOptions;
 import com.resend.services.broadcasts.model.CreateBroadcastResponseSuccess;
-import com.resend.services.broadcasts.model.RemoveBroadcastResponseSuccess;
 import com.resend.services.broadcasts.model.SendBroadcastOptions;
 import com.resend.services.contacts.model.*;
 import com.resend.services.emails.model.CreateEmailOptions;
 import com.resend.services.emails.model.CreateEmailResponse;
 import com.resend.services.segments.model.CreateSegmentOptions;
 import com.resend.services.segments.model.CreateSegmentResponseSuccess;
-import com.resend.services.segments.model.RemoveSegmentResponseSuccess;
 import jakarta.annotation.PostConstruct;
 import jakarta.validation.constraints.NotBlank;
 import lombok.extern.slf4j.Slf4j;
@@ -48,7 +45,7 @@ public class EmailService {
     private OTPService otpService;
 
     @Autowired
-    private EmailTemplateService emailTemplateService;
+    private ThymeleafTemplateService emailTemplateService;
     @Autowired
     private ObjectMapper mapper;
 

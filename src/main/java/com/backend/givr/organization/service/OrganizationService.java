@@ -39,6 +39,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
+import java.util.concurrent.ExecutionException;
 
 @Service
 public class OrganizationService {
@@ -302,6 +303,15 @@ public class OrganizationService {
             emailService.broadcastToParticipants(message, project.getSegmentId(), organization.getOrganizationName());
         }catch (ResendException e){
             throw new BroadcastFailedException(e.getLocalizedMessage());
+        }
+    }
+
+    public String shareProject(Long projectId){
+        try{
+            return projectService.shareProject(projectId);
+        } catch (ExecutionException | InterruptedException e) {
+            System.err.printf("Failed to create shareable link, %s", e.getLocalizedMessage());
+            throw new RuntimeException(e);
         }
     }
 }

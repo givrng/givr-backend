@@ -69,6 +69,10 @@ public class OrganizationController {
     public ResponseEntity<EmailExists> emailExists(@RequestParam("email") String email,@AuthenticationPrincipal SecurityDetails details){
         return ResponseEntity.ok(service.emailExists(email, details));
     }
+    @GetMapping("/share/project/{id}")
+    public ResponseEntity<String> shareProject(@PathVariable("id") Long projectId){
+        return ResponseEntity.ok(service.shareProject(projectId));
+    }
     @GetMapping("/projects")
     public ResponseEntity<List<ProjectResponseDto>> getOrganizationProjects(@AuthenticationPrincipal SecurityDetails details){
         return ResponseEntity.ok(mapper.toDtos(service.getProjects(details)));

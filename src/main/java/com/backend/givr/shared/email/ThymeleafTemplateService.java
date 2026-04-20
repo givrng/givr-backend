@@ -12,7 +12,7 @@ import java.time.LocalDate;
 
 @Service
 @RequiredArgsConstructor
-public class EmailTemplateService {
+public class ThymeleafTemplateService {
     private final SpringTemplateEngine engine;
 
     public String otpEmail(String otp, Duration duration){
@@ -108,5 +108,15 @@ public class EmailTemplateService {
         context.setVariable("status", reviewStatus);
         context.setVariable("reason", reason);
         return engine.process("email/verificationUpdate", context);
+    }
+
+    public String projectCard(String title, String description, String cardUrl, String clientUrl, String projectUrl){
+        Context context = new Context();
+        context.setVariable("projectTitle", title);
+        context.setVariable("projectDescription", description);
+        context.setVariable("projectCardUrl", cardUrl);
+        context.setVariable("clientUrl", clientUrl);
+        context.setVariable("projectUrl", projectUrl);
+        return engine.process("email/projectCard", context);
     }
 }

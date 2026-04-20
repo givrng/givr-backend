@@ -25,12 +25,16 @@ public class VolunteerOAuthSuccessHandler implements AuthenticationSuccessHandle
         assert authUser != null;
 
         VolunteerDetails details = service.loadUserByUsername(authUser.getEmail());
+        Object redirect = request.getSession().getAttribute("REDIRECT_AFTER_LOGIN");
 
         if(details.getAuthProvider() != AuthProviderType.GOOGLE){
             response.sendRedirect(String.format("%s/signin/volunteer?error=Account was registered with different sign method. Input username & password instead", appBaseUrl));
             return;
         }
         givrCookie.addCookieToResponse(details, response);
-        response.sendRedirect(String.format("%s/volunteer", appBaseUrl));
+        if(redirect != null)
+            response.sendRedirect(String.format("%s/volunteer?%s", appBaseUrl, redirect));
+        else
+            response.sendRedirect(String.format("%s/volunteer", appBaseUrl));
     }
 }

@@ -6,16 +6,16 @@ import com.backend.givr.organization.entity.Organization;
 import com.backend.givr.organization.entity.Project;
 import com.backend.givr.organization.repo.ProjectRepo;
 import com.backend.givr.organization.security.ProjectServiceWorker;
+import com.backend.givr.shared.dtos.RenderProjectDto;
 import com.backend.givr.shared.email.EmailService;
 import com.backend.givr.shared.entity.Location;
 import com.backend.givr.shared.enums.ProjectStatus;
 import com.backend.givr.shared.exceptions.IllegalOperationException;
 import com.backend.givr.shared.exceptions.InconsistentProjectDatesException;
 import com.backend.givr.shared.mapper.ProjectMapper;
-import com.backend.givr.shared.service.LocationService;
-import com.backend.givr.shared.service.RatingService;
-import com.backend.givr.shared.service.SkillService;
+import com.backend.givr.shared.service.*;
 import com.backend.givr.volunteer.entity.Volunteer;
+import com.cloudinary.Cloudinary;
 import com.resend.core.exception.ResendException;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.extern.slf4j.Slf4j;
@@ -26,10 +26,13 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.time.*;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 @Service
 @Slf4j
@@ -69,6 +72,9 @@ public class ProjectService {
         return repo.findAllByOrganizationAndStatus(organization, status);
     }
 
+    public Project getProject(Long projectId){
+        return repo.findById(projectId).orElseThrow();
+    }
     public List<Project> getOrganizationProjects(Organization organization){
         return repo.findAllByOrganizationOrderByCreatedAtAsc(organization);
     }
@@ -93,6 +99,7 @@ public class ProjectService {
         project.setBroadcastEnabled(repo.count() <= 3);
         Project savedProject = repo.save(project);
         worker.createProjectSegment(savedProject);
+        worker.createProjectCard(savedProject);
         return  project;
     }
 
@@ -102,9 +109,13 @@ public class ProjectService {
         Project project = findProjectById(projectId);
         mapper.updateProject(projectRequestDto, project);
 
+        if(!project.getTitle().equals(projectRequestDto.getTitle()) || !project.getDescription().equals(projectRequestDto.getDescription()))
+            worker.createProjectCard(project);
+
         if(projectRequestDto.getStatus() != null && projectRequestDto.getStatus() != project.getStatus())
             project.setStatus(projectRequestDto.getStatus());
         handleProject(project, projectRequestDto);
+
         return project;
     }
     private boolean projectDatesValid(Project project){
@@ -150,5 +161,15 @@ public class ProjectService {
 
     public List<Project> getVolunteerRecommendedProjects(Volunteer volunteer, ProjectStatus status){
         return repo.findProjectsWithAnyMatchingSkill(volunteer, volunteer.getLocation().getState(),status);
+    }
+
+    public String shareProject(Long projectId) throws ExecutionException, InterruptedException {
+        Project project = getProject(projectId);
+
+        if(StringUtils.hasLength(project.getShareableLink())){
+            return project.getShareableLink();
+        }else{
+             return worker.createProjectCard(project).get();
+        }
     }
 }

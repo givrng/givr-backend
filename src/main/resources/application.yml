@@ -51,11 +51,19 @@ spring:
               - email
             redirect-uri: "{baseUrl}/v1/api/volunteer/oauth2/code/google"
 givr:
+  baseUrl: ${API_BASEURL}
   verification:
     amount: 2000.00
   allowed:
     origins: ${ALLOWED_ORIGINS}
     admins: ${ALLOWED_ADMINS}
+  renderer:
+    baseUrl: ${GIVR_RENDERER_URL}
+cloudinary:
+  cloud-name: ${CLOUDINARY_CLOUD_NAME}
+  api:
+    key: ${CLOUDINARY_API_KEY}
+    secret: ${$CLOUDINARY_API_SECRET}
 paystack:
   key:
     secret: ${PAYSTACK_SECRET_KEY}

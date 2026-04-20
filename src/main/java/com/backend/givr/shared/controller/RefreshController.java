@@ -1,6 +1,5 @@
 package com.backend.givr.shared.controller;
 
-import com.backend.givr.admin.entity.Admin;
 import com.backend.givr.admin.entity.AdminDetails;
 import com.backend.givr.organization.entity.Organization;
 import com.backend.givr.organization.security.OrganizationDetails;

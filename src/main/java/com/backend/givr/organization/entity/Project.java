@@ -84,6 +84,8 @@ public class Project {
 
     private Double rating;
 
+    private String projectCardUrl;
+    private String shareableLink;
     private ZonedDateTime createdAt;
     private ZonedDateTime modifiedAt;
 

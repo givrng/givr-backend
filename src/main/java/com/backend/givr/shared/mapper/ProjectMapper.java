@@ -8,6 +8,7 @@ import com.backend.givr.organization.entity.Project;
 import com.backend.givr.organization.entity.ProjectApplication;
 import com.backend.givr.organization.mappings.OrganizationMapper;
 import com.backend.givr.shared.dtos.ParticipationDto;
+import com.backend.givr.shared.dtos.RenderProjectDto;
 import com.backend.givr.shared.entity.Skill;
 import com.backend.givr.volunteer.dtos.ProjectResponseDTOv;
 import com.backend.givr.volunteer.mappings.VolunteerMapper;
@@ -99,5 +100,11 @@ public interface ProjectMapper {
 
     List<ParticipationDto> toParticipationDto(List<Participation> participationList);
 
+    RenderProjectDto toDto (Project project);
+
+    @AfterMapping
+    default void updateRenderProjectDto(Project project, @MappingTarget RenderProjectDto renderProjectDto){
+        renderProjectDto.setOrganizationName(project.getOrganization().getOrganizationName());
+    }
     // Organization Participation
 }

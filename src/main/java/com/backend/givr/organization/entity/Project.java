@@ -1,7 +1,6 @@
 package com.backend.givr.organization.entity;
 
 import com.backend.givr.shared.entity.Location;
-import com.backend.givr.shared.entity.Rating;
 import com.backend.givr.shared.entity.Skill;
 import com.backend.givr.shared.enums.ProjectStatus;
 import jakarta.persistence.*;
@@ -14,6 +13,8 @@ import lombok.ToString;
 import org.hibernate.annotations.SQLRestriction;
 
 import java.time.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 @Entity
@@ -36,7 +37,14 @@ public class Project {
     @Column(nullable = false, length = 1000)
     private String description;
 
-    @Column(nullable = false)
+    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @JoinTable(
+            name = "project_categories",
+            joinColumns = @JoinColumn(name = "project_id"),
+            inverseJoinColumns = @JoinColumn(name = "category_id")
+    )
+    private List<Category> categories = new ArrayList<>();
+
     private String category;
 
     @Min(value = 1, message = "Cannot create a project for no volunteer")
@@ -84,6 +92,8 @@ public class Project {
 
     private Double rating;
 
+    private String projectCardUrl;
+    private String shareableLink;
     private ZonedDateTime createdAt;
     private ZonedDateTime modifiedAt;
 
@@ -104,6 +114,11 @@ public class Project {
         return status != ProjectStatus.CLOSE && now.isAfter(deadline.atTime(23, 59, 59));
     }
 
+    @PostLoad
+    public void updateCategories(){
+        if(this.category != null && categories.isEmpty())
+            categories.add(new Category(category));
+    }
     public void closeApplication(){
         this.status = ProjectStatus.CLOSE;
     }

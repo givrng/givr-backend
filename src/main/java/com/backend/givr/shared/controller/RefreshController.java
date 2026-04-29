@@ -1,6 +1,5 @@
 package com.backend.givr.shared.controller;
 
-import com.backend.givr.admin.entity.Admin;
 import com.backend.givr.admin.entity.AdminDetails;
 import com.backend.givr.organization.entity.Organization;
 import com.backend.givr.organization.security.OrganizationDetails;
@@ -99,14 +98,14 @@ public class RefreshController {
                     .path("/")
                     .secure(true)
                     .httpOnly(true)
-                    .sameSite("Lax")
+                    .sameSite("None")
                     .build();
             ResponseCookie refreshCookie = ResponseCookie.from("RefreshToken").value(refreshToken)
                     .maxAge(JwtUtil.REFRESHEXPIRATION)
                     .path("/")
                     .secure(true)
                     .httpOnly(true)
-                    .sameSite("Lax")
+                    .sameSite("None")
                     .build();
             HttpHeaders headers = new HttpHeaders();
             headers.add(HttpHeaders.SET_COOKIE, accessCookie.toString());

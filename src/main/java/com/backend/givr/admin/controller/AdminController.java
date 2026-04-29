@@ -81,4 +81,11 @@ public class AdminController {
     public ResponseEntity<Void> removeAdmin(){
         return null;
     }
+
+    @PatchMapping("/review/{sessionId}/retry")
+    public ResponseEntity<Void> retryVerification(@PathVariable("sessionId") Long sessionId){
+        service.retryAutomaticVerification(sessionId);
+        return ResponseEntity.ok().build();
+    }
+
 }

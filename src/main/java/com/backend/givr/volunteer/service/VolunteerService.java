@@ -45,6 +45,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
 
 @Service
 public class VolunteerService {
@@ -222,5 +223,14 @@ public class VolunteerService {
         VolunteerDetails volunteerDetails = detailsService.loadUserByUsername(details.getUsername());
         otpService.verifyOtp(details.getUsername(), passwordUpdateDto.otp(), AccountType.VOLUNTEER, OtpPurpose.PASSWORD_UPDATE);
         volunteerDetails.setPassword(encoder.encode(passwordUpdateDto.password()));
+    }
+
+    public String shareProject(Long projectId){
+        try{
+            return projectService.shareProject(projectId);
+        } catch (ExecutionException | InterruptedException e) {
+            System.err.printf("Failed to create shareable link, %s", e.getLocalizedMessage());
+            throw new RuntimeException(e);
+        }
     }
 }

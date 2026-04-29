@@ -43,6 +43,9 @@ public class Organization {
 
     private String organizationType;
 
+    @Transient
+    private int numOfActiveProjects;
+
     @Column(unique = true)
     private String cacRegNumber;
 
@@ -56,7 +59,7 @@ public class Organization {
     private String description;
 
     private String website;
-    @URL
+
     private String profileUrl;
 
     @Enumerated(EnumType.STRING)
@@ -81,7 +84,6 @@ public class Organization {
         return this.projects.stream().sorted(Comparator.comparing(Project::getCreatedAt)).toList();
     }
 
-    @Transient
     public int getNumOfActiveProjects(){
         return projects == null? 0: projects.stream().filter(p->p.getStatus()==ProjectStatus.OPEN || p.getStatus() == ProjectStatus.ONGOING).toList().size();
     }

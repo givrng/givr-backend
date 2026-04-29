@@ -37,8 +37,4 @@ public class ProjectResponseDTOv {
     private Boolean broadcastEnabled;
     private double rating;
 
-    @JsonSetter(value = "category")
-    private void setCat(String category){
-        this.categories = List.of(category.trim());
-    }
 }

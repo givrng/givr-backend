@@ -6,17 +6,19 @@ import com.backend.givr.organization.entity.Organization;
 import com.backend.givr.organization.entity.Project;
 import com.backend.givr.organization.repo.ProjectRepo;
 import com.backend.givr.organization.security.ProjectServiceWorker;
+import com.backend.givr.shared.dtos.RenderProjectDto;
 import com.backend.givr.shared.email.EmailService;
 import com.backend.givr.shared.entity.Location;
 import com.backend.givr.shared.enums.ProjectStatus;
 import com.backend.givr.shared.exceptions.IllegalOperationException;
 import com.backend.givr.shared.exceptions.InconsistentProjectDatesException;
 import com.backend.givr.shared.mapper.ProjectMapper;
-import com.backend.givr.shared.service.LocationService;
-import com.backend.givr.shared.service.RatingService;
-import com.backend.givr.shared.service.SkillService;
+import com.backend.givr.shared.service.*;
+import com.backend.givr.volunteer.dtos.ProjectViewResponse;
 import com.backend.givr.volunteer.entity.Volunteer;
+import com.cloudinary.Cloudinary;
 import com.resend.core.exception.ResendException;
+import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
@@ -26,10 +28,13 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.time.*;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 @Service
 @Slf4j
@@ -44,6 +49,8 @@ public class ProjectService {
     private EmailService emailService;
     @Autowired
     private LocationService locationService;
+    @Autowired
+    private EntityManager manager;
     @Autowired
     private ProjectServiceWorker worker;
 
@@ -69,6 +76,9 @@ public class ProjectService {
         return repo.findAllByOrganizationAndStatus(organization, status);
     }
 
+    public Project getProject(Long projectId){
+        return repo.findById(projectId).orElseThrow();
+    }
     public List<Project> getOrganizationProjects(Organization organization){
         return repo.findAllByOrganizationOrderByCreatedAtAsc(organization);
     }
@@ -93,6 +103,7 @@ public class ProjectService {
         project.setBroadcastEnabled(repo.count() <= 3);
         Project savedProject = repo.save(project);
         worker.createProjectSegment(savedProject);
+        worker.createProjectCard(savedProject);
         return  project;
     }
 
@@ -102,20 +113,25 @@ public class ProjectService {
         Project project = findProjectById(projectId);
         mapper.updateProject(projectRequestDto, project);
 
+        if(!project.getTitle().equals(projectRequestDto.getTitle()) || !project.getDescription().equals(projectRequestDto.getDescription()))
+            worker.createProjectCard(project);
+
         if(projectRequestDto.getStatus() != null && projectRequestDto.getStatus() != project.getStatus())
             project.setStatus(projectRequestDto.getStatus());
         handleProject(project, projectRequestDto);
+
         return project;
     }
     private boolean projectDatesValid(Project project){
         var startDateBeforeNow = project.getStartDate().isAfter(LocalDate.now(ZoneId.of("Africa/Lagos")));
         var endDateBeforeNow = project.getEndDate().isAfter(LocalDate.now(ZoneId.of("Africa/Lagos")));
         var deadlineBeforeStart = project.getDeadline().isBefore(project.getStartDate());
+        var deadlineEqualsStart = project.getDeadline().isEqual(project.getStartDate());
         var startBeforeEndDate = project.getStartDate().isBefore(project.getEndDate());
         var startEqualsEndDate = project.getStartDate().isEqual(project.getEndDate());
         if(startEqualsEndDate)
             project.setReviewable(true);
-        return (startBeforeEndDate || startEqualsEndDate) && endDateBeforeNow && deadlineBeforeStart && startDateBeforeNow ;
+        return (startBeforeEndDate || startEqualsEndDate) && endDateBeforeNow && (deadlineBeforeStart || deadlineEqualsStart) && startDateBeforeNow ;
     }
     public  Project findProjectById(Long projectId){
         return repo.findById(projectId).orElseThrow(()-> new EntityNotFoundException(String.format("Project with id [%s] does not exist", projectId)));
@@ -150,5 +166,21 @@ public class ProjectService {
 
     public List<Project> getVolunteerRecommendedProjects(Volunteer volunteer, ProjectStatus status){
         return repo.findProjectsWithAnyMatchingSkill(volunteer, volunteer.getLocation().getState(),status);
+    }
+
+    public String shareProject(Long projectId) throws ExecutionException, InterruptedException {
+        Project project = getProject(projectId);
+
+        if(StringUtils.hasLength(project.getShareableLink())){
+            return project.getShareableLink();
+        }else{
+             return worker.createProjectCard(project).get();
+        }
+    }
+
+    public List<ProjectViewResponse> getActiveProjectsByOrganization(String orgId){
+        Organization organization = manager.getReference(Organization.class, orgId);
+
+        return mapper.toProjectViewResponses(getProjectByOrganizationAndStatus(organization, ProjectStatus.OPEN));
     }
 }

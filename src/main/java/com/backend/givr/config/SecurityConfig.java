@@ -12,6 +12,7 @@ import com.backend.givr.shared.jwt.JwtUtil;
 import com.backend.givr.shared.jwt.JwtValidationFilter;
 import com.backend.givr.shared.service.TokenIdService;
 import com.backend.givr.volunteer.oauth2.VolunteerOAuthFailureHandler;
+import com.backend.givr.volunteer.oauth2.VolunteerOAuthFilter;
 import com.backend.givr.volunteer.oauth2.VolunteerOAuthService;
 import com.backend.givr.volunteer.oauth2.VolunteerOAuthSuccessHandler;
 import com.backend.givr.volunteer.security.VolunteerDetailsService;
@@ -33,6 +34,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestRedirectFilter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
@@ -120,6 +122,7 @@ public class SecurityConfig {
     SecurityFilterChain volunteerOAuthSecurityFilter(HttpSecurity http){
         VolunteerOAuthSuccessHandler successHandler = new VolunteerOAuthSuccessHandler(volunteerDetailsService, baseUrl, givrCookie);
         VolunteerOAuthFailureHandler failureHandler = new VolunteerOAuthFailureHandler(baseUrl);
+        VolunteerOAuthFilter authFilter = new VolunteerOAuthFilter();
         return http.securityMatcher("/v1/api/volunteer/oauth2/**")
                 .authorizeHttpRequests(req->req.anyRequest().authenticated())
                 .oauth2Login(oauth->{
@@ -134,6 +137,7 @@ public class SecurityConfig {
                             .failureHandler(failureHandler);
                 })
                 .csrf(AbstractHttpConfigurer::disable)
+                .addFilterBefore(authFilter, OAuth2AuthorizationRequestRedirectFilter.class)
                 .sessionManagement(s->s.sessionCreationPolicy(SessionCreationPolicy.ALWAYS))
                 .build();
     }

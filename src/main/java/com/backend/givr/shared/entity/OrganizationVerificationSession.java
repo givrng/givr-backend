@@ -58,7 +58,7 @@ public class OrganizationVerificationSession {
     @ManyToOne
     private Location claimedLocation;
     private Address claimedAddress;
-
+    private String website;
     @Enumerated(EnumType.STRING)
     @Setter
     private ReviewStatus reviewStatus;
@@ -82,6 +82,7 @@ public class OrganizationVerificationSession {
         this.idType = updateDto.getContactVerification().idType();
         this.idNumber = updateDto.getContactVerification().idNumber();
         this.usrImgUrl = updateDto.getContactVerification().usrImgUrl();
+        this.website = updateDto.getWebsite();
         this.verificationStatus = VerificationStatus.AUTOMATIC_VERIFICATION_PENDING;
         this.setContactFirstname(updateDto.getContactFirstname());
         this.setContactLastname(updateDto.getContactLastname());

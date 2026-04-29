@@ -13,11 +13,14 @@ import java.time.ZonedDateTime;
 @Getter
 @Setter
 public class ProjectApplicationDto {
-    private Long id;
-    private VolunteerDto volunteer;
-    private ProjectResponseDto project;
+//    private Long id;
+//    private VolunteerDto volunteer;
+//    private ProjectResponseDto project;
     private ApplicationStatus status;
     private ZonedDateTime appliedAt;
-    private String applicationReason;
-    private String availableDays;
+//    private String applicationReason;
+//    private Boolean isAvailable;
+//    private String specialSkills;
+//    private String aboutVolunteer;
+//    private String additionalInfo;
 }

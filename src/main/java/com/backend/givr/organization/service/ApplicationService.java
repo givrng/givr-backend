@@ -5,6 +5,7 @@ import com.backend.givr.organization.entity.Organization;
 import com.backend.givr.organization.entity.Project;
 import com.backend.givr.organization.entity.ProjectApplication;
 import com.backend.givr.organization.repo.ProjectApplicationRepo;
+import com.backend.givr.organization.security.OrganizationDetailsService;
 import com.backend.givr.shared.dtos.ProjectApplicationForm;
 import com.backend.givr.shared.dtos.VolunteerApplicationDto;
 import com.backend.givr.shared.email.EmailService;
@@ -12,6 +13,7 @@ import com.backend.givr.shared.enums.ApplicationStatus;
 import com.backend.givr.shared.exceptions.IllegalOperationException;
 import com.backend.givr.shared.exceptions.MaxApplicantsReachedException;
 import com.backend.givr.shared.exceptions.ProjectDeadlinePastException;
+import com.backend.givr.shared.mapper.SkillMapper;
 import com.backend.givr.volunteer.entity.Volunteer;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
@@ -19,6 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -32,24 +35,38 @@ public class ApplicationService {
     private EntityManager em;
     @Autowired
     private EmailService emailService;
-
+    @Autowired
+    private OrganizationDetailsService organizationDetailsService;
+    @Autowired
+    private SkillMapper skillMapper;
     @Autowired
     private ParticipationService participationService;
 
     public ProjectApplication apply(Volunteer volunteer, ProjectApplicationForm applicationForm, String email){
         Project project = em.getReference(Project.class, applicationForm.projectId());
+        Organization organization = project.getOrganization();
+        String orgEmail = organizationDetailsService.getEmail(organization);
         if(LocalDateTime.now().isAfter(project.getDeadline().atTime(23, 59, 59)))
             throw new ProjectDeadlinePastException("Cannot apply for a project past it's application period");
 
         var application = new ProjectApplication(project, volunteer, email);
         application.setApplicationReason(applicationForm.reason());
-        application.setAvailableDays(applicationForm.availableDays());
+        application.setIsAvailable(applicationForm.isAvailable());
+        application.setAboutVolunteer(applicationForm.aboutMe());
+
+        if(Objects.nonNull(applicationForm.additionalInfo()))
+            application.setAdditionalInfo(applicationForm.additionalInfo());
+
+        if(Objects.nonNull(applicationForm.mySkills()))
+            application.setSpecialSkills(skillMapper.toSkills(applicationForm.mySkills()));
+
         try{
             var projectApplication =  repo.save(application);
 
             emailService.sendApplicationSubmittedEmail(volunteer.getFirstname(), project.getTitle(), project.getOrganization().getOrganizationName(),
-                    String.format("%s,%s", project.getLocation().getLga(), project.getLocation().getState()), email);
+                    String.format("%S, %S", project.getAddress(), project.getLocation().getState()), email);
 
+            emailService.sendApplicationNotificationEmail(organization.getOrganizationName(), project.getTitle(), orgEmail);
             return projectApplication;
         }catch (DataIntegrityViolationException ignored){
             throw new IllegalOperationException("Cannot apply to a project more than once");
@@ -65,7 +82,7 @@ public class ApplicationService {
 
         switch (status){
             case APPROVED -> {
-                String address = String.format("%s, %s", project.getLocation().getLga(), project.getLocation().getState());
+                String address = String.format("%s, %S", project.getAddress(), project.getLocation().getState());
                 emailService.sendApplicationApproved(application.getVolunteer().getFirstname(), project.getTitle(),
                         project.getOrganization().getOrganizationName(),address, application.getEmail());
             }

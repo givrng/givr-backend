@@ -35,7 +35,7 @@ public class GivrCookie {
         ResponseCookie accessCookie = ResponseCookie.from("AccessToken").value(accessToken)
                 .path("/")
                 .maxAge(JwtUtil.ACCESSEXPIRATION)
-                .sameSite(Cookie.SameSite.LAX.attributeValue())
+                .sameSite(Cookie.SameSite.NONE.attributeValue())
                 .httpOnly(true)
                 .secure(true)
                 .build();
@@ -43,7 +43,7 @@ public class GivrCookie {
         ResponseCookie refreshCookie = ResponseCookie.from("RefreshToken").value(refreshToken)
                 .path("/")
                 .maxAge(JwtUtil.REFRESHEXPIRATION)
-                .sameSite(Cookie.SameSite.LAX.attributeValue())
+                .sameSite(Cookie.SameSite.NONE.attributeValue())
                 .httpOnly(true)
                 .secure(true)
                 .build();

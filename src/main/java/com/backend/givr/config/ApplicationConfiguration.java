@@ -1,7 +1,9 @@
 package com.backend.givr.config;
 
+import com.cloudinary.Cloudinary;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
@@ -12,11 +14,18 @@ import org.thymeleaf.templatemode.TemplateMode;
 import org.thymeleaf.templateresolver.ClassLoaderTemplateResolver;
 
 import java.net.Proxy;
+import java.util.Map;
 
 @Configuration
 @EnableAsync
 public class ApplicationConfiguration {
 
+    @Value("${cloudinary.cloud-name}")
+    private String cloudinaryCloudName;
+    @Value("${cloudinary.api.key}")
+    private String cloudinaryApiKey;
+    @Value("${cloudinary.api.secret}")
+    private String cloudinaryApiSecret;
     @Bean
     public SpringTemplateEngine emailTemplateEngine(){
         SpringTemplateEngine engine = new SpringTemplateEngine();
@@ -44,5 +53,15 @@ public class ApplicationConfiguration {
         var factory = new SimpleClientHttpRequestFactory();
         factory.setProxy(Proxy.NO_PROXY);
         return new RestTemplate(factory);
+    }
+
+    @Bean
+    public Cloudinary cloudinary(){
+
+        return new Cloudinary(Map.of(
+                "cloud_name", cloudinaryCloudName,
+                "api_key", cloudinaryApiKey,
+                "api_secret", cloudinaryApiSecret
+        ));
     }
 }

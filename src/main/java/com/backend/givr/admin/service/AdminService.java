@@ -22,6 +22,7 @@ import com.backend.givr.shared.interfaces.SecurityDetails;
 import com.backend.givr.shared.otp.OTPService;
 import com.backend.givr.shared.service.VerificationService;
 import com.backend.givr.shared.enums.ReviewStatus;
+import com.backend.givr.shared.service.VerificationWorker;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.constraints.Email;
@@ -58,6 +59,8 @@ public class AdminService {
     private OTPService otpService;
     @Autowired
     private VerificationService verificationService;
+    @Autowired
+    private VerificationWorker verificationWorker;
 
     @Async
     public void requestOtp(String email){
@@ -122,5 +125,10 @@ public class AdminService {
         Review review = reviewRepo.findFirstByVerificationSessionOrderByCreatedAt(session).orElseThrow();
 
         return  mapper.toDto(review);
+    }
+
+    public void retryAutomaticVerification(Long sessionId){
+        OrganizationVerificationSession session = verificationService.getVerificationSession(sessionId);
+        verificationWorker.verifyContactPersonInformation(session);
     }
 }

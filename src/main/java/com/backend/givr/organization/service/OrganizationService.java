@@ -39,6 +39,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
+import java.util.concurrent.ExecutionException;
 
 @Service
 public class OrganizationService {
@@ -268,6 +269,7 @@ public class OrganizationService {
         organization.setLocation(session.getClaimedLocation());
         organization.setAddress(session.getClaimedAddress().address());
         organization.setContactFirstname(session.getContactFirstname());
+        organization.setWebsite(session.getWebsite());
         organization.setContactLastname(session.getContactLastname());
     }
 
@@ -277,7 +279,7 @@ public class OrganizationService {
 
     private OrganizationProfileDto toProfile(Organization organization, SecurityDetails details){
         OrganizationDto orgDto = mapper.toOrganizationDto(organization);
-
+        orgDto.setOrganizationId(organization.getOrganizationId());
         OrganizationContactDto orgContact = mapper.toOrganizationContact(organization);
         orgContact.setEmail(details.getUsername());
         orgContact.setEmailEditable(details.getProviderType() == AuthProviderType.LOCAL);
@@ -302,6 +304,15 @@ public class OrganizationService {
             emailService.broadcastToParticipants(message, project.getSegmentId(), organization.getOrganizationName());
         }catch (ResendException e){
             throw new BroadcastFailedException(e.getLocalizedMessage());
+        }
+    }
+
+    public String shareProject(Long projectId){
+        try{
+            return projectService.shareProject(projectId);
+        } catch (ExecutionException | InterruptedException e) {
+            System.err.printf("Failed to create shareable link, %s", e.getLocalizedMessage());
+            throw new RuntimeException(e);
         }
     }
 }

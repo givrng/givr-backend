@@ -46,8 +46,8 @@ public class ProjectRequestDto {
     private String specialRequirements;
     private ProjectStatus status;
 
-    @JsonSetter(value = "category")
-    private void setCat(String category){
-        this.categories = List.of(category.trim());
-    }
+//    @JsonSetter(value = "category")
+//    private void setCat(String category){
+//        this.categories = List.of(category.trim());
+//    }
 }

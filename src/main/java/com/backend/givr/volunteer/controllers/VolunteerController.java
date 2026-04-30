@@ -100,6 +100,11 @@ public class VolunteerController {
         return ResponseEntity.ok(organizationService.getOrganizations());
     }
 
+    @GetMapping("/organizations/{orgId}/projects/active")
+    public ResponseEntity<List<ProjectViewResponse>> getOrganizationActiveProjects(@PathVariable("orgId") String orgId){
+        return ResponseEntity.ok(projectService.getActiveProjectsByOrganization(orgId));
+    }
+
     @GetMapping("/volunteering")
     public ResponseEntity<List<ParticipationDto>> getMyVolunteering(@AuthenticationPrincipal SecurityDetails details){
         return ResponseEntity.ok(service.getMyVolunteering(details));

@@ -13,6 +13,7 @@ import com.backend.givr.shared.enums.ApplicationStatus;
 import com.backend.givr.shared.exceptions.IllegalOperationException;
 import com.backend.givr.shared.exceptions.MaxApplicantsReachedException;
 import com.backend.givr.shared.exceptions.ProjectDeadlinePastException;
+import com.backend.givr.shared.mapper.SkillMapper;
 import com.backend.givr.volunteer.entity.Volunteer;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
@@ -20,6 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -35,7 +37,12 @@ public class ApplicationService {
     private EmailService emailService;
     @Autowired
     private OrganizationDetailsService organizationDetailsService;
+<<<<<<< HEAD
 
+=======
+    @Autowired
+    private SkillMapper skillMapper;
+>>>>>>> test
     @Autowired
     private ParticipationService participationService;
 
@@ -48,7 +55,15 @@ public class ApplicationService {
 
         var application = new ProjectApplication(project, volunteer, email);
         application.setApplicationReason(applicationForm.reason());
-        application.setAvailableDays(applicationForm.availableDays());
+        application.setIsAvailable(applicationForm.isAvailable());
+        application.setAboutVolunteer(applicationForm.aboutMe());
+
+        if(Objects.nonNull(applicationForm.additionalInfo()))
+            application.setAdditionalInfo(applicationForm.additionalInfo());
+
+        if(Objects.nonNull(applicationForm.mySkills()))
+            application.setSpecialSkills(skillMapper.toSkills(applicationForm.mySkills()));
+
         try{
             var projectApplication =  repo.save(application);
 

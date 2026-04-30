@@ -1,7 +1,6 @@
 package com.backend.givr.volunteer.dtos;
 
 import com.backend.givr.organization.dtos.LocationDto;
-import com.backend.givr.organization.dtos.OrganizationDto;
 import com.backend.givr.organization.entity.AttendanceHours;
 import com.backend.givr.shared.enums.ProjectStatus;
 import com.fasterxml.jackson.annotation.JsonSetter;
@@ -12,13 +11,14 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Set;
 
+/**
+ * This Dto exists to prevent the cyclic error that would occur
+ * when using ProjectResponseDTOv and OrganizationResponseDTOv*/
 @Getter
 @Setter
-public class ProjectResponseDTOv {
+public class ProjectViewResponse {
     Long id;
     private String title;
-
-    private OrganizationResponseDTOv organization;
     private String description;
     private List<String> categories;
     private Integer maxVolunteers;
@@ -34,7 +34,6 @@ public class ProjectResponseDTOv {
     private ZonedDateTime createdAt;
     private ZonedDateTime updatedAt;
     private String address;
-    private Boolean broadcastEnabled;
     private double rating;
 
 }

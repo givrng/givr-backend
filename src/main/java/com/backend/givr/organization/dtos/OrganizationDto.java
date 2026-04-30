@@ -12,6 +12,7 @@ import java.util.List;
 @Getter
 @Setter
 public class OrganizationDto {
+    private String organizationId;
     private String email;
 
     @NotBlank

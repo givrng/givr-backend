@@ -38,8 +38,8 @@ public class ProjectResponseDto {
     private String address;
     private Boolean broadcastEnabled;
     private double rating;
-    @JsonSetter(value = "category")
-    private void setCat(String category){
-        this.categories = List.of(category.trim());
-    }
+//    @JsonSetter(value = "category")
+//    private void setCat(String category){
+//        this.categories = List.of(category.trim());
+//    }
 }

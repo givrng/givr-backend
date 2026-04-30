@@ -28,7 +28,6 @@ public interface ProjectMapper {
     @Mapping(target = "startDate", ignore = true)
     @Mapping(target = "endDate", ignore = true)
     @Mapping(target = "deadline", ignore = true)
-    @Mapping(target = "categories", ignore = true)
     Project toProject (ProjectRequestDto projectRequestDto);
 
     default List<Category> toCategories (List<String> cats){

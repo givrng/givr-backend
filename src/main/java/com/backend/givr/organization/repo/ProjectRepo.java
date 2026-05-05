@@ -47,4 +47,6 @@ public interface ProjectRepo extends JpaRepository<Project, Long> {
     List<Project> findProjectsWithAnyMatchingSkill(Volunteer volunteer, String state, ProjectStatus status);
 
     List<Project> findAllByOrganizationAndStatus(Organization organization, ProjectStatus status);
+
+    List<Project> findAllByOrganizationAndStatusNot(Organization organization, ProjectStatus projectStatus);
 }

@@ -197,7 +197,7 @@ public class OrganizationService {
         return projectMapper.toProjectDto(projectService.updateProject(projectId, projectRequestDto));
     }
     public List<OrganizationResponseDTOv> getOrganizations() {
-        return mapper.toOrganizationResponsesDTOv(repo.findAll());
+        return mapper.toOrganizationResponsesDTOv(repo.findAllByStatus(VerificationStatus.VERIFIED));
     }
 
     public void deleteProject(Long projectId, String organizationId) {
@@ -299,6 +299,9 @@ public class OrganizationService {
 
     public void sendBroadcast(SecurityDetails details, Long projectId, String message) {
         Project project = projectService.findProjectById(projectId);
+        if(!project.getBroadcastEnabled())
+            return;
+
         Organization organization = repo.findById(details.getId()).get();
         try{
             emailService.broadcastToParticipants(message, project.getSegmentId(), organization.getOrganizationName());

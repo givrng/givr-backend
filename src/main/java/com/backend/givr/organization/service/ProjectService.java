@@ -180,7 +180,6 @@ public class ProjectService {
 
     public List<ProjectViewResponse> getActiveProjectsByOrganization(String orgId){
         Organization organization = manager.getReference(Organization.class, orgId);
-
-        return mapper.toProjectViewResponses(getProjectByOrganizationAndStatus(organization, ProjectStatus.OPEN));
+        return mapper.toProjectViewResponses(repo.findAllByOrganizationAndStatusNot(organization, ProjectStatus.DRAFT));
     }
 }

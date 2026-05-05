@@ -189,6 +189,8 @@ public class EmailService {
 
     @Async
     public  void addContactToSegment(String segmentId, String contactId) throws ResendException {
+        if(segmentId == null || contactId == null)
+            return;
         AddContactToSegmentOptions options = AddContactToSegmentOptions.builder()
                 .segmentId(segmentId)
                 .id(contactId)

@@ -5,13 +5,23 @@ import com.backend.givr.shared.enums.VerificationStatus;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.List;
+
 @Getter
 @Setter
 public class OrganizationResponseDTOv {
+    private String organizationId;
     private String name;
-    private LocationDto location;
-    private VerificationStatus status;
     private String description;
+    private LocationDto location;
+    private List<String> category;
+    private VerificationStatus status;
+    private int numOfActiveProjects;
     private String website;
     private String address;
+    private List<ProjectViewResponse> activeProjects;
+    private double rating;
+    private String profileUrl;
+    private String organizationType;
+
 }

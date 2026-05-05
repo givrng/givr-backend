@@ -14,6 +14,7 @@ import org.mapstruct.*;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
@@ -33,7 +34,15 @@ public interface OrganizationMapper {
     OrganizationDto toOrganizationDto (Organization organization);
 
     @Mapping(target = "name", source = "organizationName")
+    @Mapping(target = "category", ignore = true)
     OrganizationResponseDTOv toOrganizationResponseDTOv (Organization organization);
+
+    @AfterMapping
+    default void updateCategory(Organization organization, @MappingTarget OrganizationResponseDTOv organizationResponseDTOv){
+        List<String> list = new ArrayList<>();
+        list.add(organization.getOrganizationType());
+        organizationResponseDTOv.setCategory(list);
+    }
 
     List<OrganizationResponseDTOv> toOrganizationResponsesDTOv(List<Organization> organizations);
 

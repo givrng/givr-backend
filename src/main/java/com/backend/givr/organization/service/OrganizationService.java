@@ -197,7 +197,7 @@ public class OrganizationService {
         return projectMapper.toProjectDto(projectService.updateProject(projectId, projectRequestDto));
     }
     public List<OrganizationResponseDTOv> getOrganizations() {
-        return mapper.toOrganizationResponsesDTOv(repo.findAll());
+        return mapper.toOrganizationResponsesDTOv(repo.findAllByStatus(VerificationStatus.VERIFIED));
     }
 
     public void deleteProject(Long projectId, String organizationId) {
@@ -269,6 +269,7 @@ public class OrganizationService {
         organization.setLocation(session.getClaimedLocation());
         organization.setAddress(session.getClaimedAddress().address());
         organization.setContactFirstname(session.getContactFirstname());
+        organization.setWebsite(session.getWebsite());
         organization.setContactLastname(session.getContactLastname());
     }
 
@@ -278,7 +279,7 @@ public class OrganizationService {
 
     private OrganizationProfileDto toProfile(Organization organization, SecurityDetails details){
         OrganizationDto orgDto = mapper.toOrganizationDto(organization);
-
+        orgDto.setOrganizationId(organization.getOrganizationId());
         OrganizationContactDto orgContact = mapper.toOrganizationContact(organization);
         orgContact.setEmail(details.getUsername());
         orgContact.setEmailEditable(details.getProviderType() == AuthProviderType.LOCAL);
@@ -298,6 +299,9 @@ public class OrganizationService {
 
     public void sendBroadcast(SecurityDetails details, Long projectId, String message) {
         Project project = projectService.findProjectById(projectId);
+        if(!project.getBroadcastEnabled())
+            return;
+
         Organization organization = repo.findById(details.getId()).get();
         try{
             emailService.broadcastToParticipants(message, project.getSegmentId(), organization.getOrganizationName());

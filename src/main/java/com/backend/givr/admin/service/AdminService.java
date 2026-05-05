@@ -17,6 +17,7 @@ import com.backend.givr.shared.email.EmailService;
 import com.backend.givr.shared.entity.OrganizationVerificationSession;
 import com.backend.givr.shared.enums.AccountType;
 import com.backend.givr.shared.enums.OtpPurpose;
+import com.backend.givr.shared.enums.VerificationStatus;
 import com.backend.givr.shared.exceptions.DuplicateAccountException;
 import com.backend.givr.shared.interfaces.SecurityDetails;
 import com.backend.givr.shared.otp.OTPService;
@@ -114,6 +115,7 @@ public class AdminService {
                 emailService.sendVerificationStatusUpdate(organization.getContactFirstname(), email, ReviewStatus.Approved, review.getReview());
             }
             case Rejected -> {
+                organization.setStatus(VerificationStatus.UNVERIFIED);
                 emailService.sendVerificationStatusUpdate(organization.getContactFirstname(), email, ReviewStatus.Rejected, review.getReview());
             }
         }

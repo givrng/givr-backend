@@ -14,9 +14,11 @@ import com.backend.givr.shared.exceptions.IllegalOperationException;
 import com.backend.givr.shared.exceptions.InconsistentProjectDatesException;
 import com.backend.givr.shared.mapper.ProjectMapper;
 import com.backend.givr.shared.service.*;
+import com.backend.givr.volunteer.dtos.ProjectViewResponse;
 import com.backend.givr.volunteer.entity.Volunteer;
 import com.cloudinary.Cloudinary;
 import com.resend.core.exception.ResendException;
+import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
@@ -47,6 +49,8 @@ public class ProjectService {
     private EmailService emailService;
     @Autowired
     private LocationService locationService;
+    @Autowired
+    private EntityManager manager;
     @Autowired
     private ProjectServiceWorker worker;
 
@@ -122,11 +126,12 @@ public class ProjectService {
         var startDateBeforeNow = project.getStartDate().isAfter(LocalDate.now(ZoneId.of("Africa/Lagos")));
         var endDateBeforeNow = project.getEndDate().isAfter(LocalDate.now(ZoneId.of("Africa/Lagos")));
         var deadlineBeforeStart = project.getDeadline().isBefore(project.getStartDate());
+        var deadlineEqualsStart = project.getDeadline().isEqual(project.getStartDate());
         var startBeforeEndDate = project.getStartDate().isBefore(project.getEndDate());
         var startEqualsEndDate = project.getStartDate().isEqual(project.getEndDate());
         if(startEqualsEndDate)
             project.setReviewable(true);
-        return (startBeforeEndDate || startEqualsEndDate) && endDateBeforeNow && deadlineBeforeStart && startDateBeforeNow ;
+        return (startBeforeEndDate || startEqualsEndDate) && endDateBeforeNow && (deadlineBeforeStart || deadlineEqualsStart) && startDateBeforeNow ;
     }
     public  Project findProjectById(Long projectId){
         return repo.findById(projectId).orElseThrow(()-> new EntityNotFoundException(String.format("Project with id [%s] does not exist", projectId)));
@@ -171,5 +176,10 @@ public class ProjectService {
         }else{
              return worker.createProjectCard(project).get();
         }
+    }
+
+    public List<ProjectViewResponse> getActiveProjectsByOrganization(String orgId){
+        Organization organization = manager.getReference(Organization.class, orgId);
+        return mapper.toProjectViewResponses(repo.findAllByOrganizationAndStatusNot(organization, ProjectStatus.DRAFT));
     }
 }

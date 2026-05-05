@@ -14,6 +14,7 @@ import com.backend.givr.shared.service.VerificationWorker;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.persistence.EntityManager;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,6 +38,8 @@ public class PaymentService {
     private OrganizationDetailsService detailsService;
     @Autowired
     private EmailService emailService;
+    @Autowired
+    private EntityManager manager;
 
     @Autowired
     private VerificationWorker verificationWorker;
@@ -65,7 +68,7 @@ public class PaymentService {
         double amountPaid = eventData.path("amount").asDouble();
         logger.info("MerchantId {}", transactionRef);
         VerificationPayment payment = repo.findByMerchantRefId(transactionRef).orElseThrow();
-        Organization organization = payment.getOrganization();
+        Organization organization = manager.getReference(payment.getOrganization());
         organization.setStatus(VerificationStatus.PENDING);
         String email = detailsService.getEmail(payment.getOrganization());
 

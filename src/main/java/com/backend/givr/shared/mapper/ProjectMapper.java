@@ -3,6 +3,7 @@ package com.backend.givr.shared.mapper;
 import com.backend.givr.organization.dtos.ProjectApplicationDto;
 import com.backend.givr.organization.dtos.ProjectRequestDto;
 import com.backend.givr.organization.dtos.ProjectResponseDto;
+import com.backend.givr.organization.entity.Category;
 import com.backend.givr.organization.entity.Participation;
 import com.backend.givr.organization.entity.Project;
 import com.backend.givr.organization.entity.ProjectApplication;
@@ -11,6 +12,7 @@ import com.backend.givr.shared.dtos.ParticipationDto;
 import com.backend.givr.shared.dtos.RenderProjectDto;
 import com.backend.givr.shared.entity.Skill;
 import com.backend.givr.volunteer.dtos.ProjectResponseDTOv;
+import com.backend.givr.volunteer.dtos.ProjectViewResponse;
 import com.backend.givr.volunteer.mappings.VolunteerMapper;
 import org.mapstruct.*;
 
@@ -26,12 +28,14 @@ public interface ProjectMapper {
     @Mapping(target = "startDate", ignore = true)
     @Mapping(target = "endDate", ignore = true)
     @Mapping(target = "deadline", ignore = true)
-    @Mapping(target = "category", ignore = true)
     Project toProject (ProjectRequestDto projectRequestDto);
 
-    @AfterMapping
-    default void updateCategory(ProjectRequestDto projectRequestDto, @MappingTarget Project project){
-        project.setCategory(projectRequestDto.getCategories().getFirst());
+    default List<Category> toCategories (List<String> cats){
+        return cats.stream().map(Category::new).toList();
+    }
+
+    default List<String> toCategoriesString(List<Category> categoryList){
+        return categoryList.stream().map(Category::getCategory).toList();
     }
 
     @AfterMapping
@@ -51,24 +55,31 @@ public interface ProjectMapper {
     @Mapping(target = "requiredSkills", ignore = true)
     @Mapping(target = "id", source = "projectId")
     @Mapping(source = "deadline", target = "applicationDeadline")
-    @Mapping(target = "categories", ignore = true)
     ProjectResponseDto toProjectDto (Project project);
 
     @Mapping(target = "requiredSkills", ignore = true)
     @Mapping(target = "id", source = "projectId")
     @Mapping(source = "deadline", target = "applicationDeadline")
-    @Mapping(target = "categories", ignore = true)
     ProjectResponseDTOv toProjectDtov (Project project);
+
+    @Mapping(target = "requiredSkills", ignore = true)
+    @Mapping(target = "id", source = "projectId")
+    ProjectViewResponse toProjectViewResponse (Project project);
+
+    @AfterMapping
+    default void updateProjectViewResponseSkills(Project project, @MappingTarget ProjectViewResponse projectViewResponse){
+        projectViewResponse.setRequiredSkills(project.getRequiredSkills().stream().map(Skill::getName).collect(Collectors.toSet()));
+    }
+    List<ProjectViewResponse> toProjectViewResponses (List<Project> project);
 
     @AfterMapping
     default void updateVolunteerAndOrganization(Project project, @MappingTarget ProjectResponseDto projectDto){
         projectDto.setTotalApplicants(project.getVolunteerCount());
-        projectDto.setCategories(List.of(project.getCategory()));
     }
     @AfterMapping
     default void updateProjectResponseV(Project project, @MappingTarget ProjectResponseDTOv projectDto){
         projectDto.setTotalApplicants(project.getVolunteerCount());
-        projectDto.setCategories(List.of(project.getCategory()));
+
         projectDto.setRequiredSkills(project.getRequiredSkills().stream().map(Skill::toString).collect(Collectors.toSet()));
     }
 

@@ -14,6 +14,11 @@ public class VolunteerApplicationDto {
     private String lastname;
     private List<String> skills;
     private String reason;
+    private Boolean isAvailable;
+    private List<String> specialSkills;
+    private String aboutVolunteer;
+    private String additionalInfo;
+    private String profileUrl;
     private ProjectAppliedDto projectApplied;
 
     public VolunteerApplicationDto(ProjectApplication application){
@@ -21,6 +26,11 @@ public class VolunteerApplicationDto {
         this.lastname = application.getVolunteer().getLastname();
         this.skills = application.getVolunteer().getSkills().stream().map(Skill::getName).toList();
         this.reason = application.getApplicationReason();
+        this.aboutVolunteer = application.getAboutVolunteer();
+        this.specialSkills = application.getSpecialSkills().stream().map(Skill::getName).toList();
+        this.isAvailable = application.getIsAvailable();
+        this.additionalInfo = application.getAdditionalInfo();
+        this.profileUrl = application.getVolunteer().getProfileUrl();
         projectApplied = new ProjectAppliedDto(application);
     }
 }

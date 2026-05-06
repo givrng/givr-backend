@@ -78,6 +78,7 @@ public class Project {
     @JoinTable(name = "project_skills", joinColumns = @JoinColumn(name = "project_id"), inverseJoinColumns = @JoinColumn(name = "skill_id"))
     private Set<Skill> requiredSkills;
 
+    @Column(length = 300)
     private String specialRequirements;
 
     @OneToMany(mappedBy = "project")

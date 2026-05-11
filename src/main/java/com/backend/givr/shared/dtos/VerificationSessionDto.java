@@ -34,7 +34,7 @@ public class VerificationSessionDto {
         public Claims(OrganizationVerificationSession verificationSession){
             this.organizationName = verificationSession.getClaimedOrgName();
             Location l = verificationSession.getClaimedLocation();
-            this.address = String.format("%s, %s, %s", verificationSession.getClaimedAddress(), l.getLga(), l.getState());
+            this.address = l!=null?String.format("%s, %s, %s", verificationSession.getClaimedAddress(), l.getLga(), l.getState()): String.format("%s, %s, %s", verificationSession.getClaimedAddress(), "","");
             this.cacRegNumber = verificationSession.getClaimedCACRegNumber();
             this.idNumber = verificationSession.getIdNumber();
             this.idType = verificationSession.getIdType();

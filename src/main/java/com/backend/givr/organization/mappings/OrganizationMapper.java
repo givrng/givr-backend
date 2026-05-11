@@ -54,10 +54,10 @@ public interface OrganizationMapper {
 
     @AfterMapping
     default void updateOrganizationDtoAddress(OrganizationVerificationSession verificationSession, @MappingTarget OrganizationDto organizationDto){
-        organizationDto.setAddress(verificationSession.getClaimedAddress().address());
+        organizationDto.setAddress(verificationSession.getClaimedAddress());
         LocationDto locationDto = new LocationDto();
-        locationDto.setLga(verificationSession.getClaimedAddress().LGA());
-        locationDto.setState(verificationSession.getClaimedAddress().state());
+        locationDto.setLga(verificationSession.getClaimedLocation().getLga());
+        locationDto.setState(verificationSession.getClaimedLocation().getState());
         organizationDto.setLocation(locationDto);
     }
 

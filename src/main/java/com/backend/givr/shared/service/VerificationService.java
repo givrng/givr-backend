@@ -8,6 +8,7 @@ import com.backend.givr.organization.repo.OrganizationRepo;
 import com.backend.givr.organization.repo.VerificationPaymentRepo;
 import com.backend.givr.organization.security.OrganizationDetailsService;
 import com.backend.givr.organization.security.PaymentService;
+import com.backend.givr.shared.entity.Location;
 import com.backend.givr.shared.entity.OrganizationVerificationSession;
 import com.backend.givr.shared.exceptions.DuplicateAccountException;
 import com.backend.givr.shared.mapper.VerificationMapper;
@@ -44,7 +45,8 @@ public class VerificationService {
     private RestTemplate restTemplate;
     @Autowired
     private PaystackClient merchant;
-
+    @Autowired
+    private LocationService locationService;
     @Autowired
     private OrganizationDetailsService detailsService;
     @Autowired
@@ -83,8 +85,10 @@ public class VerificationService {
      * */
     @Transactional
     public CheckoutResponse createVerificationSession(Organization organization, OrganizationUpdateDto organizationUpdateDto){
-        if(organizationUpdateDto.getLocation() == null || organizationUpdateDto.getCacRegNumber() == null || organizationUpdateDto.getCacDocUrl() ==null || organizationUpdateDto.getContactVerification() == null)
+        if(organizationUpdateDto.getLocation() == null || organizationUpdateDto.getCacRegNumber() == null || organizationUpdateDto.getCacDocUrl() ==null )
             return null;
+
+        Location location = locationService.createLocation(organizationUpdateDto.getLocation());
 
         String claimedCacRegNumber = organizationUpdateDto.getCacRegNumber().trim().toUpperCase();
         if(organizationRepo.existsByCacRegNumber(claimedCacRegNumber))
@@ -94,9 +98,11 @@ public class VerificationService {
 
         if(verificationSession.isPresent()){
             var session = verificationSession.get();
-            mapper.updateVerificationSess(organizationUpdateDto, session);
+            session.setClaimedLocation(location);
+            mapper.updateVerificationSession(organizationUpdateDto, session);
         }else {
             OrganizationVerificationSession session = new OrganizationVerificationSession(organization, organizationUpdateDto);
+            session.setClaimedLocation(location);
             verificationSessionRepo.save(session);
         }
 

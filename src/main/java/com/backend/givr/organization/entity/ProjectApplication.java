@@ -47,7 +47,6 @@ public class ProjectApplication {
     @Deprecated
     private String availableDays;
 
-    @Column(nullable = false)
     private Boolean isAvailable;
 
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
@@ -57,7 +56,7 @@ public class ProjectApplication {
             inverseJoinColumns = @JoinColumn(name = "skill_id", referencedColumnName = "id")
     )
     private List<Skill> specialSkills;
-    @Column(length = 300, nullable = false)
+    @Column(length = 300)
     private String aboutVolunteer;
     @Column(length = 200)
     private String additionalInfo;

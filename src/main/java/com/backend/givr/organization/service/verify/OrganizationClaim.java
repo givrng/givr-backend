@@ -1,5 +1,6 @@
 package com.backend.givr.organization.service.verify;
 
+import com.backend.givr.shared.entity.Location;
 import com.backend.givr.shared.entity.OrganizationVerificationSession;
 import lombok.Getter;
 
@@ -19,7 +20,8 @@ public class OrganizationClaim {
     public OrganizationClaim(OrganizationVerificationSession verificationSession){
         this.cacRegistrationNumber = verificationSession.getClaimedCACRegNumber();
         this.organizationName = verificationSession.getClaimedOrgName();
-        this.registeredAddress = verificationSession.getClaimedAddress();
+        Location l = verificationSession.getClaimedLocation();
+        this.registeredAddress = new Address(verificationSession.getClaimedAddress(),l.getLga(), l.getState() );
     }
 
 }

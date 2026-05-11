@@ -54,7 +54,7 @@ public class ControllerAdviser {
     }
     @ExceptionHandler(DuplicateAccountException.class)
     public ResponseEntity<ErrorMessage> handleDuplicateAccountException(DuplicateAccountException e){
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorMessage(String.format("Failed to create account: %s", e.getLocalizedMessage())));
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorMessage(String.format("%s", e.getLocalizedMessage())));
     }
     @ExceptionHandler(InconsistentProjectDatesException.class)
     public ResponseEntity<ErrorMessage> handleInconsistentProjectDateException(InconsistentProjectDatesException e){

@@ -14,13 +14,19 @@ public interface VerificationMapper {
     @Mapping(source = "name", target = "claimedOrgName")
     OrganizationVerificationSession toVerificationSession(OrganizationUpdateDto updateDto);
 
+    @Mapping(source = "name", target = "claimedOrgName")
+    @Mapping(source = "cacRegNumber", target = "claimedCACRegNumber")
+    @Mapping(source = "address", target = "claimedAddress")
     void updateVerificationSession(OrganizationUpdateDto updateDto, @MappingTarget OrganizationVerificationSession verificationSession);
 
     @AfterMapping
     default void updateVerificationSess(OrganizationUpdateDto updateDto, @MappingTarget OrganizationVerificationSession verificationSession){
-        verificationSession.setIdNumber(updateDto.getContactVerification().idNumber().trim().toUpperCase());
-        verificationSession.setUsrImgUrl(updateDto.getContactVerification().usrImgUrl());
+        verificationSession.setIdNumber(null);
+        if(updateDto.getContactVerification().idNumber() !=null) {
+            verificationSession.setIdNumber(updateDto.getContactVerification().idNumber().trim().toUpperCase());
+        }
         verificationSession.setIdType(updateDto.getContactVerification().idType());
+        verificationSession.setUsrImgUrl(updateDto.getContactVerification().usrImgUrl());
         verificationSession.setClaimedType(updateDto.getCategory().getFirst());
 
     }

@@ -39,10 +39,10 @@ public class OrganizationVerificationSession {
     @URL
     private String cacDocUrl;
     // Contact person verification information
-    @Column(nullable = false)
+
     @Enumerated(EnumType.STRING)
     private IDType idType;
-    @Column(nullable = false)
+
     private String idNumber;
     @URL
     @Column
@@ -58,7 +58,7 @@ public class OrganizationVerificationSession {
     @Setter
     @ManyToOne
     private Location claimedLocation;
-    private Address claimedAddress;
+    private String claimedAddress;
     private String website;
     @Enumerated(EnumType.STRING)
     @Setter
@@ -74,14 +74,16 @@ public class OrganizationVerificationSession {
 
     public OrganizationVerificationSession(Organization organization, OrganizationUpdateDto updateDto){
         this.organization = organization;
-        this.claimedAddress = new Address(updateDto.getAddress(), updateDto.getLocation().getLga(), updateDto.getLocation().getState());
+        this.claimedAddress = updateDto.getAddress();
         this.claimedOrgName = updateDto.getName();
         this.claimedCACRegNumber = updateDto.getCacRegNumber();
         this.reviewStatus = ReviewStatus.Pending;
         this.claimedType = updateDto.getCategory().getFirst();
         this.cacDocUrl = updateDto.getCacDocUrl();
-        this.idType = updateDto.getContactVerification().idType();
-        this.idNumber = updateDto.getContactVerification().idNumber();
+        if(updateDto.getContactVerification() != null){
+            this.idType = updateDto.getContactVerification().idType();
+            this.idNumber = updateDto.getContactVerification().idNumber();
+        }
         this.usrImgUrl = updateDto.getContactVerification().usrImgUrl();
         this.description = updateDto.getDescription();
         this.website = updateDto.getWebsite();

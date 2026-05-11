@@ -1,6 +1,7 @@
 package com.backend.givr.shared.dtos;
 
 import com.backend.givr.organization.service.verify.Address;
+import com.backend.givr.shared.entity.Location;
 import com.backend.givr.shared.entity.OrganizationVerificationSession;
 import com.backend.givr.shared.enums.IDType;
 import com.backend.givr.shared.enums.ReviewStatus;
@@ -32,8 +33,8 @@ public class VerificationSessionDto {
 
         public Claims(OrganizationVerificationSession verificationSession){
             this.organizationName = verificationSession.getClaimedOrgName();
-            Address address1 = verificationSession.getClaimedAddress();
-            this.address = String.format("%s, %s, %s", address1.address(), address1.LGA(), address1.state());
+            Location l = verificationSession.getClaimedLocation();
+            this.address = String.format("%s, %s, %s", verificationSession.getClaimedAddress(), l.getLga(), l.getState());
             this.cacRegNumber = verificationSession.getClaimedCACRegNumber();
             this.idNumber = verificationSession.getIdNumber();
             this.idType = verificationSession.getIdType();

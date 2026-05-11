@@ -82,6 +82,9 @@ public class QoreIdClient implements VerificationClient {
             case null, default -> "";
         };
 
+        if(session.getIdNumber()==null || session.getIdNumber().isEmpty())
+            return;
+
         if(expiresAt == null || accessToken == null)
             authenticate();
 

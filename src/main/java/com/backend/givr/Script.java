@@ -21,9 +21,20 @@ public class Script implements Runnable{
     @Override
     public void run() {
         System.out.println("Script is running");
-        List<Project> projects = projectService.getAllProjectsByStatus(ProjectStatus.OPEN);
+       List<Project> projects = projectService.getAllProjectsByStatus(ProjectStatus.OPEN);
+        int count = 0;
+        
+        for(Project project: projects){
+            worker.sendProjectListing(project);
+            count++;
 
-        projects.forEach(project -> worker.sendProjectListing(project));
+            if(count % 5 == 0){
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+            }
     }
 
     @PostConstruct

@@ -6,6 +6,7 @@ import com.backend.givr.organization.entity.Project;
 import com.backend.givr.organization.entity.ProjectApplication;
 import com.backend.givr.organization.repo.ProjectApplicationRepo;
 import com.backend.givr.organization.security.OrganizationDetailsService;
+import com.backend.givr.redis.RedisService;
 import com.backend.givr.shared.dtos.ProjectApplicationForm;
 import com.backend.givr.shared.dtos.VolunteerApplicationDto;
 import com.backend.givr.shared.email.EmailService;
@@ -41,6 +42,8 @@ public class ApplicationService {
     private SkillMapper skillMapper;
     @Autowired
     private ParticipationService participationService;
+    @Autowired
+    private RedisService redisService;
 
     public ProjectApplication apply(Volunteer volunteer, ProjectApplicationForm applicationForm, String email){
         Project project = em.getReference(Project.class, applicationForm.projectId());
@@ -112,6 +115,10 @@ public class ApplicationService {
 
         application.setStatus(status);
         repo.save(application);
+
+        if(status == ApplicationStatus.APPROVED){
+//            redisService.addAuthorizedUserProjects(application.getVolunteer().getVolunteerId(), project.getProjectId());
+        }
         notifyApplicationChange(application, project, status);
     }
 

@@ -15,6 +15,8 @@ import org.thymeleaf.templateresolver.ClassLoaderTemplateResolver;
 
 import java.net.Proxy;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 @Configuration
 @EnableAsync
@@ -63,5 +65,9 @@ public class ApplicationConfiguration {
                 "api_key", cloudinaryApiKey,
                 "api_secret", cloudinaryApiSecret
         ));
+    }
+    @Bean(name = "executorService")
+    ExecutorService executorService(){
+        return Executors.newVirtualThreadPerTaskExecutor();
     }
 }

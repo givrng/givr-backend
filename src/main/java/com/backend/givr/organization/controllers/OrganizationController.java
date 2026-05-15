@@ -12,6 +12,7 @@ import com.backend.givr.shared.interfaces.SecurityDetails;
 import com.backend.givr.shared.mapper.ProjectMapper;
 import com.backend.givr.shared.otp.OtpDto;
 import com.backend.givr.shared.service.LogoutService;
+import com.backend.givr.volunteer.dtos.AuthDetailsDto;
 import com.resend.core.exception.ResendException;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,6 +43,11 @@ public class OrganizationController {
     public ResponseEntity<Void> createOrganizationAccount(@RequestBody @Valid CreateOrganizationDto createOrganizationDto){
         service.createOrganization(createOrganizationDto);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/me/details")
+    public ResponseEntity<AuthDetailsDto> getAuthDetails(@AuthenticationPrincipal SecurityDetails details){
+        return ResponseEntity.ok(new AuthDetailsDto(details.getId(), details.getUsername()));
     }
 
     @GetMapping("/dashboard")
@@ -122,8 +128,9 @@ public class OrganizationController {
     }
 
     @PatchMapping("/projects/{projectId}/publish")
-    public ResponseEntity<Void> publicProject(@PathVariable("projectId") Long id){
-        service.publishProject(id);
+    public ResponseEntity<Void> publicProject(@PathVariable("projectId") Long id, @AuthenticationPrincipal SecurityDetails details){
+
+        service.publishProject(id, details);
         return ResponseEntity.noContent().build();
     }
 

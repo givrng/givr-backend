@@ -1,5 +1,6 @@
 package com.backend.givr.shared.email;
 
+import com.backend.givr.organization.entity.Project;
 import com.backend.givr.shared.enums.ReviewStatus;
 import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
@@ -118,5 +119,24 @@ public class ThymeleafTemplateService {
         context.setVariable("clientUrl", clientUrl);
         context.setVariable("projectUrl", projectUrl);
         return engine.process("email/projectCard", context);
+    }
+
+    public String projectListCTA(Project p, String volunteerFirstname){
+
+        Context context = new Context();
+        String description = p.getDescription();
+        int shortDescriptionLength = description.length() < 150 ? description.length(): Math.toIntExact(Math.round(description.length() * 0.7));
+
+        context.setVariable("projectCardUrl", p.getProjectCardUrl());
+        context.setVariable("firstname", volunteerFirstname);
+        context.setVariable("projectName", p.getTitle());
+        context.setVariable("organizationName", p.getOrganization().getOrganizationName());
+        context.setVariable("address", p.getAddress());
+        context.setVariable("startDate", p.getStartDate().toString());
+        context.setVariable("endDate", p.getEndDate().toString());
+        context.setVariable("description", String.format("%s ...", p.getDescription().substring(shortDescriptionLength)));
+        context.setVariable("shareableLink", p.getShareableLink());
+
+        return engine.process("email/ProjectListingCTA", context);
     }
 }

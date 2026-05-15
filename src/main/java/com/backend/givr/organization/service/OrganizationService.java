@@ -2,6 +2,7 @@ package com.backend.givr.organization.service;
 
 import com.backend.givr.organization.dtos.*;
 import com.backend.givr.organization.entity.Organization;
+import com.backend.givr.redis.RedisService;
 import com.backend.givr.shared.dtos.ParticipationDto;
 import com.backend.givr.organization.entity.Project;
 import com.backend.givr.organization.mappings.OrganizationMapper;
@@ -48,6 +49,8 @@ public class OrganizationService {
     @Autowired
     private ProjectMapper projectMapper;
     @Autowired
+    private ProjectAsyncServiceWorker projectAsyncServiceWorker;
+    @Autowired
     private OrganizationRepo repo;
     @Autowired
     private OrganizationDetailsService service;
@@ -73,6 +76,8 @@ public class OrganizationService {
     private RatingService ratingService;
     @Autowired
     private EntityManager em;
+    @Autowired
+    private RedisService redisService;
 
     @Value("${client.app.baseurl}")
     private String clientAppBaseUrl;
@@ -142,10 +147,18 @@ public class OrganizationService {
         return applicationService.getProjectsApplications(organization);
     }
 
-    public void publishProject(Long projectId){
+    public void publishProject(Long projectId, SecurityDetails details){
         Project project = projectService.findProjectById(projectId);
+        // Grants organization access to project in-app messages
+//        redisService.addAuthorizedUserProjects(details.getId(), projectId);
         project.setStatus(ProjectStatus.OPEN);
-        projectService.save(project);
+        try{
+            projectService.save(project);
+            projectAsyncServiceWorker.sendProjectListing(project);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
     }
 
     public OrganizationDashboard getOrganizationDashboard(SecurityDetails details){

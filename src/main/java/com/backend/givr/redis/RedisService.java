@@ -9,7 +9,6 @@ import java.time.Duration;
 import java.util.List;
 
 
-@Service
 public class RedisService {
     @Autowired
     private RedisTemplate<String, Object> redisTemplate;

@@ -2,7 +2,6 @@ package com.backend.givr.organization.service;
 
 import com.backend.givr.organization.dtos.*;
 import com.backend.givr.organization.entity.Organization;
-import com.backend.givr.redis.RedisService;
 import com.backend.givr.shared.dtos.ParticipationDto;
 import com.backend.givr.organization.entity.Project;
 import com.backend.givr.organization.mappings.OrganizationMapper;
@@ -76,8 +75,8 @@ public class OrganizationService {
     private RatingService ratingService;
     @Autowired
     private EntityManager em;
-    @Autowired
-    private RedisService redisService;
+//    @Autowired
+//    private RedisService redisService;
 
     @Value("${client.app.baseurl}")
     private String clientAppBaseUrl;

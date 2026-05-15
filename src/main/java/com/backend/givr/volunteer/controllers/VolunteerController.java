@@ -52,6 +52,10 @@ public class VolunteerController {
         return ResponseEntity.noContent().build();
     }
 
+    @GetMapping("/me/details")
+    public ResponseEntity<AuthDetailsDto> getAuthDetails(@AuthenticationPrincipal SecurityDetails details){
+        return ResponseEntity.ok(new AuthDetailsDto(details.getId(), details.getUsername()));
+    }
     @GetMapping("/dashboard")
     public ResponseEntity<VolunteerDashboard> getVolunteerDashboard(@AuthenticationPrincipal SecurityDetails volunteerDetails){
         return ResponseEntity.ok(service.getVolunteerDashboard(volunteerDetails.getId()));

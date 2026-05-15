@@ -173,7 +173,6 @@ public class EmailService {
     /**
      * Creates a recipient for organization broadcasts
      * @return Contact ID*/
-
     public String createContact(String email, String firstname, String lastname) throws ResendException {
         System.out.printf("%s %s %s", firstname, lastname, email);
         CreateContactOptions params = CreateContactOptions.builder()
@@ -227,5 +226,10 @@ public class EmailService {
 
     public void deleteSegment(String segmentId) throws ResendException {
        resend.segments().remove(segmentId);
+    }
+
+    public void sendProjectListingNotification(Project project, String volunteerFirstname, String recipient){
+        String html = emailTemplateService.projectListCTA(project, volunteerFirstname);
+        sendEmail(html, recipient, "Your Next Volunteer Opportunity Awaits");
     }
 }

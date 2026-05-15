@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<body>
+<table width="100%" cellpadding="0" cellspacing="0" style="padding:20px 0;">
+    <tr>
+        <td align="center">
+            <table width="100%" cellpadding="0" cellspacing="0" style="padding:20px 0; background:#F3F4F6;">
+                <tr>
+                    <td align="center">
+                        <table width="600" cellpadding="0" cellspacing="0"
+                               style="background:#FFFFFF; border-radius:10px; overflow:hidden; font-family:Arial, sans-serif;">
+
+                            <!-- HEADER -->
+                            <tr>
+                                <td style="background:#0A9BF0; padding:28px; text-align:center;">
+                                    <h1 style="color:#FFFFFF; margin:0; font-size:28px;">
+                                        A New Volunteer Opportunity Awaits
+                                    </h1>
+                                </td>
+                            </tr>
+
+                            <!-- HERO IMAGE -->
+                            <tr>
+                                <td>
+                                    <img th:src="${projectCardUrl}"
+                                         alt="Project Banner"
+                                         width="100%"
+                                         style="display:block; max-height:280px; object-fit:cover;">
+                                </td>
+                            </tr>
+
+                            <!-- BODY -->
+                            <tr>
+                                <td style="padding:32px; color:#1F2937;">
+
+                                    <p style="font-size:16px;">
+                                        Hi <strong th:text="${firstname}"></strong>,
+                                    </p>
+
+                                    <p style="font-size:16px; line-height:1.7;">
+                                        A new volunteering project matching your interests and skills
+                                        has just been posted on <strong>Givr Nigeria</strong>.
+                                    </p>
+
+                                    <!-- PROJECT CARD -->
+                                    <div style="
+                                background:#F9FAFB;
+                                border:1px solid #E5E7EB;
+                                border-radius:8px;
+                                padding:20px;
+                                margin:24px 0;
+                        ">
+
+                                        <h2 style="
+                                    margin-top:0;
+                                    color:#111827;
+                                    font-size:22px;
+                            "
+                                            th:text="${projectName}">
+                                        </h2>
+
+                                        <p style="margin:8px 0;">
+                                            <strong>Organisation:</strong>
+                                            <span th:text="${organizationName}"></span>
+                                        </p>
+
+                                        <p style="margin:8px 0;">
+                                            <strong>Location:</strong>
+                                            <span th:text="${address}"></span>
+                                        </p>
+
+                                        <p style="margin:8px 0;">
+                                            <strong>Project Duration:</strong>
+                                            <span th:text="${startDate}"></span>
+                                            -
+                                            <span th:text="${endDate}"></span>
+                                        </p>
+
+                                        <p style="
+                                    margin-top:18px;
+                                    color:#374151;
+                                    line-height:1.6;
+                            "
+                                           th:text="${shortDescription}">
+                                        </p>
+
+                                    </div>
+
+                                    <!-- CTA -->
+                                    <div style="text-align:center; margin:36px 0;">
+                                        <a th:href="${shareableLink}"
+                                           style="
+                                    background:#0A9BF0;
+                                    color:#FFFFFF;
+                                    text-decoration:none;
+                                    padding:16px 28px;
+                                    border-radius:6px;
+                                    font-weight:bold;
+                                    display:inline-block;
+                                    font-size:16px;
+                               ">
+                                            Apply Now
+                                        </a>
+                                    </div>
+
+                                    <!-- SECONDARY TEXT -->
+                                    <p style="
+                                font-size:15px;
+                                line-height:1.7;
+                                color:#4B5563;
+                        ">
+                                        Volunteers like you help create meaningful impact in communities
+                                        across Nigeria. If this opportunity aligns with your passion,
+                                        we encourage you to apply early.
+                                    </p>
+
+                                    <p style="
+                                font-size:14px;
+                                color:#6B7280;
+                                margin-top:24px;
+                        ">
+                                        You received this email because your volunteer profile matches
+                                        this opportunity.
+                                    </p>
+
+                                    <p style="margin-top:32px;">
+                                        — <strong>The Givr Nigeria Team</strong>
+                                    </p>
+                                </td>
+                            </tr>
+
+                            <!-- FOOTER -->
+                            <tr>
+                                <td style="
+                            background:#F9FAFB;
+                            text-align:center;
+                            padding:18px;
+                            font-size:12px;
+                            color:#6B7280;
+                    "
+                                    th:text="|© ${#dates.year(#dates.createNow())} Givr Nigeria|">
+                                </td>
+                            </tr>
+
+                        </table>
+                    </td>
+                </tr>
+            </table>
+            ```
+
+        </td>
+    </tr>
+</table>
+</body>
+</body>
+</html>

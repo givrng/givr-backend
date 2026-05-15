@@ -233,4 +233,8 @@ public class VolunteerService {
             throw new RuntimeException(e);
         }
     }
+
+    public List<Volunteer> getAllByLocation(Location location){
+        return repo.findAllByLocationState(location.getState());
+    }
 }

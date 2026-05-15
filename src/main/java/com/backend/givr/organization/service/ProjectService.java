@@ -182,4 +182,8 @@ public class ProjectService {
         Organization organization = manager.getReference(Organization.class, orgId);
         return mapper.toProjectViewResponses(repo.findAllByOrganizationAndStatusNot(organization, ProjectStatus.DRAFT));
     }
+
+    public List<Project> getAllProjectsByStatus(ProjectStatus status){
+        return repo.findAllByStatus(status);
+    }
 }

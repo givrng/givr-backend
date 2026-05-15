@@ -41,6 +41,8 @@ public class ApplicationService {
     private SkillMapper skillMapper;
     @Autowired
     private ParticipationService participationService;
+//    @Autowired
+//    private RedisService redisService;
 
     public ProjectApplication apply(Volunteer volunteer, ProjectApplicationForm applicationForm, String email){
         Project project = em.getReference(Project.class, applicationForm.projectId());
@@ -112,6 +114,10 @@ public class ApplicationService {
 
         application.setStatus(status);
         repo.save(application);
+
+        if(status == ApplicationStatus.APPROVED){
+//            redisService.addAuthorizedUserProjects(application.getVolunteer().getVolunteerId(), project.getProjectId());
+        }
         notifyApplicationChange(application, project, status);
     }
 

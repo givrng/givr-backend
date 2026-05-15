@@ -6,7 +6,6 @@ import com.backend.givr.organization.entity.Organization;
 import com.backend.givr.organization.entity.Project;
 import com.backend.givr.organization.repo.ProjectRepo;
 import com.backend.givr.organization.security.ProjectServiceWorker;
-import com.backend.givr.shared.dtos.RenderProjectDto;
 import com.backend.givr.shared.email.EmailService;
 import com.backend.givr.shared.entity.Location;
 import com.backend.givr.shared.enums.ProjectStatus;
@@ -16,15 +15,12 @@ import com.backend.givr.shared.mapper.ProjectMapper;
 import com.backend.givr.shared.service.*;
 import com.backend.givr.volunteer.dtos.ProjectViewResponse;
 import com.backend.givr.volunteer.entity.Volunteer;
-import com.cloudinary.Cloudinary;
-import com.resend.core.exception.ResendException;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,7 +29,6 @@ import org.springframework.util.StringUtils;
 import java.time.*;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 @Service
@@ -86,8 +81,7 @@ public class ProjectService {
     private void handleProject(Project project, ProjectRequestDto projectRequestDto){
         // Verify application date are valid
         if(!projectDatesValid(project))
-            throw new InconsistentProjectDatesException("Cannot start or end a project before current date. Application deadline must be before the project's start date and the project's start date must be before its end date");
-
+            throw new InconsistentProjectDatesException("Project dates are invalid. Start and end dates cannot be in the past, the application deadline must be before the start date, and the start date must be before the end date.");
         Location savedLocation = locationService.createLocation(projectRequestDto.getLocation());
         project.setLocation(savedLocation);
 
@@ -116,22 +110,22 @@ public class ProjectService {
         if(!project.getTitle().equals(projectRequestDto.getTitle()) || !project.getDescription().equals(projectRequestDto.getDescription()))
             worker.createProjectCard(project);
 
-        if(projectRequestDto.getStatus() != null && projectRequestDto.getStatus() != project.getStatus())
-            project.setStatus(projectRequestDto.getStatus());
         handleProject(project, projectRequestDto);
+        if(project.getStartDate().isBefore(LocalDate.parse(projectRequestDto.getStartDate())) )
+            project.setStatus(ProjectStatus.OPEN);
 
         return project;
     }
     private boolean projectDatesValid(Project project){
-        var startDateBeforeNow = project.getStartDate().isAfter(LocalDate.now(ZoneId.of("Africa/Lagos")));
-        var endDateBeforeNow = project.getEndDate().isAfter(LocalDate.now(ZoneId.of("Africa/Lagos")));
+        var startDateAfterNow = project.getStartDate().isAfter(LocalDate.now(ZoneId.of("Africa/Lagos")));
+        var endDateAfterNow = project.getEndDate().isAfter(LocalDate.now(ZoneId.of("Africa/Lagos")));
         var deadlineBeforeStart = project.getDeadline().isBefore(project.getStartDate());
         var deadlineEqualsStart = project.getDeadline().isEqual(project.getStartDate());
         var startBeforeEndDate = project.getStartDate().isBefore(project.getEndDate());
         var startEqualsEndDate = project.getStartDate().isEqual(project.getEndDate());
         if(startEqualsEndDate)
             project.setReviewable(true);
-        return (startBeforeEndDate || startEqualsEndDate) && endDateBeforeNow && (deadlineBeforeStart || deadlineEqualsStart) && startDateBeforeNow ;
+        return (startBeforeEndDate || startEqualsEndDate) && endDateAfterNow && (deadlineBeforeStart || deadlineEqualsStart) && startDateAfterNow;
     }
     public  Project findProjectById(Long projectId){
         return repo.findById(projectId).orElseThrow(()-> new EntityNotFoundException(String.format("Project with id [%s] does not exist", projectId)));

@@ -26,7 +26,6 @@ public class Script implements Runnable{
         projects.forEach(project -> worker.sendProjectListing(project));
     }
 
-    @PostConstruct
     public void start(){
         run();
     }

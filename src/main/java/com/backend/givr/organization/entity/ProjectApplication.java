@@ -49,11 +49,11 @@ public class ProjectApplication {
 
     private Boolean isAvailable;
 
-    @ManyToMany(@JoinTable(
+    @ManyToMany
+    @JoinTable(
             name = "project_applicant_skills",
             joinColumns = @JoinColumn(name = "project_applicant_id", referencedColumnName = "id"),
-            inverseJoinColumns = @JoinColumn(name = "skill_id", referencedColumnName = "id")
-    )
+            inverseJoinColumns = @JoinColumn(name = "skill_id", referencedColumnName = "id"))
     private List<Skill> specialSkills;
     @Column(length = 300)
     private String aboutVolunteer;

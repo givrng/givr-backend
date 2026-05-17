@@ -14,6 +14,7 @@ import com.backend.givr.shared.exceptions.IllegalOperationException;
 import com.backend.givr.shared.exceptions.MaxApplicantsReachedException;
 import com.backend.givr.shared.exceptions.ProjectDeadlinePastException;
 import com.backend.givr.shared.mapper.SkillMapper;
+import com.backend.givr.shared.service.SkillService;
 import com.backend.givr.volunteer.entity.Volunteer;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
@@ -38,7 +39,7 @@ public class ApplicationService {
     @Autowired
     private OrganizationDetailsService organizationDetailsService;
     @Autowired
-    private SkillMapper skillMapper;
+    private SkillService skillService;
     @Autowired
     private ParticipationService participationService;
 //    @Autowired
@@ -60,7 +61,7 @@ public class ApplicationService {
             application.setAdditionalInfo(applicationForm.additionalInfo());
 
         if(Objects.nonNull(applicationForm.mySkills()))
-            application.setSpecialSkills(skillMapper.toSkills(applicationForm.mySkills()));
+            application.setSpecialSkills(skillService.updateSkills(applicationForm.mySkills()).stream().toList());
 
         try{
             var projectApplication =  repo.save(application);

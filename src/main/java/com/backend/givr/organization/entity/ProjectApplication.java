@@ -49,7 +49,7 @@ public class ProjectApplication {
 
     private Boolean isAvailable;
 
-    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @ManyToMany
     @JoinTable(
             name = "project_applicant_skills",
             joinColumns = @JoinColumn(name = "project_applicant_id", referencedColumnName = "id"),

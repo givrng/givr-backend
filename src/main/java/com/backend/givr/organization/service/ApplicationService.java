@@ -7,6 +7,7 @@ import com.backend.givr.organization.entity.ProjectApplication;
 import com.backend.givr.organization.repo.ProjectApplicationRepo;
 import com.backend.givr.organization.security.OrganizationDetailsService;
 import com.backend.givr.shared.dtos.ProjectApplicationForm;
+import com.backend.givr.shared.service.SkillService;
 import com.backend.givr.shared.dtos.VolunteerApplicationDto;
 import com.backend.givr.shared.email.EmailService;
 import com.backend.givr.shared.enums.ApplicationStatus;
@@ -41,6 +42,8 @@ public class ApplicationService {
     private SkillMapper skillMapper;
     @Autowired
     private ParticipationService participationService;
+    @Autowired
+    private SkillService skillService;
 //    @Autowired
 //    private RedisService redisService;
 

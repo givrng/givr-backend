@@ -63,7 +63,7 @@ public class ApplicationService {
             application.setAdditionalInfo(applicationForm.additionalInfo());
 
         if(Objects.nonNull(applicationForm.mySkills()))
-            application.setSpecialSkills(skillService.updateSkills(applicationForm.mySkills()));
+            application.setSpecialSkills(skillService.updateSkills(applicationForm.mySkills());
 
         try{
             var projectApplication =  repo.save(application);

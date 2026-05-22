@@ -37,6 +37,7 @@ public class GivrCookie {
                 .maxAge(JwtUtil.ACCESSEXPIRATION)
                 .sameSite(Cookie.SameSite.NONE.attributeValue())
                 .httpOnly(true)
+                .domain(".givr.ng")
                 .secure(true)
                 .build();
 

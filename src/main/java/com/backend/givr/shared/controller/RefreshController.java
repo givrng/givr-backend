@@ -98,6 +98,7 @@ public class RefreshController {
                     .path("/")
                     .secure(true)
                     .httpOnly(true)
+                    .domain(".givr.ng")
                     .sameSite("None")
                     .build();
             ResponseCookie refreshCookie = ResponseCookie.from("RefreshToken").value(refreshToken)

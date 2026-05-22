@@ -1,26 +1,23 @@
 package com.backend.givr;
 
-import com.backend.givr.organization.entity.Project;
-import com.backend.givr.organization.service.ProjectAsyncServiceWorker;
+import com.backend.givr.organization.service.ParticipationService;
 import com.backend.givr.organization.service.ProjectService;
-import com.backend.givr.shared.enums.ProjectStatus;
+import com.backend.givr.shared.email.EmailService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
-import java.util.List;
 
 @Component
 public class Script implements Runnable{
     @Autowired
+    private ParticipationService participationService;
+    @Autowired
     private ProjectService projectService;
     @Autowired
-    private ProjectAsyncServiceWorker worker;
+    private EmailService emailService;
+
     @Override
     public void run() {
-        System.out.println("Script is running");
-        List<Project> projects = projectService.getAllProjectsByStatus(ProjectStatus.OPEN);
 
-        projects.forEach(project -> worker.sendProjectListing(project));
     }
 
     public void start(){

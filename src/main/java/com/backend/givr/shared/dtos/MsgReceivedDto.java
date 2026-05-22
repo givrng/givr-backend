@@ -10,7 +10,7 @@ public class MsgReceivedDto {
     private Integer projectId;
     private String content;
 
-    private String sendBy;
+    private String sentBy;
     private String username;
     private AccountType role;
     private LocalDateTime sentAt;

@@ -2,6 +2,8 @@ package com.backend.givr.organization.service;
 
 import com.backend.givr.organization.dtos.*;
 import com.backend.givr.organization.entity.Organization;
+import com.backend.givr.organization.security.ProjectServiceWorker;
+import com.backend.givr.redis.RedisService;
 import com.backend.givr.shared.dtos.ParticipationDto;
 import com.backend.givr.organization.entity.Project;
 import com.backend.givr.organization.mappings.OrganizationMapper;
@@ -33,11 +35,14 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import reactor.core.publisher.Mono;
 
+import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 
@@ -48,7 +53,9 @@ public class OrganizationService {
     @Autowired
     private ProjectMapper projectMapper;
     @Autowired
-    private ProjectAsyncServiceWorker projectAsyncServiceWorker;
+    private ProjectServiceWorker projectAsyncServiceWorker;
+    @Autowired
+    private RedisTemplate<String, Object> redisTemplate;
     @Autowired
     private OrganizationRepo repo;
     @Autowired
@@ -75,8 +82,8 @@ public class OrganizationService {
     private RatingService ratingService;
     @Autowired
     private EntityManager em;
-//    @Autowired
-//    private RedisService redisService;
+    @Autowired
+    private RedisService redisService;
 
     @Value("${client.app.baseurl}")
     private String clientAppBaseUrl;
@@ -149,7 +156,7 @@ public class OrganizationService {
     public void publishProject(Long projectId, SecurityDetails details){
         Project project = projectService.findProjectById(projectId);
         // Grants organization access to project in-app messages
-//        redisService.addAuthorizedUserProjects(details.getId(), projectId);
+        redisService.addAuthorizedUserProjects(details.getId(), projectId);
         project.setStatus(ProjectStatus.OPEN);
         try{
             projectService.save(project);
@@ -158,6 +165,17 @@ public class OrganizationService {
             throw new RuntimeException(e);
         }
 
+    }
+
+    public String getOrganizationName(String organizationId){
+        return Mono.just(Objects.requireNonNull(redisTemplate.opsForValue()
+                        .get("organization:"+organizationId)))
+                .cast(String.class)
+                .switchIfEmpty(
+                        Mono.just(repo.findById(organizationId).orElseThrow())
+                                .map(Organization::getOrganizationName)
+                                .doOnNext(organization -> redisTemplate.opsForValue().set("organization:"+organizationId, organization, Duration.ofHours(6)))
+                ).block();
     }
 
     public OrganizationDashboard getOrganizationDashboard(SecurityDetails details){

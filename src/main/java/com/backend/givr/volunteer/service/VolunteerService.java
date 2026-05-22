@@ -1,6 +1,7 @@
 package com.backend.givr.volunteer.service;
 
 import com.backend.givr.organization.dtos.ProjectResponseDto;
+import com.backend.givr.organization.entity.Organization;
 import com.backend.givr.organization.entity.Project;
 import com.backend.givr.organization.entity.ProjectApplication;
 import com.backend.givr.organization.service.ApplicationService;
@@ -38,11 +39,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import reactor.core.publisher.Mono;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
@@ -68,7 +72,8 @@ public class VolunteerService {
 
     @Autowired
     private PasswordEncoder encoder;
-
+    @Autowired
+    private RedisTemplate<String, Object> redisTemplate;
     @Autowired
     private TokenIdService tokenService;
 
@@ -139,6 +144,17 @@ public class VolunteerService {
         var updateSkills = skillService.updateSkills(skills);
         volunteer.setSkills(updateSkills);
        return repo.save(volunteer);
+    }
+
+    public String getVolunteerEmail(String volunteerId){
+        return Mono.just(Objects.requireNonNull(redisTemplate.opsForValue()
+                        .get("volunteer:"+volunteerId)))
+                .cast(String.class)
+                .switchIfEmpty(
+                        Mono.just(repo.findById(volunteerId).orElseThrow())
+                                .map(Volunteer::getEmail)
+                                .doOnNext(organization -> redisTemplate.opsForValue().set("volunteer:"+volunteerId, organization, Duration.ofHours(6)))
+                ).block();
     }
 
     @Transactional

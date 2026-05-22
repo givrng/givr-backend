@@ -21,14 +21,18 @@ import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+import reactor.core.publisher.Mono;
 
 import java.time.*;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 
 @Service
@@ -48,6 +52,9 @@ public class ProjectService {
     private EntityManager manager;
     @Autowired
     private ProjectServiceWorker worker;
+
+    @Autowired
+    private RedisTemplate<String, Object> redisTemplate;
 
     private Logger logger = LoggerFactory.getLogger(ProjectService.class);
 
@@ -74,6 +81,21 @@ public class ProjectService {
     public Project getProject(Long projectId){
         return repo.findById(projectId).orElseThrow();
     }
+
+    public String getProjectTitle(Long projectId){
+        return Mono.just(Objects.requireNonNull(redisTemplate.opsForValue()
+                        .get("project:" + projectId)))
+                .cast(String.class)
+                .switchIfEmpty(Mono.just(
+                        getProject(projectId)
+                ).map(Project::getTitle)
+                    .doOnNext(title->{
+                        redisTemplate.opsForValue().set("project:"+projectId, title, Duration.ofHours(4));
+                    })
+                )
+                .block();
+    }
+
     public List<Project> getOrganizationProjects(Organization organization){
         return repo.findAllByOrganizationOrderByCreatedAtAsc(organization);
     }
@@ -111,9 +133,10 @@ public class ProjectService {
             worker.createProjectCard(project);
 
         handleProject(project, projectRequestDto);
-        if(project.getStartDate().isBefore(LocalDate.parse(projectRequestDto.getStartDate())) )
+        if(project.getStartDate().isBefore(LocalDate.parse(projectRequestDto.getStartDate())) ) {
             project.setStatus(ProjectStatus.OPEN);
-
+            worker.sendProjectListing(project);
+        }
         return project;
     }
     private boolean projectDatesValid(Project project){

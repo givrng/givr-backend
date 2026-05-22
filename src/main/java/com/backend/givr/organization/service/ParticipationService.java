@@ -6,6 +6,7 @@ import com.backend.givr.organization.entity.Project;
 import com.backend.givr.organization.entity.ProjectApplication;
 import com.backend.givr.organization.repo.ParticipationRepo;
 import com.backend.givr.organization.repo.ProjectApplicationRepo;
+import com.backend.givr.redis.RedisService;
 import com.backend.givr.shared.dtos.RatingDTO;
 import com.backend.givr.shared.enums.ApplicationStatus;
 import com.backend.givr.shared.enums.ParticipationStatus;
@@ -15,6 +16,7 @@ import com.backend.givr.shared.service.RatingService;
 import com.backend.givr.volunteer.entity.Volunteer;
 import com.backend.givr.volunteer.security.VolunteerDetailsService;
 import com.resend.core.exception.ResendException;
+import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
@@ -41,6 +43,10 @@ public class ParticipationService {
     private EmailService emailService;
     @Autowired
     private RatingService ratingService;
+    @Autowired
+    private RedisService redisService;
+    @Autowired
+    private EntityManager em;
 
     private final Logger logger = LoggerFactory.getLogger(ParticipationService.class);
 
@@ -75,6 +81,7 @@ public class ParticipationService {
         return repo.findAllByVolunteer(volunteer);
     }
 
+
     public List<Participation> getParticipantsByOrganization(Organization organization){
         return repo.findAllByOrganization(organization);
     }
@@ -101,6 +108,7 @@ public class ParticipationService {
 
         if(status == ParticipationStatus.REJECTED){
             repo.delete(participation);
+            redisService.removeAuthorizedUserProject(volunteer.getVolunteerId(), project.getProjectId());
             try{
                 emailService.removeParticipantFromSegment(participation.getVolunteer().getEmail(), project.getSegmentId());
             } catch (ResendException e) {
@@ -114,8 +122,13 @@ public class ParticipationService {
         repo.delete(participation);
     }
 
-    public Participation getParticipationByVolunteerAndProject(Volunteer volunteer, Project project){
-        return repo.findByVolunteerAndProject(volunteer, project).orElseThrow(()->new EntityNotFoundException(String.format("Volunteer %s is not a participant of %s project", volunteer.getVolunteerId(), project.getProjectId())));
+    public List<Participation> getParticipationByProject( Project project){
+        return repo.findAllByProject( project);
+    }
+
+    public List<String> getVolunteerParticipationEmail(Long projectId){
+        Project project = em.getReference(Project.class, projectId);
+        return getParticipationByProject(project).stream().map(Participation::getVolunteer).map(Volunteer::getEmail).toList();
     }
 
     @Async

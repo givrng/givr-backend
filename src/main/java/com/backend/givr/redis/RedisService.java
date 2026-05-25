@@ -48,4 +48,13 @@ public class RedisService {
         return records==null? List.of() : records;
     }
 
+    public List<String> getProjectParticipantsEmails(Long projectId){
+        return redisTemplate.opsForSet()
+                .members("participants:"+projectId)
+                .stream().map(String::valueOf).toList();
+    };
+
+    public void addProjectParticipantEmail(Long projectId, List<String> emails){
+        emails.forEach(email->redisTemplate.opsForSet().add("participants:"+projectId, email));
+    }
 }

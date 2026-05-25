@@ -28,6 +28,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 import java.time.*;
 import java.util.Comparator;
@@ -82,18 +83,24 @@ public class ProjectService {
         return repo.findById(projectId).orElseThrow();
     }
 
-    public String getProjectTitle(Long projectId){
-        return Mono.just(Objects.requireNonNull(redisTemplate.opsForValue()
-                        .get("project:" + projectId)))
-                .cast(String.class)
-                .switchIfEmpty(Mono.just(
-                        getProject(projectId)
-                ).map(Project::getTitle)
-                    .doOnNext(title->{
-                        redisTemplate.opsForValue().set("project:"+projectId, title, Duration.ofHours(4));
-                    })
-                )
-                .block();
+    public String getProjectTitle(Long projectId) {
+
+        String cached = (String) redisTemplate.opsForValue()
+                .get("project:" + projectId);
+
+        if (cached != null) {
+            return cached;
+        }
+
+        String title = getProject(projectId).getTitle();
+
+        redisTemplate.opsForValue().set(
+                "project:" + projectId,
+                title,
+                Duration.ofHours(4)
+        );
+
+        return title;
     }
 
     public List<Project> getOrganizationProjects(Organization organization){

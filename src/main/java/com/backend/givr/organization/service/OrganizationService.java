@@ -168,14 +168,17 @@ public class OrganizationService {
     }
 
     public String getOrganizationName(String organizationId){
-        return Mono.just(Objects.requireNonNull(redisTemplate.opsForValue()
-                        .get("organization:"+organizationId)))
-                .cast(String.class)
-                .switchIfEmpty(
-                        Mono.just(repo.findById(organizationId).orElseThrow())
-                                .map(Organization::getOrganizationName)
-                                .doOnNext(organization -> redisTemplate.opsForValue().set("organization:"+organizationId, organization, Duration.ofHours(6)))
-                ).block();
+        String cached = ((String) redisTemplate.opsForValue().get("organization:" + organizationId));
+
+        if(cached!=null)
+            return cached;
+
+        String orgName = repo.findById(organizationId).orElseThrow().getOrganizationName();
+
+        redisTemplate.opsForValue()
+                .set("organization:"+organizationId, orgName, Duration.ofHours(4));
+
+        return orgName;
     }
 
     public OrganizationDashboard getOrganizationDashboard(SecurityDetails details){

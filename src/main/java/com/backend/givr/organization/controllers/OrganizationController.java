@@ -19,6 +19,7 @@ import com.resend.core.exception.ResendException;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.web.PagedModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -117,9 +118,9 @@ public class OrganizationController {
     }
 
     @GetMapping("/chat/{projectId}/history")
-    public ResponseEntity<Page<GivrMessage>> loadConversation(@PathVariable(name = "projectId") Long projectId, @RequestParam(name = "cursor",
+    public ResponseEntity<PagedModel<GivrMessage>> loadConversation(@PathVariable(name = "projectId") Long projectId, @RequestParam(name = "cursor",
             defaultValue = "", required = false) String cursor, @RequestParam(name = "size", required = false, defaultValue = "40") int size){
-        return ResponseEntity.ok(messageService.loadConversation(projectId, cursor, size));
+        return ResponseEntity.ok(new PagedModel<>(messageService.loadConversation(projectId, cursor, size)));
     }
 
     @GetMapping("/projects/unread")

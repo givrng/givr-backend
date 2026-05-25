@@ -22,6 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -46,6 +47,8 @@ public class ParticipationService {
     @Autowired
     private RedisService redisService;
     @Autowired
+    private RedisTemplate<String, Object> redisTemplate;
+    @Autowired
     private EntityManager em;
 
     private final Logger logger = LoggerFactory.getLogger(ParticipationService.class);
@@ -57,6 +60,7 @@ public class ParticipationService {
         String email = volunteer.getEmail();
         String segmentId = project.getSegmentId();
 
+        redisService.addProjectParticipantEmail(participation.getProject().getProjectId(), List.of(email));
         participation.setVolunteer(volunteer);
         participation.setProjectApplication(application);
         participation.setProject(project);
@@ -128,7 +132,16 @@ public class ParticipationService {
 
     public List<String> getVolunteerParticipationEmail(Long projectId){
         Project project = em.getReference(Project.class, projectId);
-        return getParticipationByProject(project).stream().map(Participation::getVolunteer).map(Volunteer::getEmail).toList();
+        List<String> cached = redisService.getProjectParticipantsEmails(projectId);
+
+        if(!cached.isEmpty() )
+            return cached;
+
+        List<String> emails = getParticipationByProject(project).stream().map(Participation::getVolunteer).map(Volunteer::getEmail).toList();
+
+        redisService.addProjectParticipantEmail(projectId, emails);
+        return emails;
+//        return getParticipationByProject(project).stream().map(Participation::getVolunteer).map(Volunteer::getEmail).toList();
     }
 
     @Async

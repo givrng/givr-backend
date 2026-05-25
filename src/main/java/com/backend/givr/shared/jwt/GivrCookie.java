@@ -2,8 +2,10 @@ package com.backend.givr.shared.jwt;
 
 import com.backend.givr.shared.interfaces.SecurityDetails;
 import com.backend.givr.shared.service.TokenIdService;
+import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.server.Cookie;
 import org.springframework.http.ResponseCookie;
 import org.springframework.stereotype.Service;
@@ -15,7 +17,14 @@ public class GivrCookie {
     private JwtUtil jwtUtil;
     @Autowired
     private TokenIdService tokenService;
+    @Value("${app.profile}")
+    private String profile;
+    private String tokenDomain;
 
+    @PostConstruct
+    private void setTokenDomain(){
+        this.tokenDomain = profile.equals("dev")? "127.0.0.1":".givr.ng";
+    }
     /**
      * Creates cookies and sets the HttpServletResponse headers with the cookie value.
      * Set status code and flush response to the client
@@ -37,7 +46,7 @@ public class GivrCookie {
                 .maxAge(JwtUtil.ACCESSEXPIRATION)
                 .sameSite(Cookie.SameSite.NONE.attributeValue())
                 .httpOnly(true)
-                .domain(".givr.ng")
+                .domain(tokenDomain)
                 .secure(true)
                 .build();
 

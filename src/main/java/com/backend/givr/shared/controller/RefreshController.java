@@ -8,6 +8,7 @@ import com.backend.givr.shared.jwt.JwtUtil;
 import com.backend.givr.shared.service.TokenIdService;
 import com.backend.givr.volunteer.entity.Volunteer;
 import com.backend.givr.volunteer.security.VolunteerDetails;
+import jakarta.annotation.PostConstruct;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.servlet.http.Cookie;
@@ -39,6 +40,15 @@ public class RefreshController {
 
     @PersistenceContext
     private EntityManager manager;
+
+    @Value("${app.profile}")
+    private String profile;
+    private String tokenDomain;
+
+    @PostConstruct
+    private void setTokenDomain(){
+        this.tokenDomain = profile.equals("dev")? "127.0.0.1":".givr.ng";
+    }
 
     RefreshController(TokenIdService tokenService, JwtUtil util){
         service = tokenService;
@@ -98,7 +108,7 @@ public class RefreshController {
                     .path("/")
                     .secure(true)
                     .httpOnly(true)
-                    .domain(".givr.ng")
+                    .domain(tokenDomain)
                     .sameSite("None")
                     .build();
             ResponseCookie refreshCookie = ResponseCookie.from("RefreshToken").value(refreshToken)

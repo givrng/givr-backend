@@ -16,7 +16,7 @@ import java.time.LocalDate;
 @RequiredArgsConstructor
 public class ThymeleafTemplateService {
     private final SpringTemplateEngine engine;
-    @Value("{client.app.baseUrl}")
+    @Value("${client.app.baseUrl}")
     private String clientBaseUrl;
 
     public String otpEmail(String otp, Duration duration){

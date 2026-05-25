@@ -63,6 +63,7 @@ public class GroupMsgListener {
     }
 
     public void sendNotification(GivrMessage msg) {
+
         Mono<String> orgName = Mono.fromCallable(() ->
                         organizationService.getOrganizationName(msg.getSentBy()))
                 .subscribeOn(Schedulers.boundedElastic());
@@ -70,6 +71,7 @@ public class GroupMsgListener {
         Mono<String> projectTitle = Mono.fromCallable(() ->
                         projectService.getProjectTitle(msg.getProjectId()))
                 .subscribeOn(Schedulers.boundedElastic());
+
 
         Mono.zip(orgName, projectTitle)   // fetch both concurrently
                 .flatMapMany(tuple -> {
@@ -79,6 +81,7 @@ public class GroupMsgListener {
                     return Flux.fromIterable(
                                     participationService.getVolunteerParticipationEmail(msg.getProjectId()))
                             .delayElements(Duration.ofMillis(200))
+                            .doOnNext(System.out::println)
                             .concatMap(volunteer -> Mono.fromCallable(() -> {
                                                 emailService.sendChatNotification(
                                                         volunteer, org, title, msg.getContent());
@@ -94,7 +97,7 @@ public class GroupMsgListener {
                                             })
                             );
                 })
-                .then();
+                .then().subscribe();
     }
 
     @PostConstruct
@@ -108,16 +111,15 @@ public class GroupMsgListener {
 
         executorService.submit(() -> {
             while (true) {
-                System.out.println(lastProcessedMsgRecord.get().toString());
                 List<MapRecord<String, Object, Object>> records = redisService.readMessages(10L, lastProcessedMsgRecord.get());
 
                 Flux.fromIterable(records)
                         .map(GivrMessage::new)
-                        .filter(msg->msg.getRole()== AccountType.ORGANIZATION)
+                        .filter(msg->msg.getRole().equals(AccountType.ORGANIZATION))
+                        .doOnNext(msg-> System.out.println(msg.getRole()))
                         .subscribe(this::sendNotification);
                 try {
                     List<GivrMessage> msgs = records.stream().map(GivrMessage::new).toList();
-                    System.out.println(msgs.size());
                     if(!msgs.isEmpty()){
                         List<GivrMessage> saved= messageService.saveAllMessage(msgs);
                         lastProcessedMsgRecord.set(ReadOffset.from(saved.getLast().getMsgId()));

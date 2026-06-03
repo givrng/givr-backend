@@ -60,7 +60,7 @@ public class ParticipationService {
         String email = volunteer.getEmail();
         String segmentId = project.getSegmentId();
 
-        redisService.addProjectParticipantEmail(participation.getProject().getProjectId(), List.of(email));
+        redisService.addProjectParticipantEmail(project.getProjectId(), List.of(email));
         participation.setVolunteer(volunteer);
         participation.setProjectApplication(application);
         participation.setProject(project);

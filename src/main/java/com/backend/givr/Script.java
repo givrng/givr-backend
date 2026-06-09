@@ -1,32 +1,56 @@
 package com.backend.givr;
 
-import com.backend.givr.organization.entity.Project;
-import com.backend.givr.organization.service.ProjectAsyncServiceWorker;
-import com.backend.givr.organization.service.ProjectService;
-import com.backend.givr.shared.enums.ProjectStatus;
+import com.backend.givr.shared.email.EmailService;
+import com.backend.givr.volunteer.entity.Volunteer;
+import com.backend.givr.volunteer.repo.VolunteerRepo;
 import jakarta.annotation.PostConstruct;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.annotation.EnableScheduling;
-import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.ApplicationArguments;
+import org.springframework.boot.ApplicationRunner;
 import org.springframework.stereotype.Component;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
+import java.time.Duration;
 import java.util.List;
 
 @Component
-public class Script implements Runnable{
+@Slf4j
+public class Script {
     @Autowired
-    private ProjectService projectService;
+    private VolunteerRepo volunteerRepo;
     @Autowired
-    private ProjectAsyncServiceWorker worker;
-    @Override
-    public void run() {
-        System.out.println("Script is running");
-        List<Project> projects = projectService.getAllProjectsByStatus(ProjectStatus.OPEN);
+    private EmailService emailService;
+    @Value("${app.action}")
+    private String action;
 
-        projects.forEach(project -> worker.sendProjectListing(project));
+    public void sendNotificationToVolunteers(){
+        System.out.println("Executing task");
+        List<Volunteer> volunteers = volunteerRepo.findAll();
+
+        Flux<Volunteer> volunteerFlux = Flux.fromIterable(volunteers);
+
+        int memberCount = volunteers.size();
+
+        volunteerFlux.delayElements(Duration.ofMillis(200))
+                .doOnNext(volunteer -> {
+                    String firstname= volunteer.getLastname();
+                    String email = volunteer.getEmail();
+                    System.out.println("Sending notification");
+                    emailService.sendJoinWhatsAppNotification(firstname, memberCount, email);
+                })
+                .then().subscribe();
     }
 
+
+    @PostConstruct
     public void start(){
-        run();
+        if(action.equals("send-join-notification")){
+            sendNotificationToVolunteers();
+        }
     }
+
 }

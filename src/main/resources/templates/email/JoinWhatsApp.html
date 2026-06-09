@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to #Givrs</title>
+</head>
+<body style="margin:0;padding:0;background:#f4f7fb;font-family:Arial,Helvetica,sans-serif;">
+
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f4f7fb;padding:30px 0;">
+    <tr>
+        <td align="center">
+
+            <table width="650" cellpadding="0" cellspacing="0" border="0"
+                   style="max-width:650px;background:#ffffff;border-radius:16px;overflow:hidden;">
+
+                <!-- Header -->
+                <tr>
+                    <td align="center" style="padding:40px 30px 20px;">
+                        <img src="https://givr.ng/logo.png"
+                             alt="Givr"
+                             width="120"
+                             style="display:block;">
+                    </td>
+                </tr>
+
+                <!-- Hero -->
+                <tr>
+                    <td align="center" style="padding:10px 40px 30px;">
+                        <div style="
+                            width:120px;
+                            height:120px;
+                            border-radius:50%;
+                            background:#eef4ff;
+                            margin:auto;
+                            line-height:120px;
+                            font-size:60px;">
+                            💙
+                        </div>
+
+                        <h1 style="
+                            margin:30px 0 0;
+                            color:#0f172a;
+                            font-size:42px;
+                            font-weight:700;">
+                            Welcome to
+                            <span style="color:#2563eb;">#Givrs 💙</span>
+                        </h1>
+                    </td>
+                </tr>
+
+                <!-- Body -->
+                <tr>
+                    <td style="padding:0 50px;color:#334155;line-height:1.8;font-size:16px;">
+
+                        <p>
+                            Hey <strong th:text="${firstName}">Name</strong>,
+                        </p>
+
+                        <p>
+                            I didn’t expect to feel this way this early.
+                        </p>
+
+                        <p>
+                            When we launched <strong>Givr</strong>, I knew we were building
+                            something different, but knowing that almost
+                            <strong><strong th:text="${memberCount}">200</strong> young Nigerians</strong> have signed up and said
+                            <span style="color:#2563eb;font-weight:600;">
+                                "I want to help"
+                            </span>
+                            really makes me proud in a way I can’t fully explain.
+                        </p>
+
+                        <p>
+                            You’re one of those people. And I don’t take that lightly.
+                        </p>
+
+                        <p>
+                            I’ve been thinking about how volunteering in Nigeria has
+                            always had people with the desire to help, which means
+                            passion was never the problem.
+                        </p>
+
+                        <p>
+                            What’s been missing is a community. A space where young
+                            Nigerians like you and I who care can find each other,
+                            show up together, and make sure every effort counts
+                            for something tangible.
+                        </p>
+
+                        <p style="
+                            color:#2563eb;
+                            font-weight:700;
+                            font-size:18px;">
+                            That’s what I want to build with you.
+                        </p>
+
+                    </td>
+                </tr>
+
+                <!-- Why Givrs Card -->
+                <tr>
+                    <td style="padding:20px 40px;">
+
+                        <table width="100%" cellpadding="0" cellspacing="0" border="0"
+                               style="
+                               background:#f8fbff;
+                               border:1px solid #e2e8f0;
+                               border-radius:14px;
+                               padding:20px;">
+
+                            <tr>
+                                <td>
+                                    <h2 style="
+                                        margin:0 0 15px;
+                                        color:#2563eb;
+                                        font-size:28px;">
+                                        Why #Givrs? 💙
+                                    </h2>
+
+                                    <p style="margin:0 0 20px;color:#475569;">
+                                        Our WhatsApp inner circle for everyone on the platform.
+                                    </p>
+
+                                    <ul style="
+                                        padding-left:20px;
+                                        margin:0;
+                                        color:#334155;
+                                        line-height:2;">
+                                        <li>First to know about new projects and opportunities</li>
+                                        <li>First to hear what's coming</li>
+                                        <li>A place for feedback and discussions</li>
+                                        <li>A space to connect with people who get it</li>
+                                        <li>Behind-the-scenes updates from building Givr</li>
+                                        <li>Polls, newsletters, stories and community insights</li>
+                                    </ul>
+                                </td>
+                            </tr>
+
+                        </table>
+
+                    </td>
+                </tr>
+
+                <!-- Belong -->
+                <tr>
+                    <td style="padding:10px 40px;">
+                        <table width="100%" cellpadding="0" cellspacing="0"
+                               style="
+                               background:#eef6ff;
+                               border-radius:12px;">
+                            <tr>
+                                <td style="
+                                    padding:20px;
+                                    text-align:center;
+                                    color:#1e3a8a;
+                                    font-size:20px;
+                                    font-weight:700;">
+                                    💙 You definitely belong in this room.
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+
+                <!-- CTA -->
+                <tr>
+                    <td align="center" style="padding:35px 40px 10px;">
+                        <h2 style="
+                            margin:0 0 20px;
+                            color:#0f172a;">
+                            Join us here 👇🏾
+                        </h2>
+
+                        <a th:href="${whatsappLink}"
+                           href="https://chat.whatsapp.com/GpYcrwx1qtt13jyOKVJUvq?mode=gi_t"
+                           style="
+                           display:inline-block;
+                           background:#2563eb;
+                           color:#ffffff;
+                           text-decoration:none;
+                           padding:18px 36px;
+                           border-radius:999px;
+                           font-weight:700;
+                           font-size:16px;">
+                            Join the WhatsApp Community
+                        </a>
+
+                    </td>
+                </tr>
+
+                <!-- Divider -->
+                <tr>
+                    <td style="padding:30px 50px;">
+                        <hr style="
+                            border:none;
+                            border-top:1px solid #e2e8f0;">
+                    </td>
+                </tr>
+
+                <!-- Closing -->
+                <tr>
+                    <td style="padding:0 50px 20px;">
+
+                        <h2 style="
+                            color:#1e3a8a;
+                            margin-top:0;">
+                            Let’s do this together 💙
+                        </h2>
+
+                    </td>
+                </tr>
+
+                <!-- Signature -->
+                <tr>
+                    <td style="padding:0 50px 40px;">
+
+                        <table cellpadding="0" cellspacing="0">
+                            <tr>
+                                <td style="padding-left:15px;">
+                                    <div style="
+                                        color:#0f172a;
+                                        font-size:22px;
+                                        font-weight:700;">
+                                        Stephanie
+                                    </div>
+
+                                    <div style="
+                                        color:#475569;
+                                        margin-top:5px;">
+                                        Co-founder, Givr
+                                    </div>
+
+                                    <div style="margin-top:8px;">
+                                        <a href="https://givr.ng"
+                                           style="
+                                           color:#2563eb;
+                                           text-decoration:none;">
+                                            givr.ng
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        </table>
+
+                    </td>
+                </tr>
+
+                <!-- Footer -->
+                <tr>
+                    <td align="center"
+                        style="
+                        background:#f8fbff;
+                        padding:35px;">
+
+                        <div style="
+                            font-size:40px;
+                            font-weight:700;
+                            color:#2563eb;">
+                            Givr
+                        </div>
+
+                        <div style="
+                            margin-top:10px;
+                            color:#64748b;
+                            font-size:14px;">
+                            Building a culture of giving. Creating real impact. 💙
+                        </div>
+
+                    </td>
+                </tr>
+
+            </table>
+
+        </td>
+    </tr>
+</table>
+
+</body>
+</html>

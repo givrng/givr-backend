@@ -232,4 +232,11 @@ public class EmailService {
         String html = emailTemplateService.projectListCTA(project, volunteerFirstname);
         sendEmail(html, recipient, "Your Next Volunteer Opportunity Awaits");
     }
+
+    public void sendJoinWhatsAppNotification(String firstname, Integer memberCount, String recipient){
+        String whatsappLink = "https://chat.whatsapp.com/GpYcrwx1qtt13jyOKVJUvq?mode=gi_t";
+        String html = emailTemplateService.joinWhatsAppNotification(firstname, whatsappLink, memberCount);
+
+        sendEmail(html, recipient, "Something I want you to be a part of 💙");
+    }
 }

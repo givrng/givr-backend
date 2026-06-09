@@ -89,3 +89,5 @@ jwt:
 OTP:
   SECRETS: ${OTP_SECRET}
 RESEND_API_TOKEN: ${RESEND_API_KEY}
+app:
+  action: ${APP_ACTION}

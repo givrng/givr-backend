@@ -6,6 +6,7 @@ import com.backend.givr.organization.entity.Project;
 import com.backend.givr.organization.entity.ProjectApplication;
 import com.backend.givr.organization.repo.ParticipationRepo;
 import com.backend.givr.organization.repo.ProjectApplicationRepo;
+import com.backend.givr.redis.RedisService;
 import com.backend.givr.shared.dtos.RatingDTO;
 import com.backend.givr.shared.enums.ApplicationStatus;
 import com.backend.givr.shared.enums.ParticipationStatus;
@@ -15,11 +16,13 @@ import com.backend.givr.shared.service.RatingService;
 import com.backend.givr.volunteer.entity.Volunteer;
 import com.backend.givr.volunteer.security.VolunteerDetailsService;
 import com.resend.core.exception.ResendException;
+import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,8 +44,12 @@ public class ParticipationService {
     private EmailService emailService;
     @Autowired
     private RatingService ratingService;
-
-    private final Logger logger = LoggerFactory.getLogger(ParticipationService.class);
+    @Autowired
+    private RedisService redisService;
+    @Autowired
+    private RedisTemplate<String, Object> redisTemplate;
+    @Autowired
+    private EntityManager em;
 
     @Async
     public void createParticipation(Project project, ProjectApplication application){
@@ -51,6 +58,7 @@ public class ParticipationService {
         String email = volunteer.getEmail();
         String segmentId = project.getSegmentId();
 
+        redisService.addProjectParticipantEmail(project.getProjectId(), List.of(email));
         participation.setVolunteer(volunteer);
         participation.setProjectApplication(application);
         participation.setProject(project);
@@ -64,7 +72,7 @@ public class ParticipationService {
             participation.setIsUnSubscribed(false);
             repo.save(participation);
         } catch (ResendException e) {
-            logger.error("Failed to create contact, {}", e.getLocalizedMessage());
+            log.error("Failed to create contact, {}", e.getLocalizedMessage());
             System.err.printf("Failed to create participant because contact was not created. Contact was not created because %S", e.getLocalizedMessage());
             application.setStatus(ApplicationStatus.APPLIED);
             applicationRepo.save(application);
@@ -74,6 +82,7 @@ public class ParticipationService {
     public List<Participation> getVolunteerParticipation(Volunteer volunteer){
         return repo.findAllByVolunteer(volunteer);
     }
+
 
     public List<Participation> getParticipantsByOrganization(Organization organization){
         return repo.findAllByOrganization(organization);
@@ -101,10 +110,11 @@ public class ParticipationService {
 
         if(status == ParticipationStatus.REJECTED){
             repo.delete(participation);
+            redisService.removeAuthorizedUserProject(volunteer.getVolunteerId(), project.getProjectId());
             try{
                 emailService.removeParticipantFromSegment(participation.getVolunteer().getEmail(), project.getSegmentId());
             } catch (ResendException e) {
-                logger.error("Failed to removed contact from segment, {}", e.getLocalizedMessage());
+                log.error("Failed to removed contact from segment, {}", e.getLocalizedMessage());
             }
         }
     }
@@ -114,8 +124,22 @@ public class ParticipationService {
         repo.delete(participation);
     }
 
-    public Participation getParticipationByVolunteerAndProject(Volunteer volunteer, Project project){
-        return repo.findByVolunteerAndProject(volunteer, project).orElseThrow(()->new EntityNotFoundException(String.format("Volunteer %s is not a participant of %s project", volunteer.getVolunteerId(), project.getProjectId())));
+    public List<Participation> getParticipationByProject( Project project){
+        return repo.findAllByProject( project);
+    }
+
+    public List<String> getVolunteerParticipationEmail(Long projectId){
+        Project project = em.getReference(Project.class, projectId);
+        List<String> cached = redisService.getProjectParticipantsEmails(projectId);
+
+        if(!cached.isEmpty() )
+            return cached;
+
+        List<String> emails = getParticipationByProject(project).stream().map(Participation::getVolunteer).map(Volunteer::getEmail).toList();
+
+        redisService.addProjectParticipantEmail(projectId, emails);
+        return emails;
+//        return getParticipationByProject(project).stream().map(Participation::getVolunteer).map(Volunteer::getEmail).toList();
     }
 
     @Async

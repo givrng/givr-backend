@@ -2,6 +2,8 @@ package com.backend.givr.organization.service;
 
 import com.backend.givr.organization.dtos.*;
 import com.backend.givr.organization.entity.Organization;
+import com.backend.givr.organization.security.ProjectServiceWorker;
+import com.backend.givr.redis.RedisService;
 import com.backend.givr.shared.dtos.ParticipationDto;
 import com.backend.givr.organization.entity.Project;
 import com.backend.givr.organization.mappings.OrganizationMapper;
@@ -26,18 +28,24 @@ import com.backend.givr.shared.service.SkillService;
 import com.backend.givr.shared.service.VerificationService;
 import com.backend.givr.volunteer.dtos.OrganizationResponseDTOv;
 import com.resend.core.exception.ResendException;
+import jakarta.annotation.security.PermitAll;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import reactor.core.publisher.Mono;
 
+import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 
@@ -48,7 +56,9 @@ public class OrganizationService {
     @Autowired
     private ProjectMapper projectMapper;
     @Autowired
-    private ProjectAsyncServiceWorker projectAsyncServiceWorker;
+    private ProjectServiceWorker projectAsyncServiceWorker;
+    @Autowired
+    private RedisTemplate<String, Object> redisTemplate;
     @Autowired
     private OrganizationRepo repo;
     @Autowired
@@ -75,8 +85,8 @@ public class OrganizationService {
     private RatingService ratingService;
     @Autowired
     private EntityManager em;
-//    @Autowired
-//    private RedisService redisService;
+    @Autowired
+    private RedisService redisService;
 
     @Value("${client.app.baseurl}")
     private String clientAppBaseUrl;
@@ -149,7 +159,7 @@ public class OrganizationService {
     public void publishProject(Long projectId, SecurityDetails details){
         Project project = projectService.findProjectById(projectId);
         // Grants organization access to project in-app messages
-//        redisService.addAuthorizedUserProjects(details.getId(), projectId);
+        redisService.addAuthorizedUserProjects(details.getId(), projectId);
         project.setStatus(ProjectStatus.OPEN);
         try{
             projectService.save(project);
@@ -158,6 +168,11 @@ public class OrganizationService {
             throw new RuntimeException(e);
         }
 
+    }
+
+    @Cacheable(cacheNames = "orgName", key = "#organizationId")
+    public String getOrganizationName(String organizationId){
+        return repo.findById(organizationId).orElseThrow().getOrganizationName();
     }
 
     public OrganizationDashboard getOrganizationDashboard(SecurityDetails details){
@@ -208,6 +223,7 @@ public class OrganizationService {
     public ProjectResponseDto updateProject(Long projectId, ProjectRequestDto projectRequestDto) {
         return projectMapper.toProjectDto(projectService.updateProject(projectId, projectRequestDto));
     }
+    @Cacheable(cacheNames = "organizationList")
     public List<OrganizationResponseDTOv> getOrganizations() {
         return mapper.toOrganizationResponsesDTOv(repo.findAllByStatus(VerificationStatus.VERIFIED));
     }
@@ -272,7 +288,8 @@ public class OrganizationService {
         return toProfile(organization, details);
     }
 
-    public void updateOrganizationDetails (OrganizationVerificationSession session, Organization organization){
+    @CachePut(cacheNames = "profileUrl", key = "#organization.organizationId")
+    public String updateOrganizationDetails (OrganizationVerificationSession session, Organization organization){
         organization.setStatus(VerificationStatus.VERIFIED);
         organization.setProfileCompleted(true);
         organization.setOrganizationType(session.getClaimedType());
@@ -282,8 +299,19 @@ public class OrganizationService {
         organization.setAddress(session.getClaimedAddress());
         organization.setContactFirstname(session.getContactFirstname());
         organization.setWebsite(session.getWebsite());
+        organization.setProfileUrl(session.getOrgLogoUrl());
+        organization.setContactPersonProfileUrl(session.getUsrImgUrl());
         organization.setContactLastname(session.getContactLastname());
         organization.setSession(session);
+
+        return session.getOrgLogoUrl();
+    }
+
+    @PermitAll
+    @Cacheable(cacheNames = "profileUrl", key = "#orgId")
+    public String getProfileUrl(String orgId){
+        Organization organization = repo.findById(orgId).orElseThrow();
+        return organization.getProfileUrl()==null? "" : organization.getProfileUrl();
     }
 
     public String getOrganizationEmail(Organization organization){

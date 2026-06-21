@@ -6,10 +6,13 @@ import com.backend.givr.shared.email.EmailService;
 import com.backend.givr.shared.mapper.ProjectMapper;
 import com.backend.givr.shared.service.CloudinaryService;
 import com.backend.givr.shared.service.RenderProjectService;
-import com.cloudinary.Cloudinary;
+import com.backend.givr.volunteer.entity.Volunteer;
+import com.backend.givr.volunteer.repo.VolunteerRepo;
 import com.resend.core.exception.ResendException;
-import jakarta.persistence.EntityManager;
-import org.apache.hc.core5.concurrent.CompletedFuture;
+
+import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.retry.annotation.Backoff;
@@ -17,16 +20,23 @@ import org.springframework.retry.annotation.Retryable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
+import java.time.Duration;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 @Service
+@Slf4j
 public class ProjectServiceWorker {
     @Autowired
     private EmailService emailService;
     @Autowired
     private ProjectRepo repo;
-
+    @Autowired
+    private VolunteerRepo volunteerService;
     @Value("${givr.baseUrl}")
     private String apiBaseUrl;
     @Value("${api.version}")
@@ -82,5 +92,32 @@ public class ProjectServiceWorker {
         Project project = repo.findById(projectId).orElseThrow();
         project.setProjectCardUrl(secureUrl);
         project.setShareableLink(shareableLink);
+    }
+
+    public Mono<Void> sendProjectListing(Project project) {
+        List<Volunteer> volunteers =
+                volunteerService.findAllByLocationState(project.getLocation().getState());
+
+        return Flux.fromIterable(volunteers)
+                .delayElements(Duration.ofMillis(200))           // rate-limit dispatch
+                .concatMap(volunteer ->                          // sequential, no overload
+                        Mono.fromCallable(() -> {
+                                    emailService.sendProjectListingNotification(
+                                            project,
+                                            volunteer.getFirstname(),
+                                            volunteer.getEmail()
+                                    );
+                                    return volunteer;
+                                })
+                                .subscribeOn(Schedulers.boundedElastic())    // offload blocking I/O
+                                .doOnSuccess(v ->
+                                        log.info("Email sent to {}", v.getEmail()))
+                                .onErrorResume(ex -> {
+                                    log.error("Failed to notify volunteer {}: {}",
+                                            volunteer.getEmail(), ex.getMessage());
+                                    return Mono.empty();                     // skip and continue
+                                })
+                )
+                .then();
     }
 }

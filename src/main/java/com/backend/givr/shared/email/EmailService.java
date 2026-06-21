@@ -1,6 +1,7 @@
 package com.backend.givr.shared.email;
 
 import com.backend.givr.organization.entity.Project;
+import com.backend.givr.shared.entity.GivrMessage;
 import com.backend.givr.shared.enums.*;
 import com.backend.givr.shared.exceptions.FailedToSendOTPException;
 import com.backend.givr.shared.otp.OTP;
@@ -231,6 +232,11 @@ public class EmailService {
     public void sendProjectListingNotification(Project project, String volunteerFirstname, String recipient){
         String html = emailTemplateService.projectListCTA(project, volunteerFirstname);
         sendEmail(html, recipient, "Your Next Volunteer Opportunity Awaits");
+    }
+
+    public void sendChatNotification(String recipient, String organizationName, String projectTitle, String content){
+        String html = emailTemplateService.chatNotification(recipient, organizationName, projectTitle, content);
+        sendEmail(html, recipient, "New chat notification");
     }
 
     public void sendJoinWhatsAppNotification(String firstname, Integer memberCount, String recipient){

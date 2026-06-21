@@ -4,6 +4,7 @@ import com.backend.givr.organization.entity.Project;
 import com.backend.givr.shared.enums.ReviewStatus;
 import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
@@ -15,6 +16,8 @@ import java.time.LocalDate;
 @RequiredArgsConstructor
 public class ThymeleafTemplateService {
     private final SpringTemplateEngine engine;
+    @Value("${client.app.baseUrl}")
+    private String clientBaseUrl;
 
     public String otpEmail(String otp, Duration duration){
         Context context = new Context();
@@ -140,11 +143,24 @@ public class ThymeleafTemplateService {
         return engine.process("email/ProjectListingCTA", context);
     }
 
+    public String chatNotification(String volunteerName, String organizationName, String projectTitle, String content) {
+        Context context = new Context();
+        context.setVariable("volunteerName", volunteerName);
+        context.setVariable("organizationName", organizationName);
+        context.setVariable("projectTitle", projectTitle);
+        context.setVariable("content", content);
+        context.setVariable("chatUrl", String.format("%s/volunteer", clientBaseUrl));
+        return engine.process("email/chatNotification", context);
+    }
+
     public String joinWhatsAppNotification(String firstName, String whatsappLink, Integer memberCount){
         Context context = new Context();
+
         context.setVariable("firstName", firstName);
         context.setVariable("whatsappLink", whatsappLink);
         context.setVariable("memberCount", memberCount);
+
         return engine.process("email/JoinWhatsApp",context);
     }
 }
+

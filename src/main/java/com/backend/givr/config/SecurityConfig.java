@@ -106,6 +106,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(request->{
                     request.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll();
                     request.requestMatchers(HttpMethod.POST, "/v1/api/volunteer/auth/**").permitAll();
+                    request.requestMatchers(HttpMethod.GET, "/v1/api/volunteer/profile/image").permitAll();
                     request.anyRequest().hasAuthority("VOLUNTEER");
                 })
                 .authenticationProvider(volunteerDaoAuthProvider())
@@ -155,6 +156,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(request->{
                     request.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll();
                     request.requestMatchers(HttpMethod.POST, "/v1/api/organization/auth/**").permitAll();
+                    request.requestMatchers(HttpMethod.GET, "/v1/api/organization/profile/image").permitAll();
                     request.anyRequest().hasAuthority("ORGANIZATION");
                 })
                 .authenticationProvider(organizationDaoProvider())

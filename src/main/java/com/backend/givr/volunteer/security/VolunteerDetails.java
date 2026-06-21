@@ -75,4 +75,5 @@ public class VolunteerDetails implements SecurityDetails {
     public AuthProviderType getProviderType() {
         return this.authProvider;
     }
+
 }

@@ -8,25 +8,34 @@ import com.backend.givr.shared.dtos.ParticipationDto;
 import com.backend.givr.shared.dtos.PasswordUpdateDto;
 import com.backend.givr.shared.dtos.ProjectApplicationForm;
 import com.backend.givr.shared.dtos.RatingDTO;
+import com.backend.givr.shared.entity.GivrMessage;
 import com.backend.givr.shared.enums.OtpPurpose;
 import com.backend.givr.shared.interfaces.SecurityDetails;
 import com.backend.givr.shared.enums.AuthProviderType;
 import com.backend.givr.shared.mapper.ProjectMapper;
 import com.backend.givr.shared.otp.OtpDto;
+import com.backend.givr.shared.service.GivrMessageService;
 import com.backend.givr.shared.service.LogoutService;
 import com.backend.givr.volunteer.dtos.*;
 import com.backend.givr.volunteer.entity.Volunteer;
 import com.backend.givr.volunteer.security.VolunteerDetails;
 import com.backend.givr.volunteer.service.VolunteerService;
+import jakarta.annotation.security.PermitAll;
 import jakarta.persistence.EntityManager;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.web.PagedModel;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/${api.version}/api/volunteer")
@@ -41,6 +50,8 @@ public class VolunteerController {
     private ProjectMapper projectMapper;
     @Autowired
     private LogoutService logoutService;
+    @Autowired
+    private GivrMessageService messageService;
     @Autowired
     private EntityManager em;
 
@@ -67,6 +78,13 @@ public class VolunteerController {
         profile.setEmail(volunteerDetails.getUsername());
         profile.setEmailEditable(volunteerDetails.getProviderType() == AuthProviderType.LOCAL);
         return ResponseEntity.ok(profile);
+    }
+
+    @GetMapping("/profile/image")
+    @PermitAll
+    public ResponseEntity<URL> getProfileUrl (@RequestParam("userId") String volunteerId) throws URISyntaxException {
+        URL profileUrl = service.getVolunteerProfile(volunteerId).getProfileUrl();
+        return ResponseEntity.status(HttpStatus.FOUND).location(profileUrl.toURI()).build();
     }
 
     @PatchMapping("/profile")
@@ -97,6 +115,17 @@ public class VolunteerController {
     @GetMapping("/projects/recommended")
     public ResponseEntity<List<ProjectResponseDto>> getRecommendedProjects(@AuthenticationPrincipal SecurityDetails details){
         return ResponseEntity.ok(service.getRecommendedProjects(details));
+    }
+
+    @GetMapping("/chat/{projectId}/history")
+    public ResponseEntity<PagedModel<GivrMessage>> loadConversation(@PathVariable(name = "projectId") Long projectId, @RequestParam(name = "cursor",
+            defaultValue = "", required = false) String cursor, @RequestParam(name = "size", required = false, defaultValue = "40") int size){
+        return ResponseEntity.ok(new PagedModel<>(messageService.loadConversation(projectId, cursor, size)));
+    }
+
+    @GetMapping("/projects/unread")
+    public ResponseEntity<Map<Long, Long>> getUnreadCount (@AuthenticationPrincipal SecurityDetails details){
+        return ResponseEntity.ok(messageService.computeUserChatUnreadCount(details.getId()));
     }
 
     @GetMapping("/organizations")

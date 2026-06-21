@@ -86,4 +86,5 @@ public class OrganizationDetails implements SecurityDetails {
     public AuthProviderType getProviderType() {
         return this.authProvider;
     }
+
 }

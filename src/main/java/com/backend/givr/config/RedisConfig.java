@@ -1,14 +1,22 @@
 package com.backend.givr.config;
 
+import com.backend.givr.shared.entity.GivrMessage;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.redis.cache.RedisCacheConfiguration;
+import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.*;
+import tools.jackson.databind.ObjectMapper;
 
+import java.time.Duration;
+
+@Configuration
 public class RedisConfig {
     @Value("${spring.data.redis.host}")
     private String hostname;
@@ -29,14 +37,25 @@ public class RedisConfig {
     }
 
     @Bean
-    public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory connection){
+    public RedisCacheManager redisCacheManager(RedisConnectionFactory connectionFactory){
+        RedisCacheConfiguration configuration = RedisCacheConfiguration.defaultCacheConfig().entryTtl(Duration.ofMinutes(20));
+        return RedisCacheManager.builder(connectionFactory).cacheDefaults(configuration).build();
+    }
+
+    @Bean
+    public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory connection, ObjectMapper mapper){
         RedisTemplate<String, Object> template= new RedisTemplate<>();
+        JacksonJsonRedisSerializer<Object> serializer = new JacksonJsonRedisSerializer<>(mapper, Object.class);
         template.setConnectionFactory(connection);
+
         template.setHashKeySerializer(new StringRedisSerializer());
+        template.setHashValueSerializer(serializer);
+
+
         template.setKeySerializer(new StringRedisSerializer());
-        template.setValueSerializer(new JacksonJsonRedisSerializer<Object>(Object.class));
-        template.setHashKeySerializer(new JacksonJsonRedisSerializer<Object>(Object.class));
+        template.setValueSerializer(serializer);
 
         return template;
     }
+
 }

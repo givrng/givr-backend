@@ -90,4 +90,5 @@ OTP:
   SECRETS: ${OTP_SECRET}
 RESEND_API_TOKEN: ${RESEND_API_KEY}
 app:
+  profile: ${APP_PROFILE}
   action: ${APP_ACTION}

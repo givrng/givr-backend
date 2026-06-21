@@ -19,4 +19,6 @@ public interface ParticipationRepo extends JpaRepository<Participation, Long> {
     List<Participation> findAllByOrganization(Organization organization);
 
     Optional<Participation> findByVolunteerAndProject(Volunteer volunteer, Project project);
+
+    List<Participation> findAllByProject(Project project);
 }

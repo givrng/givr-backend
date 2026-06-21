@@ -34,12 +34,15 @@ public class OrganizationVerificationSession {
     private String claimedCACRegNumber;
     private String claimedOrgName;
     private String claimedType;
+
     @Column(nullable = false)
     @NotBlank
     @URL
     private String cacDocUrl;
-    // Contact person verification information
 
+    @URL
+    private String orgLogoUrl;
+    // Contact person verification information
     @Enumerated(EnumType.STRING)
     private IDType idType;
 
@@ -52,6 +55,7 @@ public class OrganizationVerificationSession {
     private String contactFirstname;
     private String contactLastname;
     private LocalDate dateOfBirth;
+    @Column(length = 600)
     private String description;
     @Setter
     private String review;

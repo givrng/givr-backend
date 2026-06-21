@@ -6,6 +6,7 @@ import com.backend.givr.organization.entity.Project;
 import com.backend.givr.organization.entity.ProjectApplication;
 import com.backend.givr.organization.repo.ProjectApplicationRepo;
 import com.backend.givr.organization.security.OrganizationDetailsService;
+import com.backend.givr.redis.RedisService;
 import com.backend.givr.shared.dtos.ProjectApplicationForm;
 import com.backend.givr.shared.dtos.VolunteerApplicationDto;
 import com.backend.givr.shared.email.EmailService;
@@ -14,7 +15,6 @@ import com.backend.givr.shared.exceptions.IllegalOperationException;
 import com.backend.givr.shared.exceptions.MaxApplicantsReachedException;
 import com.backend.givr.shared.exceptions.ProjectDeadlinePastException;
 import com.backend.givr.shared.mapper.SkillMapper;
-import com.backend.givr.shared.service.SkillService;
 import com.backend.givr.volunteer.entity.Volunteer;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
@@ -39,11 +39,11 @@ public class ApplicationService {
     @Autowired
     private OrganizationDetailsService organizationDetailsService;
     @Autowired
-    private SkillService skillService;
+    private SkillMapper skillMapper;
     @Autowired
     private ParticipationService participationService;
-//    @Autowired
-//    private RedisService redisService;
+    @Autowired
+    private RedisService redisService;
 
     public ProjectApplication apply(Volunteer volunteer, ProjectApplicationForm applicationForm, String email){
         Project project = em.getReference(Project.class, applicationForm.projectId());
@@ -61,7 +61,7 @@ public class ApplicationService {
             application.setAdditionalInfo(applicationForm.additionalInfo());
 
         if(Objects.nonNull(applicationForm.mySkills()))
-            application.setSpecialSkills(skillService.updateSkills(applicationForm.mySkills()).stream().toList());
+            application.setSpecialSkills(skillMapper.toSkills(applicationForm.mySkills()));
 
         try{
             var projectApplication =  repo.save(application);
@@ -117,7 +117,7 @@ public class ApplicationService {
         repo.save(application);
 
         if(status == ApplicationStatus.APPROVED){
-//            redisService.addAuthorizedUserProjects(application.getVolunteer().getVolunteerId(), project.getProjectId());
+            redisService.addAuthorizedUserProjects(application.getVolunteer().getVolunteerId(), project.getProjectId());
         }
         notifyApplicationChange(application, project, status);
     }

@@ -19,6 +19,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.List;
 import java.util.stream.Collectors;
 
 public class JwtValidationFilter extends OncePerRequestFilter {
@@ -26,19 +27,32 @@ public class JwtValidationFilter extends OncePerRequestFilter {
     private final VolunteerDetailsService volunteerDetailsService;
     private final OrganizationDetailsService organizationDetailsService;
     private final AdminDetailsService adminDetailsService;
+    private final List<String> ignorePaths = List.of("/v1/api/volunteer/auth/",
+            "/v1/api/volunteer/oauth2/", "/v1/api/organization/auth/", "/v1/api/organization/oauth2/");
     public JwtValidationFilter(JwtUtil util, VolunteerDetailsService volunteerDetailsService, OrganizationDetailsService organizationDetailsService, AdminDetailsService adminDetailsService){
         jwtUtil =util;
         this.volunteerDetailsService = volunteerDetailsService;
         this.organizationDetailsService = organizationDetailsService;
         this.adminDetailsService = adminDetailsService;
     }
+
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
+        for(String path: ignorePaths){
+            if(request.getServletPath().contains(path)) {
+                System.out.println("Ignored, "+request.getServletPath());
+                return true;
+            }
+        }
+        return false;
+    }
+
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         if(request.getCookies()== null || request.getServletPath().endsWith("/auth/login")){
             filterChain.doFilter(request, response);
             return;
         }
-
         try{
             Cookie[] cookies = request.getCookies();
             String accessToken = null;

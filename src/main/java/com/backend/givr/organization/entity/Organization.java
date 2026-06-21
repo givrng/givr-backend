@@ -62,6 +62,8 @@ public class Organization {
 
     private String profileUrl;
 
+    private String contactPersonProfileUrl;
+
     @Enumerated(EnumType.STRING)
     private VerificationStatus status;
 

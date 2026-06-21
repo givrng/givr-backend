@@ -41,6 +41,7 @@ public class AdminDetails implements SecurityDetails {
         return null;
     }
 
+
     @Override
     public @NotNull Collection<? extends GrantedAuthority> getAuthorities() {
         return authorities;

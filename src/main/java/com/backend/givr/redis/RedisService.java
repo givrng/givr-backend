@@ -1,5 +1,6 @@
 package com.backend.givr.redis;
 
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.connection.stream.*;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -13,6 +14,15 @@ public class RedisService {
     @Autowired
     private RedisTemplate<String, Object> redisTemplate;
 
+    @PostConstruct
+    private void createGroup(){
+        try{
+            redisTemplate.opsForStream()
+                    .createGroup("user_project_pointers", ReadOffset.from("0-0"), "pointer-group" );
+        }catch (Exception ignored){
+
+        }
+    }
 
     public void addAuthorizedUserProjects(String userId, Long projectId){
         // A SET of users that have the permission to connect to a group and allowed groups
@@ -36,18 +46,25 @@ public class RedisService {
         return records == null ? List.of() : records;
     }
 
-    public List<MapRecord<String, Object, Object>> readUserProjectOffset(Long count, ReadOffset readOffset){
+    public List<MapRecord<String, Object, Object>> readUserProjectOffset(long count){
         StreamReadOptions options = StreamReadOptions.empty()
                 .count(count)
                 .block(Duration.ofSeconds(5));
 
         String POINTER_STREAM = "user_project_pointers";
 
-        var records = redisTemplate.opsForStream().read(options, StreamOffset.create(POINTER_STREAM, readOffset));
+        var records = redisTemplate.opsForStream().read(Consumer.from("pointer-group", "listener-1"),
+                options,
+                StreamOffset.create(POINTER_STREAM, ReadOffset.lastConsumed()));
 
         return records==null? List.of() : records;
     }
 
+    public void acknowledgeRecord(String recordId){
+        redisTemplate.opsForStream()
+                .acknowledge("user_project_pointers", "pointer-group", recordId);
+
+    }
     public List<String> getProjectParticipantsEmails(Long projectId){
         return redisTemplate.opsForSet()
                 .members("participants:"+projectId)

@@ -27,7 +27,7 @@ public class GivrUserProjectPointer {
     private String userId;
     private String recordId;
 
-    @ElementCollection
+    @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "collection_project_offset", joinColumns = @JoinColumn(name = "project_offset"))
     @MapKeyColumn(name = "project_id")
     @Column(name = "offset_id")
@@ -40,7 +40,7 @@ public class GivrUserProjectPointer {
 
     @PrePersist
     private void setCreatedAt(){
-        this.createdAt = LocalDateTime.now(ZoneId.of("Africa/lagos"));
+        this.createdAt = LocalDateTime.now(ZoneId.of("Africa/Lagos"));
     }
 
     public GivrUserProjectPointer(MapRecord<String, Object, Object> record){
@@ -53,8 +53,8 @@ public class GivrUserProjectPointer {
         payload.remove("role");
 
         payload.entrySet().stream().forEach(entry->{
-            Long projectId = (Long) entry.getKey();
-            String offsetId = (String) entry.getValue();
+            Long projectId = Long.valueOf(entry.getKey().toString());
+            String offsetId = entry.getValue() == null? "": entry.getValue().toString();
             projectOffsets.put(projectId, offsetId);
         });
     }

@@ -51,8 +51,6 @@ public class ParticipationService {
     @Autowired
     private EntityManager em;
 
-    private final Logger logger = LoggerFactory.getLogger(ParticipationService.class);
-
     @Async
     public void createParticipation(Project project, ProjectApplication application){
         Participation participation = new Participation();
@@ -60,7 +58,7 @@ public class ParticipationService {
         String email = volunteer.getEmail();
         String segmentId = project.getSegmentId();
 
-        redisService.addProjectParticipantEmail(participation.getProject().getProjectId(), List.of(email));
+        redisService.addProjectParticipantEmail(project.getProjectId(), List.of(email));
         participation.setVolunteer(volunteer);
         participation.setProjectApplication(application);
         participation.setProject(project);
@@ -74,7 +72,7 @@ public class ParticipationService {
             participation.setIsUnSubscribed(false);
             repo.save(participation);
         } catch (ResendException e) {
-            logger.error("Failed to create contact, {}", e.getLocalizedMessage());
+            log.error("Failed to create contact, {}", e.getLocalizedMessage());
             System.err.printf("Failed to create participant because contact was not created. Contact was not created because %S", e.getLocalizedMessage());
             application.setStatus(ApplicationStatus.APPLIED);
             applicationRepo.save(application);
@@ -116,7 +114,7 @@ public class ParticipationService {
             try{
                 emailService.removeParticipantFromSegment(participation.getVolunteer().getEmail(), project.getSegmentId());
             } catch (ResendException e) {
-                logger.error("Failed to removed contact from segment, {}", e.getLocalizedMessage());
+                log.error("Failed to removed contact from segment, {}", e.getLocalizedMessage());
             }
         }
     }

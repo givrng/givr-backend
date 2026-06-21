@@ -153,4 +153,14 @@ public class ThymeleafTemplateService {
         return engine.process("email/chatNotification", context);
     }
 
+    public String joinWhatsAppNotification(String firstName, String whatsappLink, Integer memberCount){
+        Context context = new Context();
+
+        context.setVariable("firstName", firstName);
+        context.setVariable("whatsappLink", whatsappLink);
+        context.setVariable("memberCount", memberCount);
+
+        return engine.process("email/JoinWhatsApp",context);
+    }
 }
+

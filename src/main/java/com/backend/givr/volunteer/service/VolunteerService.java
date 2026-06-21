@@ -39,6 +39,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -120,13 +122,10 @@ public class VolunteerService {
         return new VolunteerDashboard(volunteer.getFirstname(), volunteer.getProfileCompleted(), projectMapper.toApplicationsDto(applications));
     }
 
+    @Cacheable(cacheNames = "volunteerProfile", key = "#volunteerId")
     public VolunteerProfile getVolunteerProfile(String volunteerId){
         return mapper.toProfile(getVolunteer(volunteerId));
     }
-//    public void createAuthPrincipal (CreateVolunteerRequestDto volunteerDto, Volunteer volunteer){
-//        VolunteerDetails details = new VolunteerDetails(volunteerDto.getEmail(), encoder.encode(volunteerDto.getPassword()), volunteer);
-//        detailsService.save(details);
-//    }
 
 
     public Volunteer createAccount(CreateVolunteerRequestDto volunteerDto){
@@ -158,6 +157,7 @@ public class VolunteerService {
     }
 
     @Transactional
+    @CachePut(cacheNames = "volunteerProfile", key = "#volunteerId")
     public VolunteerProfile updateProfile(String volunteerId, UpdateVolunteerDto updatedVolunteerDto, SecurityDetails details){
         Volunteer volunteer = manager.getReference(Volunteer.class, volunteerId);
         Location location = locationService.createLocation(updatedVolunteerDto.getLocation());

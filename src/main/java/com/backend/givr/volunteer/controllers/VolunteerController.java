@@ -20,16 +20,20 @@ import com.backend.givr.volunteer.dtos.*;
 import com.backend.givr.volunteer.entity.Volunteer;
 import com.backend.givr.volunteer.security.VolunteerDetails;
 import com.backend.givr.volunteer.service.VolunteerService;
+import jakarta.annotation.security.PermitAll;
 import jakarta.persistence.EntityManager;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.web.PagedModel;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.List;
 import java.util.Map;
 
@@ -74,6 +78,13 @@ public class VolunteerController {
         profile.setEmail(volunteerDetails.getUsername());
         profile.setEmailEditable(volunteerDetails.getProviderType() == AuthProviderType.LOCAL);
         return ResponseEntity.ok(profile);
+    }
+
+    @GetMapping("/profile/image")
+    @PermitAll
+    public ResponseEntity<URL> getProfileUrl (@RequestParam("userId") String volunteerId) throws URISyntaxException {
+        URL profileUrl = service.getVolunteerProfile(volunteerId).getProfileUrl();
+        return ResponseEntity.status(HttpStatus.FOUND).location(profileUrl.toURI()).build();
     }
 
     @PatchMapping("/profile")

@@ -54,7 +54,6 @@ public class GroupMsgListener {
 
     // Static variable
     private static final AtomicReference<ReadOffset> lastProcessedMsgRecord = new AtomicReference<>();
-    private static final AtomicReference<ReadOffset> lastProcessProjectRecord = new AtomicReference<>();
     private static final Logger logger = LoggerFactory.getLogger(GroupMsgListener.class);
     //------------ end ----------------
     public GroupMsgListener(@Qualifier("executorService") ExecutorService executorService, @Autowired RedisService redisService){
@@ -81,7 +80,6 @@ public class GroupMsgListener {
                     return Flux.fromIterable(
                                     participationService.getVolunteerParticipationEmail(msg.getProjectId()))
                             .delayElements(Duration.ofMillis(200))
-                            .doOnNext(System.out::println)
                             .concatMap(volunteer -> Mono.fromCallable(() -> {
                                                 emailService.sendChatNotification(
                                                         volunteer, org, title, msg.getContent());
@@ -128,24 +126,6 @@ public class GroupMsgListener {
                     logger.error(e.getMessage());
                     System.err.println(e.getMessage());
                 }
-            }
-        });
-    }
-
-    @PostConstruct
-    public void listenForOffSets(){
-        if(lastProcessProjectRecord.get() == null){
-            GivrUserProjectPointer projectOffset = messageService.getLastOffsetValue();
-            lastProcessProjectRecord.set(projectOffset == null? ReadOffset.from("0"): ReadOffset.from(projectOffset.getRecordId()));
-        }
-
-        executorService.submit(()->{
-            while (true){
-                List<MapRecord<String, Object, Object>> records = redisService.readUserProjectOffset(10L, lastProcessProjectRecord.get());
-
-                List<GivrUserProjectPointer> pointers = messageService.saveAllProjectPointer(records.stream().map(GivrUserProjectPointer::new).toList());
-                if(!pointers.isEmpty())
-                    lastProcessProjectRecord.set(ReadOffset.from(pointers.getLast().getRecordId()));
             }
         });
     }

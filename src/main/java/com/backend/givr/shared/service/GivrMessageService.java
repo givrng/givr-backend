@@ -10,6 +10,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Flux;
 
 import java.util.HashMap;
@@ -46,7 +47,6 @@ public class GivrMessageService {
 
     private void saveProjectPointer (GivrUserProjectPointer pointer){
         Optional<GivrUserProjectPointer> projectPointer = pointerRepo.findById(pointer.getUserId());
-
         projectPointer.ifPresentOrElse(p->{
             p.getProjectOffsets().putAll(pointer.getProjectOffsets());
             pointerRepo.save(p);

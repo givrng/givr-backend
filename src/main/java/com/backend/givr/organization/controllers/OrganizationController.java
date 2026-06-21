@@ -18,6 +18,7 @@ import com.backend.givr.volunteer.dtos.AuthDetailsDto;
 import com.resend.core.exception.ResendException;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.web.PagedModel;
 import org.springframework.http.HttpStatus;
@@ -26,8 +27,10 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
+import java.net.URL;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 @RestController
 @RequestMapping("/${api.version}/api/organization")
@@ -65,6 +68,12 @@ public class OrganizationController {
     @GetMapping("/profile")
     public ResponseEntity<OrganizationProfileDto> getOrganizationProfile(@AuthenticationPrincipal SecurityDetails details){
         return ResponseEntity.ok(service.getOrganizationProfile(details));
+    }
+
+    @GetMapping("/profile/image")
+    public ResponseEntity<String> getProfileImageUrl(@RequestParam("userId") String orgId){
+        String orgLogo = service.getProfileUrl(orgId);
+        return ResponseEntity.status(HttpStatus.FOUND).location(URI.create(orgLogo)).build();
     }
 
     @PostMapping("/verification/initiate")

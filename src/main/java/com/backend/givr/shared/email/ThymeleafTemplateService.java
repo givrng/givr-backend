@@ -162,5 +162,12 @@ public class ThymeleafTemplateService {
 
         return engine.process("email/JoinWhatsApp",context);
     }
+
+    public String shareGivrStory(String firstname){
+        Context context = new Context();
+        context.setVariable("firstName", firstname);
+
+        return engine.process("email/story", context);
+    }
 }
 

@@ -39,8 +39,7 @@ public class Script {
                 .doOnNext(volunteer -> {
                     String firstname= volunteer.getLastname();
                     String email = volunteer.getEmail();
-                    System.out.println("Sending notification");
-                    emailService.sendJoinWhatsAppNotification(firstname, memberCount, email);
+                    emailService.sendGivrStory(firstname, email);
                 })
                 .then().subscribe();
     }

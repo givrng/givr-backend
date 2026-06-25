@@ -163,7 +163,7 @@ public class OrganizationService {
         project.setStatus(ProjectStatus.OPEN);
         try{
             projectService.save(project);
-            projectAsyncServiceWorker.sendProjectListing(project);
+            projectAsyncServiceWorker.sendProjectListing(project).subscribe();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

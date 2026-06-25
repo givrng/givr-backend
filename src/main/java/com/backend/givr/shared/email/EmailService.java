@@ -245,4 +245,9 @@ public class EmailService {
 
         sendEmail(html, recipient, "Something I want you to be a part of 💙");
     }
+
+    public void sendGivrStory(String firstname, String recipient){
+        String html = emailTemplateService.shareGivrStory(firstname);
+        sendEmail(html, recipient, "My volunteer experience through Givr 💙");
+    }
 }

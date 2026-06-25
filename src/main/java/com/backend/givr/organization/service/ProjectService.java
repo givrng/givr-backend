@@ -142,7 +142,7 @@ public class ProjectService {
         handleProject(project, projectRequestDto);
         if(project.getStartDate().isBefore(LocalDate.parse(projectRequestDto.getStartDate())) ) {
             project.setStatus(ProjectStatus.OPEN);
-            worker.sendProjectListing(project);
+            worker.sendProjectListing(project).subscribe();
         }
         return project;
     }

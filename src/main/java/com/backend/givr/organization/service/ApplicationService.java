@@ -10,11 +10,13 @@ import com.backend.givr.redis.RedisService;
 import com.backend.givr.shared.dtos.ProjectApplicationForm;
 import com.backend.givr.shared.dtos.VolunteerApplicationDto;
 import com.backend.givr.shared.email.EmailService;
+import com.backend.givr.shared.entity.Skill;
 import com.backend.givr.shared.enums.ApplicationStatus;
 import com.backend.givr.shared.exceptions.IllegalOperationException;
 import com.backend.givr.shared.exceptions.MaxApplicantsReachedException;
 import com.backend.givr.shared.exceptions.ProjectDeadlinePastException;
 import com.backend.givr.shared.mapper.SkillMapper;
+import com.backend.givr.shared.service.SkillService;
 import com.backend.givr.volunteer.entity.Volunteer;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
@@ -27,6 +29,7 @@ import org.springframework.util.StringUtils;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 @Service
 public class ApplicationService {
@@ -44,6 +47,8 @@ public class ApplicationService {
     private ParticipationService participationService;
     @Autowired
     private RedisService redisService;
+    @Autowired
+    private SkillService skillService;
 
     public ProjectApplication apply(Volunteer volunteer, ProjectApplicationForm applicationForm, String email){
         Project project = em.getReference(Project.class, applicationForm.projectId());
@@ -60,9 +65,10 @@ public class ApplicationService {
         if(Objects.nonNull(applicationForm.additionalInfo()))
             application.setAdditionalInfo(applicationForm.additionalInfo());
 
-        if(Objects.nonNull(applicationForm.mySkills()))
-            application.setSpecialSkills(skillMapper.toSkills(applicationForm.mySkills()));
-
+        if(Objects.nonNull(applicationForm.mySkills())) {
+            Set<Skill> skills = skillService.updateSkills(applicationForm.mySkills());
+            application.setSpecialSkills(skills.stream().toList());
+        }
         try{
             var projectApplication =  repo.save(application);
 

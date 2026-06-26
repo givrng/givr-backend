@@ -7,12 +7,8 @@ import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.ApplicationArguments;
-import org.springframework.boot.ApplicationRunner;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Schedulers;
 
 import java.time.Duration;
 import java.util.List;
@@ -32,8 +28,6 @@ public class Script {
         List<Volunteer> volunteers = volunteerRepo.findAll();
 
         Flux<Volunteer> volunteerFlux = Flux.fromIterable(volunteers);
-
-        int memberCount = volunteers.size();
 
         volunteerFlux.delayElements(Duration.ofMillis(200))
                 .doOnNext(volunteer -> {

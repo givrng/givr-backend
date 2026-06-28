@@ -4,6 +4,7 @@ import com.backend.givr.shared.jwt.GivrCookie;
 import com.backend.givr.shared.enums.AuthProviderType;
 import com.backend.givr.volunteer.security.VolunteerDetails;
 import com.backend.givr.volunteer.security.VolunteerDetailsService;
+import com.backend.givr.volunteer.service.VolunteerService;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;

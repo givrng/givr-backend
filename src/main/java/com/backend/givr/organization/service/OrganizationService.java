@@ -278,13 +278,17 @@ public class OrganizationService {
 
     /**
      * Updates organization email*/
-    public OrganizationProfileDto updateEmail(OrganizationUpdateDto organizationDto, SecurityDetails details){
+    public OrganizationProfileDto updateEmailOrLogo(OrganizationUpdateDto organizationDto, SecurityDetails details){
         Organization organization = em.getReference(Organization.class, details.getId());
         // To be removed to a dedicated method for email update
         if((organizationDto.getEmail()!= null) && !Objects.equals(organizationDto.getEmail(), details.getUsername())) {
             organization.setEmailVerified(false);
             service.updateEmail(organizationDto.getEmail(), details.getUsername());
         }
+        if(organizationDto.getProfileUrl()!=null)
+            organization.setProfileUrl(organizationDto.getProfileUrl());
+        System.out.println();
+        repo.save(organization);
         return toProfile(organization, details);
     }
 

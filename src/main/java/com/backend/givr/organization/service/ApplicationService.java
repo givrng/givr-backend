@@ -12,6 +12,7 @@ import com.backend.givr.shared.dtos.VolunteerApplicationDto;
 import com.backend.givr.shared.email.EmailService;
 import com.backend.givr.shared.entity.Skill;
 import com.backend.givr.shared.enums.ApplicationStatus;
+import com.backend.givr.shared.exceptions.DuplicateAccountException;
 import com.backend.givr.shared.exceptions.IllegalOperationException;
 import com.backend.givr.shared.exceptions.MaxApplicantsReachedException;
 import com.backend.givr.shared.exceptions.ProjectDeadlinePastException;
@@ -44,11 +45,11 @@ public class ApplicationService {
     @Autowired
     private SkillMapper skillMapper;
     @Autowired
+    private SkillService skillService;
+    @Autowired
     private ParticipationService participationService;
     @Autowired
     private RedisService redisService;
-    @Autowired
-    private SkillService skillService;
 
     public ProjectApplication apply(Volunteer volunteer, ProjectApplicationForm applicationForm, String email){
         Project project = em.getReference(Project.class, applicationForm.projectId());
@@ -66,8 +67,8 @@ public class ApplicationService {
             application.setAdditionalInfo(applicationForm.additionalInfo());
 
         if(Objects.nonNull(applicationForm.mySkills())) {
-            Set<Skill> skills = skillService.updateSkills(applicationForm.mySkills());
-            application.setSpecialSkills(skills.stream().toList());
+            Set<Skill> specialSkillSet = skillService.updateSkills(applicationForm.mySkills());
+            application.setSpecialSkills(specialSkillSet.stream().toList());
         }
         try{
             var projectApplication =  repo.save(application);
@@ -78,7 +79,7 @@ public class ApplicationService {
             emailService.sendApplicationNotificationEmail(organization.getOrganizationName(), project.getTitle(), orgEmail);
             return projectApplication;
         }catch (DataIntegrityViolationException ignored){
-            throw new IllegalOperationException("Cannot apply to a project more than once");
+            throw new DuplicateAccountException("Cannot apply to a project more than once");
         }
     }
 

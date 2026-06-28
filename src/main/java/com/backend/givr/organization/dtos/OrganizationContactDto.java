@@ -11,7 +11,7 @@ public class OrganizationContactDto {
     private String contactLastname;
     private String phoneNumber;
     private String email;
-
+    private String contactPersonProfileUrl;
     private Boolean emailEditable;
     private Boolean emailVerified;
 }

@@ -1,7 +1,6 @@
 package com.backend.givr.volunteer.service;
 
 import com.backend.givr.organization.dtos.ProjectResponseDto;
-import com.backend.givr.organization.entity.Organization;
 import com.backend.givr.organization.entity.Project;
 import com.backend.givr.organization.entity.ProjectApplication;
 import com.backend.givr.organization.service.ApplicationService;
@@ -16,6 +15,7 @@ import com.backend.givr.shared.email.EmailService;
 import com.backend.givr.shared.enums.AccountType;
 import com.backend.givr.shared.enums.OtpPurpose;
 import com.backend.givr.shared.enums.ProjectStatus;
+import com.backend.givr.shared.exceptions.DuplicateAccountException;
 import com.backend.givr.shared.exceptions.IllegalOperationException;
 import com.backend.givr.shared.interfaces.SecurityDetails;
 import com.backend.givr.shared.mapper.ProjectMapper;
@@ -41,6 +41,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -133,9 +134,10 @@ public class VolunteerService {
             var volunteer = createVolunteer(volunteerDto);
             emailService.sendWelcomeEmail(volunteerDto.getFirstname(),String.format("%s/signin/volunteer", clientAppBaseUrl) , volunteerDto.getEmail());
             return volunteer;
-        }catch (IllegalStateException e){
+        }catch (IllegalStateException | DataIntegrityViolationException e){
+
             logger.error("Failed to create account for user: {}", e.getLocalizedMessage());
-            return null;
+            throw new DuplicateAccountException("A account exist with this email");
         }
     }
 
@@ -168,7 +170,7 @@ public class VolunteerService {
         volunteer.setProfileCompleted(true);
         if(updatedVolunteerDto.getEmail() != null && !updatedVolunteerDto.getEmail().equals(details.getUsername())){
             if(details.getProviderType() == AuthProviderType.LOCAL){
-                VolunteerDetails volunteerDetails = detailsService.loadUserByUsername(details.getUsername());
+                VolunteerDetails volunteerDetails = new VolunteerDetails(repo.findByEmail(details.getUsername()).orElseThrow());
                 volunteer.setEmail(updatedVolunteerDto.getEmail());
                 volunteerDetails.setEmail(updatedVolunteerDto.getEmail());
             }else{
@@ -236,9 +238,13 @@ public class VolunteerService {
     }
 
     public void updatePassword(SecurityDetails details, PasswordUpdateDto passwordUpdateDto) {
-        VolunteerDetails volunteerDetails = detailsService.loadUserByUsername(details.getUsername());
-        otpService.verifyOtp(details.getUsername(), passwordUpdateDto.otp(), AccountType.VOLUNTEER, OtpPurpose.PASSWORD_UPDATE);
-        volunteerDetails.setPassword(encoder.encode(passwordUpdateDto.password()));
+        try{
+            otpService.verifyOtp(details.getUsername(), passwordUpdateDto.otp(), AccountType.VOLUNTEER, OtpPurpose.PASSWORD_UPDATE);
+            detailsService.updatePassword(encoder.encode(passwordUpdateDto.password()), details.getUsername());
+        } catch (RuntimeException e) {
+            throw new RuntimeException(e);
+        }
+
     }
 
     public String shareProject(Long projectId){

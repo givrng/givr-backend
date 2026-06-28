@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
@@ -54,6 +55,7 @@ public class Script {
                 .then().subscribe();
     }
 
+    @Transactional
     private void authorizeActiveProjects(){
         List<Project> projects = projectRepo.findAllByStatus(ProjectStatus.OPEN);
 

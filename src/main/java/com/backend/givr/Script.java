@@ -1,7 +1,9 @@
 package com.backend.givr;
 
+import com.backend.givr.organization.entity.Participation;
 import com.backend.givr.organization.entity.Project;
 import com.backend.givr.organization.repo.ProjectRepo;
+import com.backend.givr.organization.service.ParticipationService;
 import com.backend.givr.redis.RedisService;
 import com.backend.givr.shared.email.EmailService;
 import com.backend.givr.shared.enums.ProjectStatus;
@@ -31,6 +33,8 @@ public class Script {
     private ProjectRepo projectRepo;
     @Autowired
     private RedisService redisService;
+    @Autowired
+    private ParticipationService participationService;
 
     @Autowired
     private EmailService emailService;
@@ -61,7 +65,9 @@ public class Script {
 
         projects.forEach(project->{
             redisService.addAuthorizedUserProjects(project.getOrganization().getOrganizationId(), project.getProjectId());
-            project.getApprovedList().forEach(application -> redisService.addAuthorizedUserProjects(application.getVolunteer().getVolunteerId(), project.getProjectId()));
+            List<Participation> participationList = participationService.getParticipationByProject(project);
+
+            participationList.forEach(p->redisService.addAuthorizedUserProjects(p.getVolunteer().getVolunteerId(), project.getProjectId()));
         });
     }
 

@@ -38,6 +38,7 @@ public class OrganizationUpdateDto {
     private String contactFirstname;
     private String contactLastname;
     private String contactMiddleName;
+    private String contactPersonProfileUrl;
     private String dateOfBirth;
     @Size(min = 11, max = 13, message = "Invalid phone number")
     private String phoneNumber;

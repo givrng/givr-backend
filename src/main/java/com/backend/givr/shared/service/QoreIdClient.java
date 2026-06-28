@@ -71,7 +71,7 @@ public class QoreIdClient implements VerificationClient {
     // Check for the expiration or the presence of access tokens before attempting to verify
     public void verify(OrganizationVerificationSession session) throws JsonProcessingException {
         String path = switch (session.getIdType()){
-            case vNIN -> String.format("v1/ng/identities/virtual-nin/%s", session.getIdNumber());
+            case NIN -> String.format("v1/ng/identities/virtual-nin/%s", session.getIdNumber());
 
             case DL -> String.format("v1/ng/identities/drivers-license/%s", session.getIdNumber());
 

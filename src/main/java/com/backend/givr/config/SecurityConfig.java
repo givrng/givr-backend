@@ -16,6 +16,7 @@ import com.backend.givr.volunteer.oauth2.VolunteerOAuthFilter;
 import com.backend.givr.volunteer.oauth2.VolunteerOAuthService;
 import com.backend.givr.volunteer.oauth2.VolunteerOAuthSuccessHandler;
 import com.backend.givr.volunteer.security.VolunteerDetailsService;
+import com.backend.givr.volunteer.service.VolunteerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;

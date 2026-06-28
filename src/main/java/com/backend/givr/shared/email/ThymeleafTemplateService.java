@@ -29,8 +29,10 @@ public class ThymeleafTemplateService {
 
     public String volunteerWelcomeEmail(String firstname, String volunteerDashboardUrl){
         Context context = new Context();
+        String whatsappLink = "https://chat.whatsapp.com/GpYcrwx1qtt13jyOKVJUvq?mode=gi_t";
         context.setVariable("firstname", firstname);
         context.setVariable("clientAppUrl", volunteerDashboardUrl);
+        context.setVariable("whatsappLink", whatsappLink);
         return engine.process("email/volunteerWelcome", context);
     }
 

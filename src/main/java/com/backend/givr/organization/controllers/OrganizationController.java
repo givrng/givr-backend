@@ -84,7 +84,7 @@ public class OrganizationController {
     @PatchMapping("/profile")
     @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<OrganizationProfileDto> updateOrganizationProfile(@RequestBody OrganizationUpdateDto organizationDto, @AuthenticationPrincipal SecurityDetails details){
-        return ResponseEntity.ok(service.updateEmail(organizationDto, details));
+        return ResponseEntity.ok(service.updateEmailOrLogo(organizationDto, details));
     }
 
     @GetMapping("/profile/email/exists")

@@ -114,7 +114,6 @@ public class GroupMsgListener {
                 Flux.fromIterable(records)
                         .map(GivrMessage::new)
                         .filter(msg->msg.getRole().equals(AccountType.ORGANIZATION))
-                        .doOnNext(msg-> System.out.println(msg.getRole()))
                         .subscribe(this::sendNotification);
                 try {
                     List<GivrMessage> msgs = records.stream().map(GivrMessage::new).toList();
@@ -124,7 +123,6 @@ public class GroupMsgListener {
                     }
                 } catch (Exception e) {
                     logger.error(e.getMessage());
-                    System.err.println(e.getMessage());
                 }
             }
         });

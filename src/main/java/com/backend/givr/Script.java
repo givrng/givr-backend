@@ -1,7 +1,9 @@
 package com.backend.givr;
 
+import com.backend.givr.organization.entity.Participation;
 import com.backend.givr.organization.entity.Project;
 import com.backend.givr.organization.repo.ProjectRepo;
+import com.backend.givr.organization.service.ParticipationService;
 import com.backend.givr.redis.RedisService;
 import com.backend.givr.shared.email.EmailService;
 import com.backend.givr.shared.enums.ProjectStatus;
@@ -14,9 +16,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Schedulers;
+
 
 import java.time.Duration;
 import java.util.List;
@@ -30,7 +32,8 @@ public class Script {
     private ProjectRepo projectRepo;
     @Autowired
     private RedisService redisService;
-
+    @Autowired
+    private ParticipationService participationService;
     @Autowired
     private EmailService emailService;
     @Value("${app.action}")
@@ -42,30 +45,31 @@ public class Script {
 
         Flux<Volunteer> volunteerFlux = Flux.fromIterable(volunteers);
 
-        int memberCount = volunteers.size();
 
         volunteerFlux.delayElements(Duration.ofMillis(200))
                 .doOnNext(volunteer -> {
                     String firstname= volunteer.getLastname();
                     String email = volunteer.getEmail();
                     System.out.println("Sending notification");
-                    emailService.sendJoinWhatsAppNotification(firstname, memberCount, email);
+                    emailService.sendNotification(firstname, email);
                 })
                 .then().subscribe();
     }
-
     private void authorizeActiveProjects(){
         List<Project> projects = projectRepo.findAllByStatus(ProjectStatus.OPEN);
 
         projects.forEach(project->{
             redisService.addAuthorizedUserProjects(project.getOrganization().getOrganizationId(), project.getProjectId());
-            project.getApprovedList().forEach(application -> redisService.addAuthorizedUserProjects(application.getVolunteer().getVolunteerId(), project.getProjectId()));
+            List<Participation> participationList = participationService.getParticipationByProject(project);
+
+            participationList.forEach(p->redisService.addAuthorizedUserProjects(p.getVolunteer().getVolunteerId(), project.getProjectId()));
         });
+
     }
 
     @PostConstruct
     public void start(){
-        if(action.equals("send-join-notification")){
+        if(action.equals("send-notification")){
             sendNotificationToVolunteers();
         }
 

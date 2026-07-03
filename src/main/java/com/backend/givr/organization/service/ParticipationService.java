@@ -22,6 +22,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -52,6 +55,10 @@ public class ParticipationService {
     private EntityManager em;
 
     @Async
+    @CacheEvict(
+            cacheNames = "participantEmails",
+            key = "#project.projectId"
+    )
     public void createParticipation(Project project, ProjectApplication application){
         Participation participation = new Participation();
         Volunteer volunteer = application.getVolunteer();
@@ -128,18 +135,13 @@ public class ParticipationService {
         return repo.findAllByProject( project);
     }
 
+    @Cacheable(
+            cacheNames = "participantEmails",
+            key = "#projectId"
+    )
     public List<String> getVolunteerParticipationEmail(Long projectId){
         Project project = em.getReference(Project.class, projectId);
-        List<String> cached = redisService.getProjectParticipantsEmails(projectId);
-
-        if(!cached.isEmpty() )
-            return cached;
-
-        List<String> emails = getParticipationByProject(project).stream().map(Participation::getVolunteer).map(Volunteer::getEmail).toList();
-
-        redisService.addProjectParticipantEmail(projectId, emails);
-        return emails;
-//        return getParticipationByProject(project).stream().map(Participation::getVolunteer).map(Volunteer::getEmail).toList();
+        return getParticipationByProject(project).stream().map(Participation::getVolunteer).map(Volunteer::getEmail).toList();
     }
 
     @Async

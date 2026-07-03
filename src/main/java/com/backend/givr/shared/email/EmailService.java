@@ -245,4 +245,8 @@ public class EmailService {
 
         sendEmail(html, recipient, "Something I want you to be a part of 💙");
     }
+    public void sendNotification(String firstname, String recipient){
+        String html = emailTemplateService.sendNotification(firstname);
+        sendEmail(html, recipient, "You're not a volunteer yet");
+    }
 }

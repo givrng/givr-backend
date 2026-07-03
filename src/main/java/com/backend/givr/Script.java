@@ -18,8 +18,7 @@ import org.springframework.boot.ApplicationRunner;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Schedulers;
+
 
 import java.time.Duration;
 import java.util.List;
@@ -35,7 +34,6 @@ public class Script {
     private RedisService redisService;
     @Autowired
     private ParticipationService participationService;
-
     @Autowired
     private EmailService emailService;
     @Value("${app.action}")
@@ -47,19 +45,16 @@ public class Script {
 
         Flux<Volunteer> volunteerFlux = Flux.fromIterable(volunteers);
 
-        int memberCount = volunteers.size();
 
         volunteerFlux.delayElements(Duration.ofMillis(200))
                 .doOnNext(volunteer -> {
                     String firstname= volunteer.getLastname();
                     String email = volunteer.getEmail();
                     System.out.println("Sending notification");
-                    emailService.sendJoinWhatsAppNotification(firstname, memberCount, email);
+                    emailService.sendNotification(firstname, email);
                 })
                 .then().subscribe();
     }
-
-    @Transactional
     private void authorizeActiveProjects(){
         List<Project> projects = projectRepo.findAllByStatus(ProjectStatus.OPEN);
 
@@ -69,11 +64,12 @@ public class Script {
 
             participationList.forEach(p->redisService.addAuthorizedUserProjects(p.getVolunteer().getVolunteerId(), project.getProjectId()));
         });
+
     }
 
     @PostConstruct
     public void start(){
-        if(action.equals("send-join-notification")){
+        if(action.equals("send-notification")){
             sendNotificationToVolunteers();
         }
 

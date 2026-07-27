@@ -4,6 +4,7 @@ import com.backend.givr.organization.dtos.*;
 
 import com.backend.givr.organization.service.ApplicationService;
 import com.backend.givr.organization.service.OrganizationService;
+import com.backend.givr.organization.service.ParticipationService;
 import com.backend.givr.shared.dtos.ParticipationDto;
 import com.backend.givr.shared.dtos.PasswordUpdateDto;
 import com.backend.givr.shared.dtos.VolunteerApplicationDto;
@@ -46,6 +47,9 @@ public class OrganizationController {
 
     @Autowired
     private LogoutService logoutService;
+
+    @Autowired
+    private ParticipationService participationService;
 
     @Autowired
     private GivrMessageService messageService;
@@ -159,6 +163,12 @@ public class OrganizationController {
 
         service.publishProject(id, details);
         return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/projects/{projectId}/completed")
+    public ResponseEntity<Void> markProjectCompleted(@PathVariable("projectId") Long projectId){
+        participationService.markProjectCompleted(projectId);
+        return ResponseEntity.accepted().build();
     }
 
     @DeleteMapping("/projects/{projectId}")

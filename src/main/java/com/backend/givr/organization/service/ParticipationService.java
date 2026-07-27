@@ -10,6 +10,7 @@ import com.backend.givr.redis.RedisService;
 import com.backend.givr.shared.dtos.RatingDTO;
 import com.backend.givr.shared.enums.ApplicationStatus;
 import com.backend.givr.shared.enums.ParticipationStatus;
+import com.backend.givr.shared.enums.ProjectStatus;
 import com.backend.givr.shared.exceptions.IllegalOperationException;
 import com.backend.givr.shared.email.EmailService;
 import com.backend.givr.shared.service.RatingService;
@@ -29,7 +30,9 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import reactor.core.publisher.Flux;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 
@@ -53,6 +56,8 @@ public class ParticipationService {
     private RedisTemplate<String, Object> redisTemplate;
     @Autowired
     private EntityManager em;
+    @Autowired
+    private ProjectService projectService;
 
     @Async
     @CacheEvict(
@@ -126,6 +131,27 @@ public class ParticipationService {
         }
     }
 
+    @Async
+    @Transactional
+    public void markProjectCompleted(Long projectId) {
+        Project project = projectService.findProjectById(projectId);
+        project.setStatus(ProjectStatus.COMPLETED);
+        Flux<Participation> participationList = Flux.fromIterable(getParticipationByProject(project));
+
+        participationList.parallel().doOnNext(p->{
+                    p.setParticipationStatus(ParticipationStatus.COMPLETED);
+                })
+                .sequential()
+                .delayElements(Duration.ofMillis(200))
+                .doOnNext(p->{
+                    emailService.sendParticipationUpdate(p.getVolunteer(), project, ParticipationStatus.COMPLETED);
+                }).doOnError(err->{
+                    log.error("An error occurred while updating participation status {}", err.getLocalizedMessage());
+                })
+                .doOnComplete(()->log.info("Participant has been notified"))
+                .subscribe();
+
+    }
     public void deleteVolunteerParticipation(Long participationId, Volunteer volunteer){
         Participation participation = repo.findByIdAndVolunteer(participationId, volunteer).orElseThrow(()->new IllegalOperationException("Illegal operation, cannot perform operation delete"));
         repo.delete(participation);

@@ -123,11 +123,7 @@ public class ParticipationService {
         if(status == ParticipationStatus.REJECTED){
             repo.delete(participation);
             redisService.removeAuthorizedUserProject(volunteer.getVolunteerId(), project.getProjectId());
-            try{
-                emailService.removeParticipantFromSegment(participation.getVolunteer().getEmail(), project.getSegmentId());
-            } catch (ResendException e) {
-                log.error("Failed to removed contact from segment, {}", e.getLocalizedMessage());
-            }
+            emailService.sendParticipationUpdate(volunteer, project, ParticipationStatus.REJECTED);
         }
     }
 

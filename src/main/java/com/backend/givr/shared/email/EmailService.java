@@ -247,6 +247,6 @@ public class EmailService {
     }
     public void sendNotification(String firstname, String recipient){
         String html = emailTemplateService.sendNotification(firstname);
-        sendEmail(html, recipient, "We have something to celebrate 🎉");
+        sendEmail(html, recipient, "The volunteer who never showed up");
     }
 }

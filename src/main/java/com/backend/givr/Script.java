@@ -72,11 +72,6 @@ public class Script {
         if(action.equals("send-notification")){
             sendNotificationToVolunteers();
         }
-
-        if(action.equals("authorize-active-projects")){
-            authorizeActiveProjects();
-        }
-
     }
 
 }

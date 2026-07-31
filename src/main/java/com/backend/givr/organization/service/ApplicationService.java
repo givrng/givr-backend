@@ -1,36 +1,26 @@
 package com.backend.givr.organization.service;
 
-import com.backend.givr.organization.dtos.ApplicationStats;
 import com.backend.givr.organization.entity.Organization;
 import com.backend.givr.organization.entity.Project;
 import com.backend.givr.organization.entity.ProjectApplication;
 import com.backend.givr.organization.repo.ProjectApplicationRepo;
-import com.backend.givr.organization.security.OrganizationDetailsService;
-import com.backend.givr.redis.RedisService;
-import com.backend.givr.shared.dtos.ProjectApplicationForm;
-import com.backend.givr.shared.dtos.VolunteerApplicationDto;
-import com.backend.givr.shared.email.EmailService;
-import com.backend.givr.shared.entity.Skill;
+import com.backend.givr.shared.ProjectApplicationForm;
+import com.backend.givr.shared.VolunteerApplicationDto;
 import com.backend.givr.shared.enums.ApplicationStatus;
-import com.backend.givr.shared.exceptions.DuplicateAccountException;
 import com.backend.givr.shared.exceptions.IllegalOperationException;
 import com.backend.givr.shared.exceptions.MaxApplicantsReachedException;
 import com.backend.givr.shared.exceptions.ProjectDeadlinePastException;
-import com.backend.givr.shared.mapper.SkillMapper;
-import com.backend.givr.shared.service.SkillService;
 import com.backend.givr.volunteer.entity.Volunteer;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
+import java.util.Date;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 
 @Service
 public class ApplicationService {
@@ -38,48 +28,18 @@ public class ApplicationService {
     private ProjectApplicationRepo repo;
     @PersistenceContext
     private EntityManager em;
-    @Autowired
-    private EmailService emailService;
-    @Autowired
-    private OrganizationDetailsService organizationDetailsService;
-    @Autowired
-    private SkillMapper skillMapper;
-    @Autowired
-    private SkillService skillService;
-    @Autowired
-    private ParticipationService participationService;
-    @Autowired
-    private RedisService redisService;
-
-    public ProjectApplication apply(Volunteer volunteer, ProjectApplicationForm applicationForm, String email){
+    public ProjectApplication apply(Volunteer volunteer, ProjectApplicationForm applicationForm){
         Project project = em.getReference(Project.class, applicationForm.projectId());
-        Organization organization = project.getOrganization();
-        String orgEmail = organizationDetailsService.getEmail(organization);
-        if(LocalDateTime.now().isAfter(project.getDeadline().atTime(23, 59, 59)))
+        if(project.getEndDate().before(Date.from(Instant.now())))
             throw new ProjectDeadlinePastException("Cannot apply for a project past it's application period");
 
-        var application = new ProjectApplication(project, volunteer, email);
-        application.setApplicationReason(applicationForm.reason());
-        application.setIsAvailable(applicationForm.isAvailable());
-        application.setAboutVolunteer(applicationForm.aboutMe());
-
-        if(Objects.nonNull(applicationForm.additionalInfo()))
-            application.setAdditionalInfo(applicationForm.additionalInfo());
-
-        if(Objects.nonNull(applicationForm.mySkills())) {
-            Set<Skill> specialSkillSet = skillService.updateSkills(applicationForm.mySkills());
-            application.setSpecialSkills(specialSkillSet.stream().toList());
-        }
+        var application = new ProjectApplication(project, volunteer);
+        application.setApplicationReason(application.getApplicationReason());
+        application.setAvailableDays(application.getAvailableDays());
         try{
-            var projectApplication =  repo.save(application);
-
-            emailService.sendApplicationSubmittedEmail(volunteer.getFirstname(), project.getTitle(), project.getOrganization().getOrganizationName(),
-                    String.format("%S, %S", project.getAddress(), project.getLocation().getState()), email);
-
-            emailService.sendApplicationNotificationEmail(organization.getOrganizationName(), project.getTitle(), orgEmail);
-            return projectApplication;
+            return repo.save(application);
         }catch (DataIntegrityViolationException ignored){
-            throw new DuplicateAccountException("Cannot apply to a project more than once");
+            throw new DataIntegrityViolationException("Cannot apply to a project more than once");
         }
     }
 
@@ -88,22 +48,15 @@ public class ApplicationService {
         repo.deleteByProjectAndVolunteer(project, volunteer);
     }
 
-    public void notifyApplicationChange(ProjectApplication application, Project project, ApplicationStatus status){
-
-        switch (status){
-            case APPROVED -> {
-                String address = String.format("%s, %S", project.getAddress(), project.getLocation().getState());
-                emailService.sendApplicationApproved(application.getVolunteer().getFirstname(), project.getTitle(),
-                        project.getOrganization().getOrganizationName(),address, application.getEmail());
-            }
-            case REJECTED -> {
-                emailService.sendApplicationRejected(application.getVolunteer().getFirstname(), project.getTitle(),
-                        project.getOrganization().getOrganizationName(), application.getEmail());
-            }
-        }
+    public void changeApplicationStatus(Long projectId, Volunteer volunteer, ApplicationStatus status){
+        Project project = em.getReference(Project.class, projectId);
+        ProjectApplication application = repo.findByProjectAndVolunteer(project, volunteer).orElseThrow();
+        if(status == ApplicationStatus.APPLIED)
+            throw new IllegalOperationException("Cannot change status to applied");
+        application.setStatus(status);
+        repo.save(application);
     }
 
-    @Transactional
     public void changeApplicationStatus(Long applicationId, ApplicationStatus status){
         if(applicationId==null)
             throw new IllegalArgumentException("Null values are not accepted");
@@ -116,17 +69,8 @@ public class ApplicationService {
 
         if(status == ApplicationStatus.APPLIED)
             throw new IllegalOperationException("Cannot change status to applied");
-
-        if(status == ApplicationStatus.APPROVED)
-            participationService.createParticipation(project, application);
-
         application.setStatus(status);
         repo.save(application);
-
-        if(status == ApplicationStatus.APPROVED){
-            redisService.addAuthorizedUserProjects(application.getVolunteer().getVolunteerId(), project.getProjectId());
-        }
-        notifyApplicationChange(application, project, status);
     }
 
     private void checkNull(Project project, Volunteer volunteer){
@@ -142,11 +86,4 @@ public class ApplicationService {
         return repo.findAllByOrganizationAndStatus(organization, ApplicationStatus.APPLIED).stream().map(VolunteerApplicationDto::new).toList();
     }
 
-    public ApplicationStats getVolunteerStats(Organization organization){
-        int approved = repo.countByStatus(ApplicationStatus.APPLIED);
-        int applied = repo.countByStatus(ApplicationStatus.APPLIED);
-        int rejected = repo.countByStatus(ApplicationStatus.REJECTED);
-
-        return new ApplicationStats(applied, approved, rejected);
-    }
 }

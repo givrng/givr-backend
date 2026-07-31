@@ -1,7 +1,6 @@
 package com.backend.givr.volunteer.security;
 
 import com.backend.givr.shared.interfaces.SecurityDetails;
-import com.backend.givr.shared.enums.AuthProviderType;
 import com.backend.givr.volunteer.entity.Volunteer;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
@@ -10,42 +9,32 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.oauth2.core.oidc.user.OidcUser;
+import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
 import java.util.List;
 
+@Entity
 @NoArgsConstructor
 public class VolunteerDetails implements SecurityDetails {
-    @Setter
-    private String email;
+    @Id
+    @Email(message = "Invalid email format")
 
-    @Setter
+    private String email;
     private String password;
     private Collection<GrantedAuthority> roles = List.of(new SimpleGrantedAuthority("VOLUNTEER"));
 
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "volunteer_id")
     @Getter
     private Volunteer volunteer;
-    @Getter
-
-    private AuthProviderType authProvider;
-    @Getter
-    private String providerId;
 
     public VolunteerDetails(String email, String password, Volunteer volunteer){
         this.email = email;
         this.password = password;
         this.volunteer = volunteer;
-        this.authProvider = AuthProviderType.LOCAL;
     }
 
-    public VolunteerDetails(Volunteer volunteer){
-        this.email = volunteer.getEmail();
-        this.authProvider = volunteer.getAuthProvider();
-        this.providerId = volunteer.getProviderId();
-        this.password = volunteer.getPassword();
-        this.volunteer = volunteer;
-    }
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return roles;
@@ -70,10 +59,4 @@ public class VolunteerDetails implements SecurityDetails {
     public void setAuthorities() {
         this.roles = List.of(new SimpleGrantedAuthority("VOLUNTEER"));
     }
-
-    @Override
-    public AuthProviderType getProviderType() {
-        return this.authProvider;
-    }
-
 }

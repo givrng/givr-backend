@@ -1,10 +1,11 @@
 package com.backend.givr.organization.entity;
 
-import com.backend.givr.shared.entity.Location;
-import com.backend.givr.shared.entity.Skill;
+import com.backend.givr.shared.Location;
+import com.backend.givr.shared.Skill;
 import com.backend.givr.shared.enums.ProjectStatus;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -12,8 +13,8 @@ import lombok.Setter;
 import lombok.ToString;
 import org.hibernate.annotations.SQLRestriction;
 
-import java.time.*;
-import java.util.ArrayList;
+import java.time.ZonedDateTime;
+import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
@@ -31,20 +32,13 @@ public class Project {
     @JoinColumn(name = "organization_id")
     private Organization organization;
 
+    @NotBlank
     @Column(nullable = false, unique = true)
     private String title;
-
-    @Column(nullable = false, length = 1000)
+    @Column(nullable = false)
     private String description;
 
-    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    @JoinTable(
-            name = "project_categories",
-            joinColumns = @JoinColumn(name = "project_id"),
-            inverseJoinColumns = @JoinColumn(name = "category_id")
-    )
-    private List<Category> categories = new ArrayList<>();
-
+    @Column(nullable = false)
     private String category;
 
     @Min(value = 1, message = "Cannot create a project for no volunteer")
@@ -57,19 +51,14 @@ public class Project {
     private Location location;
 
     @Column(nullable = false)
-    private LocalDate startDate;
+    private Date startDate;
     @Column(nullable = false)
-    private LocalDate endDate;
+    private Date endDate;
     @Column(nullable = false)
-    private LocalDate deadline;
-
-    private String address;
-    @Transient
-    private Boolean reviewable;
-    @Embedded
-    private AttendanceHours attendanceHours;
-
-    private Boolean orgNotifiedOfDeadline;
+    private Date deadline;
+    @Column(nullable = false)
+    @NotBlank
+    private String attendanceHours;
 
     @Enumerated(EnumType.STRING)
     private ProjectStatus status;
@@ -78,7 +67,6 @@ public class Project {
     @JoinTable(name = "project_skills", joinColumns = @JoinColumn(name = "project_id"), inverseJoinColumns = @JoinColumn(name = "skill_id"))
     private Set<Skill> requiredSkills;
 
-    @Column(length = 300)
     private String specialRequirements;
 
     @OneToMany(mappedBy = "project")
@@ -88,52 +76,15 @@ public class Project {
     @SQLRestriction(value = "status = 'APPROVED'")
     private Set<ProjectApplication> approvedList;
 
-    private String segmentId;
-    private Boolean broadcastEnabled;
-
-    private Double rating;
-
-    private String projectCardUrl;
-    private String shareableLink;
     private ZonedDateTime createdAt;
     private ZonedDateTime modifiedAt;
 
-
     @PrePersist
     private void setCreatedAt(){
-        this.createdAt = ZonedDateTime.now(ZoneOffset.UTC);
+        this.createdAt = ZonedDateTime.now();
     }
     @PreUpdate
     private void setModifiedAt(){
-        this.modifiedAt = ZonedDateTime.now(ZoneOffset.UTC);
-    }
-
-    public int getVolunteerCount(){
-        return approvedList==null? 0 : approvedList.size();
-    }
-
-    public boolean shouldClose(LocalDateTime now){
-        return status != ProjectStatus.CLOSE && now.isAfter(deadline.atTime(23, 59, 59));
-    }
-
-    @PostLoad
-    public void updateCategories(){
-        if(this.category != null && categories.isEmpty())
-            categories.add(new Category(category));
-    }
-    public void closeApplication(){
-        this.status = ProjectStatus.CLOSE;
-    }
-
-    public boolean shouldNotifyDeadline(){
-        return status==ProjectStatus.CLOSE && !orgNotifiedOfDeadline;
-    }
-
-    public void markOrgNotifiedOfDeadline(){
-        this.orgNotifiedOfDeadline = true;
-    }
-
-    public boolean getReviewable(){
-        return LocalDate.now().plusDays(7).isAfter(this.getEndDate());
+        this.modifiedAt = ZonedDateTime.now();
     }
 }

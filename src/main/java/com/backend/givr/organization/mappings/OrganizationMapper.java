@@ -2,102 +2,78 @@ package com.backend.givr.organization.mappings;
 
 import com.backend.givr.organization.dtos.*;
 import com.backend.givr.organization.entity.Organization;
-import com.backend.givr.shared.entity.OrganizationVerificationSession;
 import com.backend.givr.organization.entity.Project;
-import com.backend.givr.shared.entity.Location;
-import com.backend.givr.shared.entity.Skill;
-import com.backend.givr.shared.mapper.SkillMapper;
-import com.backend.givr.volunteer.dtos.OrganizationResponseDTOv;
+import com.backend.givr.organization.entity.ProjectApplication;
+import com.backend.givr.shared.Location;
+import com.backend.givr.shared.Skill;
+import com.backend.givr.shared.mapper.SharedMapper;
 import com.backend.givr.volunteer.mappings.VolunteerMapper;
-import org.mapstruct.*;
+import org.mapstruct.AfterMapping;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.MappingTarget;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 
-import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.Locale;
 
-@Mapper(componentModel = "spring", uses = {VolunteerMapper.class, SkillMapper.class, }, nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+@Mapper(componentModel = "spring", uses = {VolunteerMapper.class, SharedMapper.class})
 public interface OrganizationMapper {
 
     Organization toOrganization(CreateOrganizationDto organizationDto);
 
+    @Mapping(target = "requiredSkills",ignore = true)
+    @Mapping(target = "startDate", ignore = true)
+    @Mapping(target = "endDate", ignore = true)
+    @Mapping(target = "deadline", ignore = true)
+    @Mapping(target = "category", ignore = true)
+    Project toProject (ProjectDto projectDto);
+
     @AfterMapping
-    default void updateVolunteerAndOrganization(Project project, @MappingTarget ProjectResponseDto projectDto){
-        projectDto.setTotalApplicants(project.getVolunteerCount());
+    default void updateCategory(ProjectDto projectDto, @MappingTarget Project project){
+        project.setCategory(projectDto.getCategories().getFirst());
     }
 
+    @Mapping(target = "requiredSkills", ignore = true)
+    @Mapping(target = "id", source = "projectId")
+    @Mapping(source = "deadline", target = "applicationDeadline")
+    @Mapping(target = "categories", ignore = true)
+    ProjectDto toProjectDTO (Project project);
+
+    @AfterMapping
+    default void updateCategory(Project project, @MappingTarget ProjectDto projectDto){
+        projectDto.setCategories(List.of(project.getCategory()));
+    }
+
+    @AfterMapping
+    default void mapDates(ProjectDto projectDto, @MappingTarget Project project) {
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH);
+        try{
+            project.setStartDate(formatter.parse(projectDto.getStartDate()));
+            project.setDeadline(formatter.parse(projectDto.getApplicationDeadline()));
+            project.setEndDate(formatter.parse(projectDto.getEndDate()));
+        }catch (ParseException e){
+            System.out.println(e.getLocalizedMessage());
+        }
+    }
+
+    @AfterMapping
+    default void mapSkills(Project project, @MappingTarget ProjectDto dto){
+        dto.setRequiredSkills(project.getRequiredSkills().stream().map(Skill::toString).toList());
+    }
+
+    @Mapping(target = "id", source = "organizationId")
     @Mapping(target = "name", source = "organizationName")
+    @Mapping(target = "category", source = "organizationType")
     OrganizationDto toOrganizationDto (Organization organization);
 
-    @Mapping(target = "name", source = "organizationName")
-    @Mapping(target = "category", ignore = true)
-    OrganizationResponseDTOv toOrganizationResponseDTOv (Organization organization);
-
-    @AfterMapping
-    default void updateCategory(Organization organization, @MappingTarget OrganizationResponseDTOv organizationResponseDTOv){
-        List<String> list = new ArrayList<>();
-        list.add(organization.getOrganizationType());
-        organizationResponseDTOv.setCategory(list);
-    }
-
-    List<OrganizationResponseDTOv> toOrganizationResponsesDTOv(List<Organization> organizations);
-
-    @Mapping(target = "name", source = "claimedOrgName")
-    @Mapping(target = "cacRegNumber", source = "claimedCACRegNumber")
-    @Mapping(target = "location", source = "claimedLocation")
-    @Mapping(target = "address", ignore = true)
-    OrganizationDto toOrganizationDto (OrganizationVerificationSession verificationSession);
-
-    @AfterMapping
-    default void updateOrganizationDtoAddress(OrganizationVerificationSession verificationSession, @MappingTarget OrganizationDto organizationDto){
-        organizationDto.setAddress(verificationSession.getClaimedAddress());
-        LocationDto locationDto = new LocationDto();
-        locationDto.setLga(verificationSession.getClaimedLocation().getLga());
-        locationDto.setState(verificationSession.getClaimedLocation().getState());
-        organizationDto.setLocation(locationDto);
-    }
-
-    @AfterMapping
-    default void updateActiveProjectCount(Organization organization, @MappingTarget OrganizationDto organizationDto){
-        organizationDto.setNumOfActiveProjects(organization.getNumOfActiveProjects());
-        List<String> organizationType = organization.getOrganizationType() == null? List.of("") : List.of(organization.getOrganizationType());
-        organizationDto.setCategory(organizationType);
-    }
-
     List<OrganizationDto> toOrganizationDtoList (List<Organization> organizations);
+    List<ProjectDto> toDtos(List<Project> projects);
 
     LocationDto toLocationDto (Location location);
 
-
-    default Date toDate(String date)throws ParseException{
-        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
-        return format.parse(date);
-    }
-
-    default Set<Skill> toSet(List<Skill> skills){
-        return Set.copyOf(skills);
-    }
-
-
-    OrganizationContactDto toOrganizationContact(Organization organization);
-
-    // name -> organizationName;
-    // category -> organizationType;
-    @Mapping(target = "organizationType", ignore = true)
-    @Mapping(target = "location", ignore = true)
-    @Mapping(target = "cacRegNumber", ignore = true)
-    @Mapping(target = "organizationName", ignore = true)
-    @Mapping(target = "address", ignore = true)
-    void updateOrganization(OrganizationUpdateDto organizationDto, @MappingTarget Organization organization);
-
-    @AfterMapping
-    default void updateOrganizationType(OrganizationUpdateDto organizationUpdateDto, @MappingTarget Organization organization){
-        if(organizationUpdateDto.getCategory() != null)
-            organization.setOrganizationType(organizationUpdateDto.getCategory().getFirst());
-    }
-
+    ProjectApplicationDto toApplicationDto(ProjectApplication application);
+    List<ProjectApplicationDto> toApplicationsDto(List<ProjectApplication> application);
 }

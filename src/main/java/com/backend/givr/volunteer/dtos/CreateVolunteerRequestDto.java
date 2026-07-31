@@ -1,6 +1,6 @@
 package com.backend.givr.volunteer.dtos;
 
-import com.backend.givr.shared.entity.Location;
+import com.backend.givr.shared.Location;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -32,7 +32,7 @@ public class CreateVolunteerRequestDto {
 
     @NotNull
     private Location location;
-    private String profileUrl;
+
     @NotNull
     private List<String> interests;
     public boolean validatePassword(){

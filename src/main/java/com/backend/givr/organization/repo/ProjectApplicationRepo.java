@@ -19,6 +19,4 @@ public interface ProjectApplicationRepo extends JpaRepository<ProjectApplication
     List<ProjectApplication> findAllByVolunteer(Volunteer volunteer);
 
     List<ProjectApplication> findAllByOrganizationAndStatus(Organization organization, ApplicationStatus status);
-
-    int countByStatus(ApplicationStatus applicationStatus);
 }

@@ -1,64 +1,39 @@
 package com.backend.givr.organization.service;
 
-import com.backend.givr.organization.dtos.*;
+import com.backend.givr.organization.dtos.CreateOrganizationDto;
+import com.backend.givr.organization.dtos.OrganizationDashboard;
+import com.backend.givr.organization.dtos.OrganizationDto;
+import com.backend.givr.organization.dtos.ProjectDto;
 import com.backend.givr.organization.entity.Organization;
-import com.backend.givr.organization.security.ProjectServiceWorker;
-import com.backend.givr.redis.RedisService;
-import com.backend.givr.shared.dtos.ParticipationDto;
 import com.backend.givr.organization.entity.Project;
+import com.backend.givr.organization.entity.ProjectApplication;
 import com.backend.givr.organization.mappings.OrganizationMapper;
 import com.backend.givr.organization.repo.OrganizationRepo;
+import com.backend.givr.organization.repo.ProjectRepo;
 import com.backend.givr.organization.security.OrganizationDetails;
 import com.backend.givr.organization.security.OrganizationDetailsService;
-import com.backend.givr.shared.dtos.PasswordUpdateDto;
-import com.backend.givr.shared.dtos.VolunteerApplicationDto;
-import com.backend.givr.shared.email.EmailService;
-import com.backend.givr.shared.entity.OrganizationVerificationSession;
-import com.backend.givr.shared.enums.*;
-import com.backend.givr.shared.exceptions.BroadcastFailedException;
+import com.backend.givr.shared.VolunteerApplicationDto;
+import com.backend.givr.shared.enums.ApplicationStatus;
+import com.backend.givr.shared.enums.ProjectStatus;
+import com.backend.givr.shared.enums.VerificationStatus;
 import com.backend.givr.shared.exceptions.DuplicateAccountException;
-import com.backend.givr.shared.exceptions.IllegalOperationException;
 import com.backend.givr.shared.interfaces.SecurityDetails;
-import com.backend.givr.shared.mapper.ProjectMapper;
-import com.backend.givr.shared.enums.AuthProviderType;
-import com.backend.givr.shared.otp.OTPService;
 import com.backend.givr.shared.service.LocationService;
-import com.backend.givr.shared.service.RatingService;
 import com.backend.givr.shared.service.SkillService;
-import com.backend.givr.shared.service.VerificationService;
-import com.backend.givr.volunteer.dtos.OrganizationResponseDTOv;
-import com.resend.core.exception.ResendException;
-import jakarta.annotation.security.PermitAll;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityNotFoundException;
-import jakarta.validation.ConstraintViolationException;
-import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.cache.annotation.CachePut;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import reactor.core.publisher.Mono;
 
-import java.time.Duration;
-import java.util.*;
-import java.util.concurrent.ExecutionException;
+import java.util.List;
 
 @Service
 public class OrganizationService {
     @Autowired
     private OrganizationMapper mapper;
-    @Autowired
-    private ProjectMapper projectMapper;
-    @Autowired
-    private ProjectServiceWorker projectAsyncServiceWorker;
-    @Autowired
-    private RedisTemplate<String, Object> redisTemplate;
     @Autowired
     private OrganizationRepo repo;
     @Autowired
@@ -68,72 +43,49 @@ public class OrganizationService {
     @Autowired
     private ApplicationService applicationService;
     @Autowired
-    private ParticipationService participationService;
-    @Autowired
     private ProjectService projectService;
     @Autowired
     private PasswordEncoder encoder;
     @Autowired
     private LocationService locationService;
-    @Autowired
-    private EmailService emailService;
-    @Autowired
-    private VerificationService verificationService;
-    @Autowired
-    private OTPService otpService;
-    @Autowired
-    private RatingService ratingService;
+
     @Autowired
     private EntityManager em;
-    @Autowired
-    private RedisService redisService;
 
-    @Value("${client.app.baseurl}")
-    private String clientAppBaseUrl;
     @Transactional
     public Organization createOrganization(CreateOrganizationDto organizationDto){
         if(organizationDto == null){
             throw new IllegalArgumentException("Organization DTO cannot be null");
         }
         Organization organization = mapper.toOrganization(organizationDto);
-
-        organization.setProfileCompleted(orgProfileComplete(organization));
         organization.setLocation(locationService.createLocation(organization.getLocation()));
         organization.setStatus(VerificationStatus.UNVERIFIED);
-        organization.setEmailVerified(false);
-
         try{
             var savedOrganization = repo.save(organization);
             OrganizationDetails details = new OrganizationDetails(organizationDto.getEmail(), encoder.encode(organizationDto.getPassword()), savedOrganization);
             service.save(details);
-            emailService.sendOrganizationWelcomeEmail(savedOrganization.getContactFirstname(), String.format("%s/organization", clientAppBaseUrl), details.getUsername() );
             return savedOrganization;
-        }catch (DataIntegrityViolationException | ConstraintViolationException ignored){
+        }catch (DataIntegrityViolationException ignored){
             throw new DuplicateAccountException("An organization with the same cac registration number or email already exists ");
         }
     }
 
-    private boolean orgProfileComplete(Organization organization){
-        return organization.getOrganizationName() != null && organization.getOrganizationType() != null && organization.getCacRegNumber() != null;
-    }
-
     @Transactional
-    public List<ProjectResponseDto> createProject(ProjectRequestDto projectRequestDto, SecurityDetails details){
-        if(projectRequestDto == null)
+    public ProjectDto createProject(ProjectDto projectDto, SecurityDetails details){
+        if(projectDto == null)
             throw new IllegalArgumentException("Null project DTO null accepted");
 
         var organization = repo.findById(details.getId());
         if(organization.isEmpty())
             throw new EntityNotFoundException("Failed to fetch organization");
-
         Organization org = organization.get();
 
-        if(!org.getProfileCompleted())
-            throw new IllegalOperationException("Profile not complete, cannot create project");
+        Project project = projectService.createProject(projectDto, org);
 
-        projectService.createProject(projectRequestDto, org);
+//        org.addProject(project);
+//        repo.save(org);
 
-        return projectMapper.toDtos(projectService.getProjectByOrganizationAndStatus(org, ProjectStatus.DRAFT));
+        return mapper.toProjectDTO(project);
     }
 
     public void approveApplication(Long applicationId){
@@ -144,223 +96,27 @@ public class OrganizationService {
         applicationService.changeApplicationStatus(applicationId, ApplicationStatus.REJECTED);
     }
 
-    public List<ParticipationDto> getProjectParticipants(SecurityDetails details){
-        Organization organization = repo.findById(details.getId()).orElseThrow();
-        return projectMapper.toParticipationDto(participationService.getParticipantsByOrganization(organization));
-    }
-    public void updateVolunteerParticipation(UpdateParticipantDto payload){
-        participationService.changeParticipationStatus(payload.id(), payload.status());
-    }
     public List<VolunteerApplicationDto> getProjectApplications (SecurityDetails details){
         Organization organization = repo.findById(details.getId()).orElseThrow();
         return applicationService.getProjectsApplications(organization);
     }
 
-    public void publishProject(Long projectId, SecurityDetails details){
+    public void publishProject(Long projectId){
         Project project = projectService.findProjectById(projectId);
-        // Grants organization access to project in-app messages
-        redisService.addAuthorizedUserProjects(details.getId(), projectId);
-        project.setStatus(ProjectStatus.OPEN);
-        try{
-            projectService.save(project);
-            projectAsyncServiceWorker.sendProjectListing(project).subscribe();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-
-    }
-
-    @Cacheable(cacheNames = "orgName", key = "#organizationId")
-    public String getOrganizationName(String organizationId){
-        return repo.findById(organizationId).orElseThrow().getOrganizationName();
+        project.setStatus(ProjectStatus.PENDING);
+        projectService.save(project);
     }
 
     public OrganizationDashboard getOrganizationDashboard(SecurityDetails details){
         var organization = repo.findById(details.getId()).orElseThrow(()-> new EntityNotFoundException(String.format("Organization withID %s does not exist", details.getId())));
-
-        Map<String, List<ProjectResponseDto>> projectDtoMap = new HashMap<>();
-
-        projectDtoMap.put("draftProjects", projectMapper.toDtos(
-                organization.getProjects()
-                        .stream()
-                        .filter(project -> project.getStatus() == ProjectStatus.DRAFT)
-                        .toList()
-        ));
-
-        projectDtoMap.put("openProjects", projectMapper.toDtos(
-                organization.getProjects()
-                        .stream()
-                        .filter(project -> project.getStatus() == ProjectStatus.OPEN)
-                        .sorted(Comparator.comparing(Project::getCreatedAt))
-                        .toList()
-        ));
-
-
-        projectDtoMap.put("ongoingProjects", projectMapper.toDtos(
-                organization.getProjects()
-                        .stream()
-                        .filter(project -> project.getStatus() == ProjectStatus.ONGOING)
-                        .sorted(Comparator.comparing(Project::getCreatedAt))
-                        .toList()
-        ));
-
-        projectDtoMap.put("completedProjects", projectMapper.toDtos(organization.getProjects()
-                .stream()
-                .filter(project -> project.getStatus() == ProjectStatus.COMPLETED)
-                .sorted(Comparator.comparing(Project::getCreatedAt))
-                .toList()));
-
-        ApplicationStats stats = applicationService.getVolunteerStats(organization);
-
-        return new OrganizationDashboard(organization.getOrganizationName(), projectDtoMap, ratingService.getOrganizationRatingScore(organization), stats ,organization.getStatus());
+        return new OrganizationDashboard(organization.getOrganizationName(), mapper.toDtos(organization.getProjects()));
     }
 
     public List<Project> getProjects(SecurityDetails details){
         return projectService.getOrganizationProjects(em.getReference(Organization.class, details.getId()));
     }
 
-    @Transactional
-    public ProjectResponseDto updateProject(Long projectId, ProjectRequestDto projectRequestDto) {
-        return projectMapper.toProjectDto(projectService.updateProject(projectId, projectRequestDto));
-    }
-    @Cacheable(cacheNames = "organizationList")
-    public List<OrganizationResponseDTOv> getOrganizations() {
-        return mapper.toOrganizationResponsesDTOv(repo.findAllByStatus(VerificationStatus.VERIFIED));
-    }
-
-    public void deleteProject(Long projectId, String organizationId) {
-        Organization organization = em.getReference(Organization.class, organizationId);
-        projectService.deleteProject(projectId, organization);
-    }
-
-    @Async
-    public void requestOtp( String email, OtpPurpose purpose) {
-        Optional<OrganizationDetails> details = service.getDetails(email);
-        if(details.isPresent()) {
-            OrganizationDetails organizationDetails = details.get();
-            if(organizationDetails.getAuthProvider()!=AuthProviderType.GOOGLE)
-                emailService.sendOtpTo(email, AccountType.ORGANIZATION, purpose);
-            else
-                emailService.sendPasswordChangeNotificationForOauthUser(email);
-        }
-        else
-            throw new IllegalOperationException("Account does not exist");
-    }
-
-    @Transactional
-    public void confirmEmail(SecurityDetails details, String Otp){
-        otpService.verifyOtp(details.getUsername(), Otp, AccountType.ORGANIZATION, OtpPurpose.EMAIL_VERIFICATION);
-
-        Organization organization = repo.findById(details.getId()).orElseThrow(()->new EntityNotFoundException("User with email does not exist"));
-        organization.setEmailVerified(true);
-        repo.save(organization);
-    }
-
-    public void resetPassword(String email, String newPassword, String otp) {
-        otpService.verifyOtp(email, otp, AccountType.ORGANIZATION, OtpPurpose.PASSWORD_UPDATE);
-        service.updatePassword(encoder.encode(newPassword), email );
-    }
-
-    public OrganizationProfileDto getOrganizationProfile(SecurityDetails details) {
-        Organization organization = em.getReference(Organization.class, details.getId());
-        return toProfile(organization, details);
-    }
-
-    /**
-     * Organization profile update optionally initiates a verification process. This multistep procedure includes
-     * 1. Save organization claims temporarily
-     * 2. Initialize payment and returns checkout url*/
-    @Transactional
-    public CheckoutResponse initiateOrganizationVerification(OrganizationUpdateDto organizationDto, SecurityDetails details) {
-        Organization organization = em.getReference(Organization.class, details.getId());
-        return verificationService.createVerificationSession(organization, organizationDto);
-    }
-
-    /**
-     * Updates organization email*/
-    public OrganizationProfileDto updateEmailOrLogo(OrganizationUpdateDto organizationDto, SecurityDetails details){
-        Organization organization = em.getReference(Organization.class, details.getId());
-        // To be removed to a dedicated method for email update
-        if((organizationDto.getEmail()!= null) && !Objects.equals(organizationDto.getEmail(), details.getUsername())) {
-            organization.setEmailVerified(false);
-            service.updateEmail(organizationDto.getEmail(), details.getUsername());
-        }
-        if(organizationDto.getProfileUrl()!=null)
-            organization.setProfileUrl(organizationDto.getProfileUrl());
-        System.out.println();
-        repo.save(organization);
-        return toProfile(organization, details);
-    }
-
-    @CachePut(cacheNames = "profileUrl", key = "#organization.organizationId")
-    public String updateOrganizationDetails (OrganizationVerificationSession session, Organization organization){
-        organization.setStatus(VerificationStatus.VERIFIED);
-        organization.setProfileCompleted(true);
-        organization.setOrganizationType(session.getClaimedType());
-        organization.setOrganizationName(session.getClaimedOrgName());
-        organization.setCacRegNumber(session.getClaimedCACRegNumber());
-        organization.setLocation(session.getClaimedLocation());
-        organization.setAddress(session.getClaimedAddress());
-        organization.setContactFirstname(session.getContactFirstname());
-        organization.setWebsite(session.getWebsite());
-        organization.setProfileUrl(session.getOrgLogoUrl());
-        organization.setContactPersonProfileUrl(session.getUsrImgUrl());
-        organization.setContactLastname(session.getContactLastname());
-        organization.setSession(session);
-
-        return session.getOrgLogoUrl();
-    }
-
-    @PermitAll
-    @Cacheable(cacheNames = "profileUrl", key = "#orgId")
-    public String getProfileUrl(String orgId){
-        Organization organization = repo.findById(orgId).orElseThrow();
-        return organization.getProfileUrl()==null? "" : organization.getProfileUrl();
-    }
-
-    public String getOrganizationEmail(Organization organization){
-        return service.getEmail(organization);
-    }
-
-    private OrganizationProfileDto toProfile(Organization organization, SecurityDetails details){
-        OrganizationDto orgDto = mapper.toOrganizationDto(organization);
-        orgDto.setOrganizationId(organization.getOrganizationId());
-        OrganizationContactDto orgContact = mapper.toOrganizationContact(organization);
-        orgContact.setEmail(details.getUsername());
-        orgContact.setEmailEditable(details.getProviderType() == AuthProviderType.LOCAL);
-        return new OrganizationProfileDto(orgContact, orgDto);
-    }
-
-    @Transactional
-    public void updatePassword(@Valid PasswordUpdateDto passwordUpdateDto, SecurityDetails details) {
-        OrganizationDetails orgDetails = service.loadUserByUsername(details.getUsername());
-        otpService.verifyOtp(details.getUsername(), passwordUpdateDto.otp(), AccountType.ORGANIZATION, OtpPurpose.PASSWORD_UPDATE);
-        orgDetails.setPassword(encoder.encode(passwordUpdateDto.password()));
-    }
-
-    public EmailExists emailExists(String email, SecurityDetails details) {
-        return new EmailExists(email, !Objects.equals(email, details.getUsername()) && service.emailExist(email));
-    }
-
-    public void sendBroadcast(SecurityDetails details, Long projectId, String message) {
-        Project project = projectService.findProjectById(projectId);
-        if(!project.getBroadcastEnabled())
-            return;
-
-        Organization organization = repo.findById(details.getId()).get();
-        try{
-            emailService.broadcastToParticipants(message, project.getSegmentId(), organization.getOrganizationName());
-        }catch (ResendException e){
-            throw new BroadcastFailedException(e.getLocalizedMessage());
-        }
-    }
-
-    public String shareProject(Long projectId){
-        try{
-            return projectService.shareProject(projectId);
-        } catch (ExecutionException | InterruptedException e) {
-            System.err.printf("Failed to create shareable link, %s", e.getLocalizedMessage());
-            throw new RuntimeException(e);
-        }
+    public List<OrganizationDto> getOrganizations() {
+        return mapper.toOrganizationDtoList(repo.findAll());
     }
 }

@@ -21,19 +21,15 @@ import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.annotation.CachePut;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
-import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Schedulers;
 
 import java.time.*;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 
 @Service
@@ -118,16 +114,15 @@ public class ProjectService {
         project.setRequiredSkills(updatedSkills);
     }
 
-    public Project createProject(ProjectRequestDto projectRequestDto, Organization organization){
+    public void createProject(ProjectRequestDto projectRequestDto, Organization organization){
         Project project = mapper.toProject(projectRequestDto);
         handleProject(project, projectRequestDto);
         project.setOrganization(organization);
         project.setStatus(ProjectStatus.DRAFT);
         project.setBroadcastEnabled(repo.count() <= 3);
         Project savedProject = repo.save(project);
-        worker.createProjectSegment(savedProject);
+//        worker.createProjectSegment(savedProject);
         worker.createProjectCard(savedProject);
-        return  project;
     }
 
 

@@ -85,6 +85,13 @@ public class ThymeleafTemplateService {
         return engine.process("email/projectCompletion", context);
     }
 
+    public String certificateReady(String firstname, String projectName,String organizationName){
+        Context context = new Context();
+        context.setVariable("firstname", firstname);
+        context.setVariable("projectName", projectName);
+        context.setVariable("organizationName", organizationName);
+        return engine.process("email/certificateReadyNotification", context);
+    }
     public String projectCompleteAdminUpdate(String email, String projectName, String fullName){
         Context context = new Context();
         context.setVariable("volunteerFullName", fullName);
@@ -167,7 +174,7 @@ public class ThymeleafTemplateService {
     public String sendNotification(String firstName){
         Context context = new Context();
         context.setVariable("firstName", firstName);
-        return engine.process("email/notAVolunteerYet",context);
+        return engine.process("email/notification",context);
     }
 }
 

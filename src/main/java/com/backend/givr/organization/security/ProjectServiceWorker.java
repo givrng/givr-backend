@@ -5,14 +5,12 @@ import com.backend.givr.organization.repo.ProjectRepo;
 import com.backend.givr.shared.email.EmailService;
 import com.backend.givr.shared.mapper.ProjectMapper;
 import com.backend.givr.shared.service.CloudinaryService;
-import com.backend.givr.shared.service.RenderProjectService;
+import com.backend.givr.shared.service.GivrImageRendererService;
 import com.backend.givr.volunteer.entity.Volunteer;
 import com.backend.givr.volunteer.repo.VolunteerRepo;
 import com.resend.core.exception.ResendException;
 
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.retry.annotation.Backoff;
@@ -44,7 +42,7 @@ public class ProjectServiceWorker {
     @Autowired
     private ProjectMapper mapper;
     @Autowired
-    private RenderProjectService renderProjectService;
+    private GivrImageRendererService renderProjectService;
     @Autowired
     private CloudinaryService cloudinaryService;
 
@@ -71,11 +69,15 @@ public class ProjectServiceWorker {
     @Async
     @Transactional
     public CompletableFuture<String> createProjectCard(Project project){
-
+        if (project.getProjectFlierUrl() == null || project.getProjectFlierUrl().isEmpty()) {
+            String shareableLink = String.format("%s/%s/share/project/%s", apiBaseUrl, apiVersion, project.getProjectId());
+            saveUrl(project.getProjectId(), null, shareableLink);
+            return CompletableFuture.completedFuture(null);
+        }
         try{
             var projectDto = mapper.toDto(project);
             byte[] imageByte = renderProjectService.renderProjectCard(projectDto);
-            String securedUrl = cloudinaryService.uploadImage(imageByte, project.getProjectId());
+            String securedUrl = cloudinaryService.uploadImage(imageByte, "projects",project.getProjectId());
             String shareableLink = String.format("%s/%s/share/project/%s", apiBaseUrl, apiVersion, project.getProjectId());
 
             saveUrl(project.getProjectId(), securedUrl, shareableLink);

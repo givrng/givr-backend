@@ -2,6 +2,7 @@ package com.backend.givr.organization.service;
 
 import com.backend.givr.organization.dtos.*;
 import com.backend.givr.organization.entity.Organization;
+import com.backend.givr.organization.entity.Participation;
 import com.backend.givr.organization.security.ProjectServiceWorker;
 import com.backend.givr.redis.RedisService;
 import com.backend.givr.shared.dtos.ParticipationDto;
@@ -33,6 +34,8 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.CachePut;
@@ -43,6 +46,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
@@ -50,6 +54,7 @@ import java.util.*;
 import java.util.concurrent.ExecutionException;
 
 @Service
+@Slf4j
 public class OrganizationService {
     @Autowired
     private OrganizationMapper mapper;

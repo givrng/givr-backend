@@ -44,15 +44,15 @@ public class OrganizationController {
 
     @Autowired
     private OrganizationService service;
+    @Autowired
+    private ParticipationService participationService;
 
     @Autowired
     private LogoutService logoutService;
 
     @Autowired
-    private ParticipationService participationService;
-
-    @Autowired
     private GivrMessageService messageService;
+
     @PostMapping("/auth/signup")
     public ResponseEntity<Void> createOrganizationAccount(@RequestBody @Valid CreateOrganizationDto createOrganizationDto){
         service.createOrganization(createOrganizationDto);

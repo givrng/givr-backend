@@ -11,12 +11,12 @@ public class CloudinaryService {
     @Autowired
     private Cloudinary cloudinary;
 
-    public String uploadImage(byte[] imageBytes, Long projectId) {
+    public String uploadImage(byte[] imageBytes,String folder, Object id) {
         try {
             Map uploadResult = cloudinary.uploader().upload(
                     imageBytes,
                     Map.of(
-                            "public_id", "givr/projects/" + projectId,
+                            "public_id", String.format("/givr/%s/%s", folder, id),
                             "overwrite", true,
                             "resource_type", "image"
                     )

@@ -1,6 +1,5 @@
 package com.backend.givr.shared.dtos;
 
-import com.backend.givr.organization.service.verify.Address;
 import com.backend.givr.shared.entity.Location;
 import com.backend.givr.shared.entity.OrganizationVerificationSession;
 import com.backend.givr.shared.enums.IDType;

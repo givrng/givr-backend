@@ -178,17 +178,18 @@ public class OrganizationService {
     public OrganizationDashboard getOrganizationDashboard(SecurityDetails details){
         var organization = repo.findById(details.getId()).orElseThrow(()-> new EntityNotFoundException(String.format("Organization withID %s does not exist", details.getId())));
 
+        List<Project> projects = projectService.getOrganizationProjects(organization);
         Map<String, List<ProjectResponseDto>> projectDtoMap = new HashMap<>();
 
         projectDtoMap.put("draftProjects", projectMapper.toDtos(
-                organization.getProjects()
+                projects
                         .stream()
                         .filter(project -> project.getStatus() == ProjectStatus.DRAFT)
                         .toList()
         ));
 
         projectDtoMap.put("openProjects", projectMapper.toDtos(
-                organization.getProjects()
+                projects
                         .stream()
                         .filter(project -> project.getStatus() == ProjectStatus.OPEN)
                         .sorted(Comparator.comparing(Project::getCreatedAt))
@@ -197,14 +198,14 @@ public class OrganizationService {
 
 
         projectDtoMap.put("ongoingProjects", projectMapper.toDtos(
-                organization.getProjects()
+                projects
                         .stream()
                         .filter(project -> project.getStatus() == ProjectStatus.ONGOING)
                         .sorted(Comparator.comparing(Project::getCreatedAt))
                         .toList()
         ));
 
-        projectDtoMap.put("completedProjects", projectMapper.toDtos(organization.getProjects()
+        projectDtoMap.put("completedProjects", projectMapper.toDtos(projects
                 .stream()
                 .filter(project -> project.getStatus() == ProjectStatus.COMPLETED)
                 .sorted(Comparator.comparing(Project::getCreatedAt))

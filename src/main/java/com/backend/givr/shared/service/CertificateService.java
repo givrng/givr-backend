@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 import reactor.core.publisher.Flux;
+import tools.jackson.databind.ObjectMapper;
 
 import java.time.Duration;
 
@@ -34,6 +35,8 @@ public class CertificateService {
     private GivrImageRendererService imageRendererService;
     @Autowired
     private ParticipationRepo participationRepo;
+    @Autowired
+    private ObjectMapper mapper;
 
     @Transactional
     @Async
@@ -44,8 +47,11 @@ public class CertificateService {
 
         try{
             VolunteerCertificate certificate = new VolunteerCertificate(participant);
-            byte[] certificateImg = imageRendererService.renderCertificate(new RenderCertificateDto(participant.getProject(),
-                    participant.getVolunteer(), certificate.getCertId()));
+            RenderCertificateDto certificateDto = new RenderCertificateDto(participant.getProject(),
+                    participant.getVolunteer(), certificate.getCertId());
+
+            System.out.println(mapper.writerWithDefaultPrettyPrinter().writeValueAsString(certificateDto));
+            byte[] certificateImg = imageRendererService.renderCertificate(certificateDto);
 
             String shareableLink = cloudinaryService.uploadImage(certificateImg, "certificates", certificate.getCertId());
             certificate.setCertUrl(shareableLink);

@@ -73,7 +73,7 @@ public class Organization {
     private Boolean emailVerified;
 
     private Boolean profileCompleted;
-    @OneToMany(fetch = FetchType.LAZY, mappedBy = "organization", orphanRemoval = true, cascade = CascadeType.ALL)
+    @OneToMany( mappedBy = "organization", orphanRemoval = true, cascade = CascadeType.ALL)
     private Set<Project> projects;
 
     public void addProject(Project project){

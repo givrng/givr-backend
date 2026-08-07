@@ -35,6 +35,6 @@ public class VolunteerCertificate {
     public VolunteerCertificate(Participation participant){
         this.project = participant.getProject();
         this.certifiedVolunteer = participant.getVolunteer();
-        this.certId = String.format("Givr-cert-%S", UUID.randomUUID().toString().substring(0, 7));
+        this.certId = String.format("Givr-CERT-%S", UUID.randomUUID().toString().substring(0, 7));
     }
 }

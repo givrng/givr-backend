@@ -34,7 +34,7 @@ public class GivrImageRendererService implements GivrImageRenderer {
     public byte[] renderCertificate(RenderCertificateDto certificateDto) {
         System.out.println(mapper.writerWithDefaultPrettyPrinter().writeValueAsString(certificateDto));
         try{
-            return restTemplate.postForObject(String.format("%s/rebder/certificate", givrRendererBaseUrl), certificateDto, byte[].class);
+            return restTemplate.postForObject(String.format("%s/render/certificate", givrRendererBaseUrl), certificateDto, byte[].class);
         }catch (RestClientException e){
             throw new RuntimeException(e);
         }

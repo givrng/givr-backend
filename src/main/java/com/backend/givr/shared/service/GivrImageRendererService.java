@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
+import tools.jackson.databind.ObjectMapper;
 
 @Service
 public class GivrImageRendererService implements GivrImageRenderer {
@@ -16,6 +17,9 @@ public class GivrImageRendererService implements GivrImageRenderer {
     private RestTemplate restTemplate;
     @Value("${givr.renderer.baseUrl}")
     private String givrRendererBaseUrl;
+
+    @Autowired
+    private ObjectMapper mapper;
 
     @Override
     public byte[] renderProjectCard(RenderProjectDto project) {
@@ -28,6 +32,7 @@ public class GivrImageRendererService implements GivrImageRenderer {
 
     @Override
     public byte[] renderCertificate(RenderCertificateDto certificateDto) {
+        System.out.println(mapper.writerWithDefaultPrettyPrinter().writeValueAsString(certificateDto));
         try{
             return restTemplate.postForObject(String.format("%s/rebder/certificate", givrRendererBaseUrl), certificateDto, byte[].class);
         }catch (RestClientException e){

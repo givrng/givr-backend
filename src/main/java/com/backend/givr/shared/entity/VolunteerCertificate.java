@@ -5,6 +5,7 @@ import com.backend.givr.organization.entity.Project;
 import com.backend.givr.volunteer.entity.Volunteer;
 import jakarta.persistence.*;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.ZonedDateTime;
@@ -13,17 +14,18 @@ import java.util.UUID;
 
 @Entity
 @Getter
+@NoArgsConstructor
 public class VolunteerCertificate {
     @Id
-    private final String certId;
+    private String certId;
     @Setter
     private String certUrl;
     @ManyToOne
     @JoinColumn(name = "project_id")
-    private final Project project;
+    private Project project;
     @ManyToOne
     @JoinColumn(name = "volunteer_id")
-    private final Volunteer certifiedVolunteer;
+    private Volunteer certifiedVolunteer;
 
     private ZonedDateTime issuedAt;
 

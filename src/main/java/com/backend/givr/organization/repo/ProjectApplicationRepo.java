@@ -20,5 +20,6 @@ public interface ProjectApplicationRepo extends JpaRepository<ProjectApplication
 
     List<ProjectApplication> findAllByOrganizationAndStatus(Organization organization, ApplicationStatus status);
 
-    int countByStatus(ApplicationStatus applicationStatus);
+    int countByStatusAndOrganization(ApplicationStatus applicationStatus, Organization organization);
+
 }

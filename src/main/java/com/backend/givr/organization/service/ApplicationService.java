@@ -143,9 +143,9 @@ public class ApplicationService {
     }
 
     public ApplicationStats getVolunteerStats(Organization organization){
-        int approved = repo.countByStatus(ApplicationStatus.APPLIED);
-        int applied = repo.countByStatus(ApplicationStatus.APPLIED);
-        int rejected = repo.countByStatus(ApplicationStatus.REJECTED);
+        int approved = repo.countByStatusAndOrganization(ApplicationStatus.APPLIED, organization);
+        int applied = repo.countByStatusAndOrganization(ApplicationStatus.APPLIED, organization);
+        int rejected = repo.countByStatusAndOrganization(ApplicationStatus.REJECTED, organization);
 
         return new ApplicationStats(applied, approved, rejected);
     }

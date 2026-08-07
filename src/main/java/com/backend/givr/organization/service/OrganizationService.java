@@ -179,6 +179,7 @@ public class OrganizationService {
         var organization = repo.findById(details.getId()).orElseThrow(()-> new EntityNotFoundException(String.format("Organization withID %s does not exist", details.getId())));
 
         List<Project> projects = projectService.getOrganizationProjects(organization);
+        System.out.println(projects.size());
         Map<String, List<ProjectResponseDto>> projectDtoMap = new HashMap<>();
 
         projectDtoMap.put("draftProjects", projectMapper.toDtos(

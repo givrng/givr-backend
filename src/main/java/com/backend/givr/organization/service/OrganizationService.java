@@ -44,6 +44,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Mono;
+import tools.jackson.databind.ObjectMapper;
 
 import java.time.Duration;
 import java.util.*;
@@ -90,6 +91,8 @@ public class OrganizationService {
 
     @Value("${client.app.baseurl}")
     private String clientAppBaseUrl;
+    @Autowired
+    private ObjectMapper objectMapper;
     @Transactional
     public Organization createOrganization(CreateOrganizationDto organizationDto){
         if(organizationDto == null){
@@ -177,40 +180,37 @@ public class OrganizationService {
 
     public OrganizationDashboard getOrganizationDashboard(SecurityDetails details){
         var organization = repo.findById(details.getId()).orElseThrow(()-> new EntityNotFoundException(String.format("Organization withID %s does not exist", details.getId())));
-
-        List<Project> projects = projectService.getOrganizationProjects(organization);
-        System.out.println(projects.size());
         Map<String, List<ProjectResponseDto>> projectDtoMap = new HashMap<>();
 
         projectDtoMap.put("draftProjects", projectMapper.toDtos(
-                projects
+                organization.getProjects()
                         .stream()
                         .filter(project -> project.getStatus() == ProjectStatus.DRAFT)
                         .toList()
         ));
 
         projectDtoMap.put("openProjects", projectMapper.toDtos(
-                projects
+                organization.getProjects()
                         .stream()
                         .filter(project -> project.getStatus() == ProjectStatus.OPEN)
                         .sorted(Comparator.comparing(Project::getCreatedAt))
                         .toList()
         ));
 
-
         projectDtoMap.put("ongoingProjects", projectMapper.toDtos(
-                projects
+                organization.getProjects()
                         .stream()
                         .filter(project -> project.getStatus() == ProjectStatus.ONGOING)
                         .sorted(Comparator.comparing(Project::getCreatedAt))
                         .toList()
         ));
 
-        projectDtoMap.put("completedProjects", projectMapper.toDtos(projects
-                .stream()
-                .filter(project -> project.getStatus() == ProjectStatus.COMPLETED)
-                .sorted(Comparator.comparing(Project::getCreatedAt))
-                .toList()));
+        projectDtoMap.put("completedProjects", projectMapper.toDtos(
+                organization.getProjects()
+                    .stream()
+                    .filter(project -> project.getStatus() == ProjectStatus.COMPLETED)
+                    .sorted(Comparator.comparing(Project::getCreatedAt))
+                    .toList()));
 
         ApplicationStats stats = applicationService.getVolunteerStats(organization);
 

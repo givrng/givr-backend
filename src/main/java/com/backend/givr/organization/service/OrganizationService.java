@@ -213,7 +213,7 @@ public class OrganizationService {
                     .toList()));
 
         ApplicationStats stats = applicationService.getVolunteerStats(organization);
-
+        System.out.println(objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(projectDtoMap));
         return new OrganizationDashboard(organization.getOrganizationName(), projectDtoMap, ratingService.getOrganizationRatingScore(organization), stats ,organization.getStatus());
     }
 

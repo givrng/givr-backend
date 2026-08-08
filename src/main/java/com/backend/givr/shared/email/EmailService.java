@@ -42,6 +42,8 @@ public class EmailService {
     @Value("${givr.allowed.admins}")
     private List<String> admins;
 
+    @Value("${app.email-title}")
+    private String emailSubject;
     @Autowired
     private OTPService otpService;
 
@@ -247,6 +249,6 @@ public class EmailService {
     }
     public void sendNotification(String firstname, String recipient){
         String html = emailTemplateService.sendNotification(firstname);
-        sendEmail(html, recipient, "The volunteer who never showed up");
+        sendEmail(html, recipient, emailSubject);
     }
 }

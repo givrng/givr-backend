@@ -63,6 +63,7 @@ public class CertificateService {
         }
     }
     @Async
+    @Transactional
     public void issueBatchCertificates(BatchCertificateRequest request){
         Flux.fromIterable(request.participants())
                 .delayElements(Duration.ofMillis(200))

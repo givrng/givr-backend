@@ -15,6 +15,7 @@ import java.util.UUID;
 @Entity
 @Getter
 @NoArgsConstructor
+@Table(uniqueConstraints = @UniqueConstraint(name = "unq_project_volunteer", columnNames = {"project", "certifiedVolunteer"}))
 public class VolunteerCertificate {
     @Id
     private String certId;

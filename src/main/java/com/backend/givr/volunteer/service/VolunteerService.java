@@ -131,6 +131,7 @@ public class VolunteerService {
     @Cacheable(cacheNames = "volunteerProfile", key = "#volunteerId")
     public VolunteerProfile getVolunteerProfile(String volunteerId){
         Volunteer volunteer = getVolunteer(volunteerId);
+        System.out.println(volunteer.getCertificates().getFirst().getCertId());
         List<VolunteerCertificateDto> certs = certMapper.toDto(volunteer.getCertificates());
         var profile =  mapper.toProfile(volunteer);
         profile.setCertificates(certs);

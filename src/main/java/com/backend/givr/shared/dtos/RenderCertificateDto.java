@@ -26,6 +26,6 @@ public class RenderCertificateDto{
         this.startDate = project.getStartDate();
         this.endDate = project.getEndDate();
         this.organizationLogo = project.getOrganization().getProfileUrl();
-        this.impactArea = String.format("%s", project.getCategories().getFirst());
+        this.impactArea = String.format("%s", project.getCategories().getFirst().getCategory());
     }
 }

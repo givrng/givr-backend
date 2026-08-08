@@ -1,4 +1,4 @@
-package com.backend.givr.shared.service;
+package com.backend.givr.shared.service.Certificate;
 
 import com.backend.givr.admin.dtos.BatchCertificateRequest;
 import com.backend.givr.organization.entity.Participation;
@@ -8,6 +8,8 @@ import com.backend.givr.shared.entity.VolunteerCertificate;
 import com.backend.givr.shared.enums.CertificationStatus;
 import com.backend.givr.shared.repo.VolunteerCertificateRepo;
 import com.backend.givr.shared.email.EmailService;
+import com.backend.givr.shared.service.CloudinaryService;
+import com.backend.givr.shared.service.GivrImageRendererService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,7 +42,7 @@ public class CertificateService {
 
     @Transactional
     @Async
-    public void issueSingleCertificateTo(Long participantId){
+    public void generateCertificate(Long participantId){
         Participation participant = participationRepo.findById(participantId).orElseThrow(()->new EntityNotFoundException("Cannot issue a certificate to a participant that does not exist"));
         if(participant.getCertificationStatus()== CertificationStatus.Certified)
             return;
@@ -61,13 +63,5 @@ public class CertificateService {
         }catch (RuntimeException e){
             log.error("Failed to issue certificate to participant: {} because {}", participant.getId(), e.getLocalizedMessage());
         }
-    }
-    @Async
-    @Transactional
-    public void issueBatchCertificates(BatchCertificateRequest request){
-        Flux.fromIterable(request.participants())
-                .delayElements(Duration.ofMillis(200))
-                .doOnNext(this::issueSingleCertificateTo)
-                .subscribe();
     }
 }

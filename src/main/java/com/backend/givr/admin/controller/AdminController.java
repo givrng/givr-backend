@@ -6,20 +6,18 @@ import com.backend.givr.admin.dtos.ReviewDto;
 import com.backend.givr.admin.dtos.ReviewResponseDto;
 import com.backend.givr.admin.entity.AdminDetails;
 import com.backend.givr.admin.service.AdminService;
-import com.backend.givr.organization.entity.Participation;
 import com.backend.givr.organization.service.ParticipationService;
 import com.backend.givr.shared.dtos.ParticipationDto;
 import com.backend.givr.shared.dtos.VerificationSessionDto;
-import com.backend.givr.shared.entity.OrganizationVerificationSession;
 import com.backend.givr.shared.enums.ReviewStatus;
 import com.backend.givr.shared.interfaces.SecurityDetails;
 import com.backend.givr.shared.jwt.GivrCookie;
-import com.backend.givr.shared.service.CertificateService;
+import com.backend.givr.shared.service.Certificate.CertificateIssuingService;
+import com.backend.givr.shared.service.Certificate.CertificateService;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.domain.Page;
 import org.springframework.data.web.PagedModel;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -40,7 +38,7 @@ public class AdminController {
     @Autowired
     private ParticipationService participationService;
     @Autowired
-    private CertificateService certificateService;
+    private CertificateIssuingService certificateService;
 
     @Value("${givr.allowed.admins}")
     private List<String> allowedAdmins;

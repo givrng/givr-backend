@@ -42,7 +42,7 @@ public class EmailService {
     @Value("${givr.allowed.admins}")
     private List<String> admins;
 
-    @Value("${app.email-title}")
+    @Value("${app.email-subject}")
     private String emailSubject;
     @Autowired
     private OTPService otpService;

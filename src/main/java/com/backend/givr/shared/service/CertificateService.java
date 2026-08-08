@@ -50,7 +50,6 @@ public class CertificateService {
             RenderCertificateDto certificateDto = new RenderCertificateDto(participant.getProject(),
                     participant.getVolunteer(), certificate.getCertId());
 
-            System.out.println(mapper.writerWithDefaultPrettyPrinter().writeValueAsString(certificateDto));
             byte[] certificateImg = imageRendererService.renderCertificate(certificateDto);
 
             String shareableLink = cloudinaryService.uploadImage(certificateImg, "certificates", certificate.getCertId());

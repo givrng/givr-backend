@@ -125,8 +125,10 @@ public class ParticipationService {
         if(participation.getParticipationStatus() == status)
             return;
 
-        if(status == ParticipationStatus.COMPLETED)
+        if(status == ParticipationStatus.COMPLETED) {
             participation.setCertificationStatus(CertificationStatus.Pending);
+            participation.setParticipationStatus(ParticipationStatus.COMPLETED);
+        }
         participation.setParticipationStatus(status);
 
         // Send notification to volunteer

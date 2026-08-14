@@ -150,6 +150,7 @@ public class ParticipationService {
 
         participationList.parallel().doOnNext(p->{
                     p.setParticipationStatus(ParticipationStatus.COMPLETED);
+                    p.setCertificationStatus(CertificationStatus.Pending);
                 })
                 .sequential()
                 .delayElements(Duration.ofMillis(200))

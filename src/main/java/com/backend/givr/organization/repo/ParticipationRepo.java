@@ -4,6 +4,7 @@ import com.backend.givr.organization.entity.Organization;
 import com.backend.givr.organization.entity.Participation;
 import com.backend.givr.organization.entity.Project;
 import com.backend.givr.shared.enums.CertificationStatus;
+import com.backend.givr.shared.enums.ParticipationStatus;
 import com.backend.givr.volunteer.entity.Volunteer;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -25,5 +26,5 @@ public interface ParticipationRepo extends JpaRepository<Participation, Long> {
 
     List<Participation> findAllByProject(Project project);
 
-    Page<Participation> findAllByCertificationStatus(CertificationStatus certificationStatus, Pageable pageable);
+    Page<Participation> findAllByCertificationStatusAndParticipationStatus(CertificationStatus certificationStatus, ParticipationStatus participationStatus, Pageable pageable);
 }

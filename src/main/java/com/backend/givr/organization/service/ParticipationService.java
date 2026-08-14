@@ -190,9 +190,9 @@ public class ParticipationService {
 
     public PagedModel<ParticipationDto> findParticipantsPendingCertification(int pageNum, int pageSize){
         Pageable pageable = PageRequest.of(pageNum, pageSize, Sort.by("updatedAt").descending());
-        Page<Participation> participation = repo.findAllByCertificationStatus(CertificationStatus.Pending, pageable);
+        Page<Participation> participation = repo.findAllByCertificationStatusAndParticipationStatus(CertificationStatus.Pending,ParticipationStatus.COMPLETED, pageable);
         if(participation.isEmpty())
-            participation = repo.findAllByCertificationStatus(null, pageable);
+            participation = repo.findAllByCertificationStatusAndParticipationStatus(null, ParticipationStatus.COMPLETED, pageable);
 
         return new PagedModel<>(participation.map(mapper::toParticipationDto));
     }

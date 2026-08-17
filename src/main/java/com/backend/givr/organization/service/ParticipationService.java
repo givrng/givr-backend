@@ -151,6 +151,7 @@ public class ParticipationService {
         participationList.parallel().doOnNext(p->{
                     p.setParticipationStatus(ParticipationStatus.COMPLETED);
                     p.setCertificationStatus(CertificationStatus.Pending);
+                    repo.save(p);
                 })
                 .sequential()
                 .delayElements(Duration.ofMillis(200))
@@ -161,7 +162,6 @@ public class ParticipationService {
                 })
                 .doOnComplete(()->log.info("Participant has been notified"))
                 .subscribe();
-        repo.saveAll(participationList.toIterable());
     }
 
     public void deleteVolunteerParticipation(Long participationId, Volunteer volunteer){

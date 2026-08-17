@@ -161,7 +161,7 @@ public class ParticipationService {
                 })
                 .doOnComplete(()->log.info("Participant has been notified"))
                 .subscribe();
-
+        repo.saveAll(participationList.toIterable());
     }
 
     public void deleteVolunteerParticipation(Long participationId, Volunteer volunteer){

@@ -121,7 +121,6 @@ public class ProjectService {
         project.setStatus(ProjectStatus.DRAFT);
         project.setBroadcastEnabled(repo.count() <= 3);
         Project savedProject = repo.save(project);
-//        worker.createProjectSegment(savedProject);
         worker.createProjectCard(savedProject);
     }
 

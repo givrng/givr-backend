@@ -69,10 +69,10 @@ public class ProjectServiceWorker {
     @Async
     @Transactional
     public CompletableFuture<String> createProjectCard(Project project){
-        if (project.getProjectFlierUrl() == null || project.getProjectFlierUrl().isEmpty()) {
+        if (project.getProjectFlierUrl() != null && !project.getProjectFlierUrl().isEmpty()) {
             String shareableLink = String.format("%s/%s/share/project/%s", apiBaseUrl, apiVersion, project.getProjectId());
             saveUrl(project.getProjectId(), null, shareableLink);
-            return CompletableFuture.completedFuture(null);
+            return CompletableFuture.completedFuture(shareableLink);
         }
         try{
             var projectDto = mapper.toDto(project);

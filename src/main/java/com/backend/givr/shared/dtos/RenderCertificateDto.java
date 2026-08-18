@@ -12,6 +12,7 @@ public class RenderCertificateDto{
     private String certId;
     private String firstName;
     private String lastName;
+    private String orgName;
     private String projectTitle;
     private LocalDate startDate;
     private LocalDate endDate;
@@ -26,6 +27,7 @@ public class RenderCertificateDto{
         this.startDate = project.getStartDate();
         this.endDate = project.getEndDate();
         this.organizationLogo = project.getOrganization().getProfileUrl();
+        this.orgName = project.getOrganization().getOrganizationName();
         this.impactArea = String.format("%s", project.getCategories().getFirst().getCategory());
     }
 }

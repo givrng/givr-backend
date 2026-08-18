@@ -141,16 +141,25 @@ public class ProjectService {
         }
         return project;
     }
-    private boolean projectDatesValid(Project project){
-        var startDateAfterNow = project.getStartDate().isAfter(LocalDate.now(ZoneId.of("Africa/Lagos")));
-        var endDateAfterNow = project.getEndDate().isAfter(LocalDate.now(ZoneId.of("Africa/Lagos")));
-        var deadlineBeforeStart = project.getDeadline().isBefore(project.getStartDate());
-        var deadlineEqualsStart = project.getDeadline().isEqual(project.getStartDate());
-        var startBeforeEndDate = project.getStartDate().isBefore(project.getEndDate());
-        var startEqualsEndDate = project.getStartDate().isEqual(project.getEndDate());
-        if(startEqualsEndDate)
+    private boolean projectDatesValid(Project project) {
+        LocalDate today = LocalDate.now(ZoneId.of("Africa/Lagos"));
+
+        LocalDate startDate = project.getStartDate();
+        LocalDate endDate = project.getEndDate();
+        LocalDate deadline = project.getDeadline();
+
+        boolean startDateValid = startDate.isAfter(today);
+        boolean endDateValid = endDate.isAfter(today);
+        boolean dateRangeValid = !startDate.isAfter(endDate);
+        boolean deadlineValid = !deadline.isAfter(startDate);
+
+        if (startDate.isEqual(endDate))
             project.setReviewable(true);
-        return (startBeforeEndDate || startEqualsEndDate) && endDateAfterNow && (deadlineBeforeStart || deadlineEqualsStart) && startDateAfterNow;
+
+        return startDateValid
+                && endDateValid
+                && dateRangeValid
+                && deadlineValid;
     }
     public  Project findProjectById(Long projectId){
         return repo.findById(projectId).orElseThrow(()-> new EntityNotFoundException(String.format("Project with id [%s] does not exist", projectId)));

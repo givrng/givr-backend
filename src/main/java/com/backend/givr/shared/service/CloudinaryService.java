@@ -16,7 +16,7 @@ public class CloudinaryService {
             Map uploadResult = cloudinary.uploader().upload(
                     imageBytes,
                     Map.of(
-                            "public_id", String.format("givr/%s/%s", folder, id),
+                            "public_id", String.format("/givr/%s/%s", folder, id),
                             "overwrite", true,
                             "resource_type", "image"
                     )

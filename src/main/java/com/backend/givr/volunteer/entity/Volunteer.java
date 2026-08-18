@@ -14,7 +14,6 @@ import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -55,8 +54,8 @@ public class Volunteer {
     @JoinTable(name = "volunteer_skills", joinColumns = @JoinColumn(name = "volunteer_id"), inverseJoinColumns = @JoinColumn(name = "skill_id"))
     private Set<Skill> skills = new HashSet<>();
 
-    @OneToMany(mappedBy = "certifiedVolunteer")
-    private List<VolunteerCertificate> certificates = new ArrayList<>();
+    @OneToMany
+    private List<VolunteerCertificate> certificates;
     private Boolean profileCompleted;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

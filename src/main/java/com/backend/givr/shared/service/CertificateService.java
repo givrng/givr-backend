@@ -1,4 +1,4 @@
-package com.backend.givr.shared.service.Certificate;
+package com.backend.givr.shared.service;
 
 import com.backend.givr.admin.dtos.BatchCertificateRequest;
 import com.backend.givr.organization.entity.Participation;
@@ -8,8 +8,6 @@ import com.backend.givr.shared.entity.VolunteerCertificate;
 import com.backend.givr.shared.enums.CertificationStatus;
 import com.backend.givr.shared.repo.VolunteerCertificateRepo;
 import com.backend.givr.shared.email.EmailService;
-import com.backend.givr.shared.service.CloudinaryService;
-import com.backend.givr.shared.service.GivrImageRendererService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,7 +16,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 import reactor.core.publisher.Flux;
-import tools.jackson.databind.ObjectMapper;
 
 import java.time.Duration;
 
@@ -37,22 +34,18 @@ public class CertificateService {
     private GivrImageRendererService imageRendererService;
     @Autowired
     private ParticipationRepo participationRepo;
-    @Autowired
-    private ObjectMapper mapper;
 
     @Transactional
     @Async
-    public void generateCertificate(Long participantId){
+    public void issueSingleCertificateTo(Long participantId){
         Participation participant = participationRepo.findById(participantId).orElseThrow(()->new EntityNotFoundException("Cannot issue a certificate to a participant that does not exist"));
         if(participant.getCertificationStatus()== CertificationStatus.Certified)
             return;
 
         try{
             VolunteerCertificate certificate = new VolunteerCertificate(participant);
-            RenderCertificateDto certificateDto = new RenderCertificateDto(participant.getProject(),
-                    participant.getVolunteer(), certificate.getCertId());
-
-            byte[] certificateImg = imageRendererService.renderCertificate(certificateDto);
+            byte[] certificateImg = imageRendererService.renderCertificate(new RenderCertificateDto(participant.getProject(),
+                    participant.getVolunteer(), certificate.getCertId()));
 
             String shareableLink = cloudinaryService.uploadImage(certificateImg, "certificates", certificate.getCertId());
             certificate.setCertUrl(shareableLink);
@@ -63,5 +56,12 @@ public class CertificateService {
         }catch (RuntimeException e){
             log.error("Failed to issue certificate to participant: {} because {}", participant.getId(), e.getLocalizedMessage());
         }
+    }
+    @Async
+    public void issueBatchCertificates(BatchCertificateRequest request){
+        Flux.fromIterable(request.participants())
+                .delayElements(Duration.ofMillis(200))
+                .doOnNext(this::issueSingleCertificateTo)
+                .subscribe();
     }
 }

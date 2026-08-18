@@ -1,6 +1,5 @@
 package com.backend.givr.shared.dtos;
 
-import com.backend.givr.shared.enums.CertificationStatus;
 import com.backend.givr.shared.enums.ParticipationStatus;
 import com.backend.givr.volunteer.dtos.OrganizationResponseDTOv;
 import com.backend.givr.volunteer.dtos.ProjectResponseDTOv;
@@ -22,6 +21,5 @@ public class ParticipationDto {
     private VolunteerProfile volunteer;
     private Boolean reviewable;
     private String reason;
-    private CertificationStatus certificationStatus;
     private LocalDate endDate;
 }

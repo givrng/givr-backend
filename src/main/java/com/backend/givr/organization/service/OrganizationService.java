@@ -2,6 +2,7 @@ package com.backend.givr.organization.service;
 
 import com.backend.givr.organization.dtos.*;
 import com.backend.givr.organization.entity.Organization;
+import com.backend.givr.organization.entity.Participation;
 import com.backend.givr.organization.security.ProjectServiceWorker;
 import com.backend.givr.redis.RedisService;
 import com.backend.givr.shared.dtos.ParticipationDto;
@@ -33,6 +34,8 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.CachePut;
@@ -43,14 +46,15 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import tools.jackson.databind.ObjectMapper;
 
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 
 @Service
+@Slf4j
 public class OrganizationService {
     @Autowired
     private OrganizationMapper mapper;
@@ -91,7 +95,6 @@ public class OrganizationService {
 
     @Value("${client.app.baseurl}")
     private String clientAppBaseUrl;
-
     @Transactional
     public Organization createOrganization(CreateOrganizationDto organizationDto){
         if(organizationDto == null){
@@ -179,6 +182,7 @@ public class OrganizationService {
 
     public OrganizationDashboard getOrganizationDashboard(SecurityDetails details){
         var organization = repo.findById(details.getId()).orElseThrow(()-> new EntityNotFoundException(String.format("Organization withID %s does not exist", details.getId())));
+
         Map<String, List<ProjectResponseDto>> projectDtoMap = new HashMap<>();
 
         projectDtoMap.put("draftProjects", projectMapper.toDtos(
@@ -187,6 +191,7 @@ public class OrganizationService {
                         .filter(project -> project.getStatus() == ProjectStatus.DRAFT)
                         .toList()
         ));
+
         projectDtoMap.put("openProjects", projectMapper.toDtos(
                 organization.getProjects()
                         .stream()
@@ -194,6 +199,7 @@ public class OrganizationService {
                         .sorted(Comparator.comparing(Project::getCreatedAt))
                         .toList()
         ));
+
 
         projectDtoMap.put("ongoingProjects", projectMapper.toDtos(
                 organization.getProjects()
@@ -203,21 +209,14 @@ public class OrganizationService {
                         .toList()
         ));
 
-        projectDtoMap.put("completedProjects", projectMapper.toDtos(
-                organization.getProjects()
-                    .stream()
-                    .filter(project -> project.getStatus() == ProjectStatus.COMPLETED)
-                    .sorted(Comparator.comparing(Project::getCreatedAt))
-                    .toList()));
+        projectDtoMap.put("completedProjects", projectMapper.toDtos(organization.getProjects()
+                .stream()
+                .filter(project -> project.getStatus() == ProjectStatus.COMPLETED)
+                .sorted(Comparator.comparing(Project::getCreatedAt))
+                .toList()));
 
-        projectDtoMap.put("closedProjects", projectMapper.toDtos(
-                organization.getProjects()
-                        .stream()
-                        .filter(project -> project.getStatus() == ProjectStatus.CLOSE)
-                        .sorted(Comparator.comparing(Project::getCreatedAt))
-                        .toList())
-        );
         ApplicationStats stats = applicationService.getVolunteerStats(organization);
+
         return new OrganizationDashboard(organization.getOrganizationName(), projectDtoMap, ratingService.getOrganizationRatingScore(organization), stats ,organization.getStatus());
     }
 

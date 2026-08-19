@@ -1,6 +1,7 @@
 package com.backend.givr.volunteer.dtos;
 
 import com.backend.givr.organization.dtos.LocationDto;
+import com.backend.givr.shared.dtos.VolunteerCertificateDto;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -25,6 +26,7 @@ public class VolunteerProfile {
     private String phoneNumber;
     private List<String> skills;
     private LocationDto location;
+    private List<VolunteerCertificateDto> certificates;
     private String email;
     private boolean emailEditable;
     private boolean emailIsVerified;

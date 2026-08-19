@@ -45,6 +45,7 @@ public class ProjectRequestDto {
     private LocationDto locationDto;
     private String specialRequirements;
     private ProjectStatus status;
+    private String projectFlierUrl;
 
 //    @JsonSetter(value = "category")
 //    private void setCat(String category){

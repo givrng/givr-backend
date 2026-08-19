@@ -92,7 +92,7 @@ public class Project {
     private Boolean broadcastEnabled;
 
     private Double rating;
-
+    private String projectFlierUrl;
     private String projectCardUrl;
     private String shareableLink;
     private ZonedDateTime createdAt;

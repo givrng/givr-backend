@@ -154,6 +154,12 @@ public class EmailService {
         sendEmail(html, volunteer.getEmail(), subject );
     }
 
+
+    public void sendCertificateReadyNotification(Volunteer volunteer, Project project){
+        String html = emailTemplateService.certificateReady(volunteer.getFirstname(), project.getTitle(), project.getOrganization().getOrganizationName());
+        sendEmail(html, volunteer.getEmail(), "Congratulations! Your certificate is now available.🎉");
+    }
+
     private void updateGivrAdmin(Project project, Volunteer volunteer){
         String fullName = String.format("%S, %s", volunteer.getLastname(), volunteer.getFirstname());
         String html = emailTemplateService.projectCompleteAdminUpdate(volunteer.getEmail(), project.getTitle(), fullName);

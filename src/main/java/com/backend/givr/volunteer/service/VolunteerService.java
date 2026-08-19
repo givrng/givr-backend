@@ -6,6 +6,7 @@ import com.backend.givr.organization.entity.ProjectApplication;
 import com.backend.givr.organization.service.ApplicationService;
 import com.backend.givr.organization.service.ParticipationService;
 import com.backend.givr.organization.service.ProjectService;
+import com.backend.givr.shared.dtos.VolunteerCertificateDto;
 import com.backend.givr.shared.entity.Location;
 import com.backend.givr.shared.entity.Skill;
 import com.backend.givr.shared.dtos.ParticipationDto;
@@ -18,6 +19,7 @@ import com.backend.givr.shared.enums.ProjectStatus;
 import com.backend.givr.shared.exceptions.DuplicateAccountException;
 import com.backend.givr.shared.exceptions.IllegalOperationException;
 import com.backend.givr.shared.interfaces.SecurityDetails;
+import com.backend.givr.shared.mapper.CertificateMapper;
 import com.backend.givr.shared.mapper.ProjectMapper;
 import com.backend.givr.shared.enums.AuthProviderType;
 import com.backend.givr.shared.otp.OTPService;
@@ -90,6 +92,9 @@ public class VolunteerService {
     private EmailService emailService;
     @Autowired
     private OTPService otpService;
+
+    @Autowired
+    private CertificateMapper certMapper;
 
     @Autowired
     private SkillRepo skillRepo;

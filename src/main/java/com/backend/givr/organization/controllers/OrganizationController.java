@@ -44,15 +44,15 @@ public class OrganizationController {
 
     @Autowired
     private OrganizationService service;
+    @Autowired
+    private ParticipationService participationService;
 
     @Autowired
     private LogoutService logoutService;
 
     @Autowired
-    private ParticipationService participationService;
-
-    @Autowired
     private GivrMessageService messageService;
+
     @PostMapping("/auth/signup")
     public ResponseEntity<Void> createOrganizationAccount(@RequestBody @Valid CreateOrganizationDto createOrganizationDto){
         service.createOrganization(createOrganizationDto);
@@ -130,6 +130,12 @@ public class OrganizationController {
         return ResponseEntity.accepted().body(service.updateProject(projectId, projectRequestDto));
     }
 
+    @PatchMapping("/projects/{projectId}/completed")
+    public ResponseEntity<Void> markProjectCompleted(@PathVariable("projectId") Long projectId){
+        participationService.markProjectCompleted(projectId);
+        return ResponseEntity.accepted().build();
+    }
+
     @GetMapping("/chat/{projectId}/history")
     public ResponseEntity<PagedModel<GivrMessage>> loadConversation(@PathVariable(name = "projectId") Long projectId, @RequestParam(name = "cursor",
             defaultValue = "", required = false) String cursor, @RequestParam(name = "size", required = false, defaultValue = "40") int size){
@@ -163,12 +169,6 @@ public class OrganizationController {
 
         service.publishProject(id, details);
         return ResponseEntity.noContent().build();
-    }
-
-    @PatchMapping("/projects/{projectId}/completed")
-    public ResponseEntity<Void> markProjectCompleted(@PathVariable("projectId") Long projectId){
-        participationService.markProjectCompleted(projectId);
-        return ResponseEntity.accepted().build();
     }
 
     @DeleteMapping("/projects/{projectId}")

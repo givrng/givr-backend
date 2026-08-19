@@ -1,19 +1,24 @@
 package com.backend.givr.admin.controller;
 
 import com.backend.givr.admin.dtos.AdminAuthDto;
+import com.backend.givr.admin.dtos.BatchCertificateRequest;
 import com.backend.givr.admin.dtos.ReviewDto;
 import com.backend.givr.admin.dtos.ReviewResponseDto;
 import com.backend.givr.admin.entity.AdminDetails;
 import com.backend.givr.admin.service.AdminService;
+import com.backend.givr.organization.service.ParticipationService;
+import com.backend.givr.shared.dtos.ParticipationDto;
 import com.backend.givr.shared.dtos.VerificationSessionDto;
-import com.backend.givr.shared.entity.OrganizationVerificationSession;
 import com.backend.givr.shared.enums.ReviewStatus;
 import com.backend.givr.shared.interfaces.SecurityDetails;
 import com.backend.givr.shared.jwt.GivrCookie;
+import com.backend.givr.shared.service.Certificate.CertificateIssuingService;
+import com.backend.givr.shared.service.Certificate.CertificateService;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.web.PagedModel;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 
@@ -30,6 +35,10 @@ public class AdminController {
     private AdminService service;
     @Autowired
     private GivrCookie givrCookie;
+    @Autowired
+    private ParticipationService participationService;
+    @Autowired
+    private CertificateIssuingService certificateService;
 
     @Value("${givr.allowed.admins}")
     private List<String> allowedAdmins;
@@ -60,7 +69,6 @@ public class AdminController {
     }
 
 
-
     @GetMapping("/verify")
     public ResponseEntity<Void> verify(){
         return ResponseEntity.ok().build();
@@ -87,5 +95,23 @@ public class AdminController {
         service.retryAutomaticVerification(sessionId);
         return ResponseEntity.ok().build();
     }
+    @GetMapping("/certificate/pending")
+    public ResponseEntity<PagedModel<ParticipationDto>> getParticipantsAwaitingCertificate(
+            @RequestParam(name = "page", defaultValue = "0") int pageNum, @RequestParam(name = "size", defaultValue = "30") int pageSize
+    ){
+        PagedModel<ParticipationDto> participants = participationService.findParticipantsPendingCertification(pageNum, pageSize);
+        return ResponseEntity.ok(participants);
+    }
 
+    @PatchMapping("/certificate/{participantId}/approve")
+    public ResponseEntity<Void> generateCertificate(@PathVariable(name = "participantId") Long participantId){
+        certificateService.issueSingleCertificateTo(participantId);
+        return ResponseEntity.accepted().build();
+    }
+
+    @PatchMapping("/certificate/approve")
+    public ResponseEntity<Void> generateCertificates(@RequestBody BatchCertificateRequest participants){
+        certificateService.issueBatchCertificates(participants);
+        return ResponseEntity.accepted().build();
+    }
 }

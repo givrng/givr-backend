@@ -29,7 +29,8 @@ public class SharedController {
     @GetMapping
     public ResponseEntity<String> share(@PathVariable("id") Long projectId, HttpServletRequest req){
         Project project = projectService.getProject(projectId);
-        String html = templateService.projectCard(project.getTitle(), project.getDescription(), project.getProjectCardUrl(),
+        String cardUrl = project.getProjectFlierUrl()!=null? project.getProjectFlierUrl(): project.getProjectCardUrl();
+        String html = templateService.projectCard(project.getTitle(), project.getDescription(), cardUrl,
                 String.format("%s/volunteer?project=%s", clientBaseUrl, project.getProjectId()), req.getRequestURL().toString());
         return ResponseEntity.ok().contentType(MediaType.TEXT_HTML).body(html);
     }

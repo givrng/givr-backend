@@ -21,19 +21,15 @@ import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.annotation.CachePut;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
-import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Schedulers;
 
 import java.time.*;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 
 @Service
@@ -118,16 +114,14 @@ public class ProjectService {
         project.setRequiredSkills(updatedSkills);
     }
 
-    public Project createProject(ProjectRequestDto projectRequestDto, Organization organization){
+    public void createProject(ProjectRequestDto projectRequestDto, Organization organization){
         Project project = mapper.toProject(projectRequestDto);
         handleProject(project, projectRequestDto);
         project.setOrganization(organization);
         project.setStatus(ProjectStatus.DRAFT);
         project.setBroadcastEnabled(repo.count() <= 3);
         Project savedProject = repo.save(project);
-        worker.createProjectSegment(savedProject);
         worker.createProjectCard(savedProject);
-        return  project;
     }
 
 
@@ -146,16 +140,25 @@ public class ProjectService {
         }
         return project;
     }
-    private boolean projectDatesValid(Project project){
-        var startDateAfterNow = project.getStartDate().isAfter(LocalDate.now(ZoneId.of("Africa/Lagos")));
-        var endDateAfterNow = project.getEndDate().isAfter(LocalDate.now(ZoneId.of("Africa/Lagos")));
-        var deadlineBeforeStart = project.getDeadline().isBefore(project.getStartDate());
-        var deadlineEqualsStart = project.getDeadline().isEqual(project.getStartDate());
-        var startBeforeEndDate = project.getStartDate().isBefore(project.getEndDate());
-        var startEqualsEndDate = project.getStartDate().isEqual(project.getEndDate());
-        if(startEqualsEndDate)
+    private boolean projectDatesValid(Project project) {
+        LocalDate today = LocalDate.now(ZoneId.of("Africa/Lagos"));
+
+        LocalDate startDate = project.getStartDate();
+        LocalDate endDate = project.getEndDate();
+        LocalDate deadline = project.getDeadline();
+
+        boolean startDateValid = startDate.isAfter(today);
+        boolean endDateValid = endDate.isAfter(today);
+        boolean dateRangeValid = !startDate.isAfter(endDate);
+        boolean deadlineValid = !deadline.isAfter(startDate);
+
+        if (startDate.isEqual(endDate))
             project.setReviewable(true);
-        return (startBeforeEndDate || startEqualsEndDate) && endDateAfterNow && (deadlineBeforeStart || deadlineEqualsStart) && startDateAfterNow;
+
+        return startDateValid
+                && endDateValid
+                && dateRangeValid
+                && deadlineValid;
     }
     public  Project findProjectById(Long projectId){
         return repo.findById(projectId).orElseThrow(()-> new EntityNotFoundException(String.format("Project with id [%s] does not exist", projectId)));

@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8">
+    <title>Project Completion Certificate</title>
+</head>
+<body>
+<table width="100%" cellpadding="0" cellspacing="0" style="padding:20px 0;">
+    <tr>
+        <td align="center">
+            <table width="600" style="background:#FFFFFF; border-radius:8px;">
+                <tr>
+                    <td style="background:#0A9BF0; padding:24px; text-align:center;">
+                        <h1 style="color:#FFFFFF; margin:0;">
+                            Congratulations! Your certificate is now available.🎉
+                        </h1>
+
+                    </td>
+                </tr>
+
+                <tr>
+                    <td style="padding:32px; color:#1F2937;">
+                        <p>
+                            Hi <strong th:text="${firstname}"></strong>,
+                        </p>
+
+                        <p>
+                            Congratulations! After a thorough review, we are pleased to award you a certificate in recognition of your successful participation in and completion of the
+                            <strong th:text="${projectName}"></strong> project.
+                        </p>
+
+                        <div style="background:#F6F9FC; padding:16px; border-left:4px solid #0A9BF0;">
+                            <strong>Project:</strong>
+                            <span th:text="${projectName}"></span><br>
+
+                            <strong>Organization:</strong>
+                            <span th:text="${organizationName}"></span>
+                        </div>
+
+                        <p>
+                            You can now view and download your certificate from your dashboard.
+                        </p>
+
+                        <p>
+                            Thank you for your contribution, and congratulations once again on this achievement!
+                        </p>
+
+                        <p>
+                            — <strong>The Givr Nigeria Team</strong>
+                        </p>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td style="background:#F6F9FC; text-align:center; padding:16px; font-size:12px;"
+                        th:text="|© ${#dates.year(#dates.createNow())} Givr Nigeria. All rights reserved.|">
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+</table>
+</body>
+</html>

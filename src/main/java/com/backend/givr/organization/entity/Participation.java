@@ -1,5 +1,6 @@
 package com.backend.givr.organization.entity;
 
+import com.backend.givr.shared.enums.CertificationStatus;
 import com.backend.givr.shared.enums.ParticipationStatus;
 import com.backend.givr.volunteer.entity.Volunteer;
 import jakarta.persistence.*;
@@ -47,6 +48,10 @@ public class Participation {
 
     @Transient
     private Boolean reviewable;
+
+    @Enumerated(EnumType.STRING)
+    @Setter
+    private CertificationStatus certificationStatus;
 
     @Setter
     private String contactId;

@@ -13,7 +13,7 @@
     <meta name="twitter:description" th:content="${projectDescription}" />
     <meta name="twitter:image" th:content="@{${projectCardUrl}}" />
     <meta name="twitter:url" th:content="@{${projectUrl}}" />
-    <title>Project</title>
+    <title th:text="${projectTitle}">Project</title>
 
 </head>
 <body>

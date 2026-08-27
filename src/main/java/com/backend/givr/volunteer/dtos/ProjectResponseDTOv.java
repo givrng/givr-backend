@@ -36,5 +36,6 @@ public class ProjectResponseDTOv {
     private String address;
     private Boolean broadcastEnabled;
     private double rating;
-
+    private String projectFlierUrl;
+    private String projectCardUrl;
 }

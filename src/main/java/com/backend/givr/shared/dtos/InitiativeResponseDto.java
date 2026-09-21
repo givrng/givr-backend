@@ -1,22 +1,22 @@
-package com.backend.givr.organization.dtos;
+package com.backend.givr.shared.dtos;
 
+import com.backend.givr.organization.dtos.LocationDto;
 import com.backend.givr.organization.entity.AttendanceHours;
 import com.backend.givr.shared.enums.ProjectStatus;
-import com.backend.givr.shared.enums.ProjectType;
-import lombok.Getter;
-import lombok.Setter;
+import com.backend.givr.volunteer.dtos.OrganizationResponseDTOv;
+import com.backend.givr.volunteer.dtos.VolunteerDto;
+import lombok.Data;
 
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Set;
 
-@Getter
-@Setter
-public class ProjectResponseDto {
+@Data
+public class InitiativeResponseDto {
     Long id;
     private String title;
 
-    private OrganizationDto organization;
+    private VolunteerDto volunteerDto;
     private String description;
     private List<String> categories;
     private Integer maxVolunteers;
@@ -36,5 +36,4 @@ public class ProjectResponseDto {
     private double rating;
     private String projectFlierUrl;
     private String projectCardUrl;
-    private ProjectType type;
 }

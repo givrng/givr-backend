@@ -1,7 +1,7 @@
 package com.backend.givr.shared.controller;
 
-import com.backend.givr.organization.entity.Project;
-import com.backend.givr.organization.service.ProjectService;
+import com.backend.givr.shared.entity.Project;
+import com.backend.givr.shared.service.ProjectService;
 import com.backend.givr.shared.email.ThymeleafTemplateService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,7 +11,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 @Controller

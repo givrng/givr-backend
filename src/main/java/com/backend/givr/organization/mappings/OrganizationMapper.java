@@ -3,7 +3,7 @@ package com.backend.givr.organization.mappings;
 import com.backend.givr.organization.dtos.*;
 import com.backend.givr.organization.entity.Organization;
 import com.backend.givr.shared.entity.OrganizationVerificationSession;
-import com.backend.givr.organization.entity.Project;
+import com.backend.givr.shared.entity.Project;
 import com.backend.givr.shared.entity.Location;
 import com.backend.givr.shared.entity.Skill;
 import com.backend.givr.shared.mapper.SkillMapper;
@@ -18,7 +18,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @Mapper(componentModel = "spring", uses = {VolunteerMapper.class, SkillMapper.class, }, nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
 public interface OrganizationMapper {

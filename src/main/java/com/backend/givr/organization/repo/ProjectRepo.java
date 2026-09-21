@@ -1,8 +1,9 @@
 package com.backend.givr.organization.repo;
 
 import com.backend.givr.organization.entity.Organization;
-import com.backend.givr.organization.entity.Project;
+import com.backend.givr.shared.entity.Project;
 import com.backend.givr.shared.enums.ProjectStatus;
+import com.backend.givr.volunteer.entity.Individual;
 import com.backend.givr.volunteer.entity.Volunteer;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -15,7 +16,7 @@ public interface ProjectRepo extends JpaRepository<Project, Long> {
     List<Project> findAllByOrganizationOrderByCreatedAtAsc(Organization organization);
 
     Optional<Project> findByProjectIdAndOrganization(Long projectId, Organization organization);
-
+    Optional<Project> findByProjectIdAndIndividual(Long projectId, Individual individual);
     List<Project> findAllByStatus(ProjectStatus projectStatus);
 
     @Query("""
@@ -49,4 +50,6 @@ public interface ProjectRepo extends JpaRepository<Project, Long> {
     List<Project> findAllByOrganizationAndStatus(Organization organization, ProjectStatus status);
 
     List<Project> findAllByOrganizationAndStatusNot(Organization organization, ProjectStatus projectStatus);
+
+    List<Project> findAllByIndividualAndStatus(Individual individual, ProjectStatus projectStatus);
 }

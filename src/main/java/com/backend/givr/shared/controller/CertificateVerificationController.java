@@ -15,7 +15,7 @@ public class CertificateVerificationController {
     @Autowired
     private CertificateService service;
 
-    @GetMapping("/verify/{certId}")
+    @GetMapping("/verifyOrganization/{certId}")
     public ResponseEntity<VolunteerCertificateVerificationDTO> verifyCertificate(@PathVariable String certId){
         return ResponseEntity.ok(service.verifyCertificate(certId));
     }

@@ -1,11 +1,10 @@
 package com.backend.givr.redis;
 
 import com.backend.givr.organization.service.OrganizationService;
-import com.backend.givr.organization.service.ParticipationService;
-import com.backend.givr.organization.service.ProjectService;
+import com.backend.givr.shared.service.ParticipationService;
+import com.backend.givr.shared.service.ProjectService;
 import com.backend.givr.shared.email.EmailService;
 import com.backend.givr.shared.entity.GivrMessage;
-import com.backend.givr.shared.entity.GivrUserProjectPointer;
 import com.backend.givr.shared.enums.AccountType;
 import com.backend.givr.shared.service.GivrMessageService;
 import com.backend.givr.volunteer.service.VolunteerService;

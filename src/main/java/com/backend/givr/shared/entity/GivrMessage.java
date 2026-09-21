@@ -24,7 +24,7 @@ public class GivrMessage {
     private String content;
 
     private Long projectId;
-    // User Id
+    // GivrUser Id
     @Column(name = "user_id")
     private String sentBy;
 

@@ -4,9 +4,10 @@ import com.backend.givr.organization.dtos.ProjectApplicationDto;
 import com.backend.givr.organization.dtos.ProjectRequestDto;
 import com.backend.givr.organization.dtos.ProjectResponseDto;
 import com.backend.givr.organization.entity.Category;
-import com.backend.givr.organization.entity.Participation;
-import com.backend.givr.organization.entity.Project;
-import com.backend.givr.organization.entity.ProjectApplication;
+import com.backend.givr.shared.dtos.InitiativeResponseDto;
+import com.backend.givr.shared.entity.Participation;
+import com.backend.givr.shared.entity.Project;
+import com.backend.givr.shared.entity.ProjectApplication;
 import com.backend.givr.organization.mappings.OrganizationMapper;
 import com.backend.givr.shared.dtos.ParticipationDto;
 import com.backend.givr.shared.dtos.RenderProjectDto;
@@ -64,6 +65,11 @@ public interface ProjectMapper {
 
     @Mapping(target = "requiredSkills", ignore = true)
     @Mapping(target = "id", source = "projectId")
+    @Mapping(source = "deadline", target = "applicationDeadline")
+    InitiativeResponseDto toInitiative(Project project);
+
+    @Mapping(target = "requiredSkills", ignore = true)
+    @Mapping(target = "id", source = "projectId")
     ProjectViewResponse toProjectViewResponse (Project project);
 
     @AfterMapping
@@ -115,7 +121,11 @@ public interface ProjectMapper {
 
     @AfterMapping
     default void updateRenderProjectDto(Project project, @MappingTarget RenderProjectDto renderProjectDto){
-        renderProjectDto.setOrganizationName(project.getOrganization().getOrganizationName());
+        String name = project.getOrganization() != null? project.getOrganization().getOrganizationName() : project.getIndividual().getFirstname();
+        renderProjectDto.setOrganizationName(name);
     }
+
+    List<InitiativeResponseDto> toInitiativeReponses(List<Project> projectByVolunteerAndStatus);
+
     // Organization Participation
 }

@@ -102,7 +102,7 @@ public class SecurityConfig {
         JwtValidationFilter validationFilter = new JwtValidationFilter(jwtUtil, volunteerDetailsService, organizationDetailsService, adminDetailsService);
 
         return httpSecurity
-                .securityMatcher("/v1/api/volunteer/**")
+                .securityMatcher("/v1/api/volunteer/**", "/v1/api/individual/**")
                 .cors(Customizer.withDefaults())
                 .authorizeHttpRequests(request->{
                     request.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll();

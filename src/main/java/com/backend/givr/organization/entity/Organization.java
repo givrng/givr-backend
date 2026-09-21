@@ -2,6 +2,7 @@ package com.backend.givr.organization.entity;
 
 import com.backend.givr.shared.entity.Location;
 import com.backend.givr.shared.entity.OrganizationVerificationSession;
+import com.backend.givr.shared.entity.Project;
 import com.backend.givr.shared.enums.ProjectStatus;
 import com.backend.givr.shared.enums.VerificationStatus;
 import jakarta.persistence.*;
@@ -10,7 +11,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
-import org.hibernate.validator.constraints.URL;
 
 import java.util.Comparator;
 import java.util.List;
@@ -21,7 +21,7 @@ import java.util.Set;
 @ToString
 @Setter
 @NoArgsConstructor
-public class Organization {
+public class Organization{
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private String organizationId;

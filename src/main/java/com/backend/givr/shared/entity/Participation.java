@@ -1,15 +1,14 @@
-package com.backend.givr.organization.entity;
+package com.backend.givr.shared.entity;
 
+import com.backend.givr.organization.entity.Organization;
 import com.backend.givr.shared.enums.CertificationStatus;
 import com.backend.givr.shared.enums.ParticipationStatus;
 import com.backend.givr.volunteer.entity.Volunteer;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 
@@ -37,7 +36,7 @@ public class Participation {
     private ProjectApplication projectApplication;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "organization_id", nullable = false)
+    @JoinColumn(name = "organization_id", nullable = true)
     @Setter
     private Organization organization;
 

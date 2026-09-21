@@ -1,5 +1,5 @@
 package com.backend.givr.shared.enums;
 
 public enum TransactionType {
-    ORGANIZATION_PAYMENT, GIVR_DISBURSEMENT
+    ORGANIZATION_PAYMENT, GIVR_DISBURSEMENT, VOLUNTEER_PAYMENT
 }

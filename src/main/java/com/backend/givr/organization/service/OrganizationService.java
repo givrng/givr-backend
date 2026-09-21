@@ -2,11 +2,10 @@ package com.backend.givr.organization.service;
 
 import com.backend.givr.organization.dtos.*;
 import com.backend.givr.organization.entity.Organization;
-import com.backend.givr.organization.entity.Participation;
 import com.backend.givr.organization.security.ProjectServiceWorker;
 import com.backend.givr.redis.RedisService;
 import com.backend.givr.shared.dtos.ParticipationDto;
-import com.backend.givr.organization.entity.Project;
+import com.backend.givr.shared.entity.Project;
 import com.backend.givr.organization.mappings.OrganizationMapper;
 import com.backend.givr.organization.repo.OrganizationRepo;
 import com.backend.givr.organization.security.OrganizationDetails;
@@ -23,11 +22,9 @@ import com.backend.givr.shared.interfaces.SecurityDetails;
 import com.backend.givr.shared.mapper.ProjectMapper;
 import com.backend.givr.shared.enums.AuthProviderType;
 import com.backend.givr.shared.otp.OTPService;
-import com.backend.givr.shared.service.LocationService;
-import com.backend.givr.shared.service.RatingService;
-import com.backend.givr.shared.service.SkillService;
-import com.backend.givr.shared.service.VerificationService;
+import com.backend.givr.shared.service.*;
 import com.backend.givr.volunteer.dtos.OrganizationResponseDTOv;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.resend.core.exception.ResendException;
 import jakarta.annotation.security.PermitAll;
 import jakarta.persistence.EntityManager;
@@ -35,7 +32,6 @@ import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
-import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.CachePut;
@@ -46,10 +42,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 
-import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 
@@ -153,8 +146,9 @@ public class OrganizationService {
         Organization organization = repo.findById(details.getId()).orElseThrow();
         return projectMapper.toParticipationDto(participationService.getParticipantsByOrganization(organization));
     }
-    public void updateVolunteerParticipation(UpdateParticipantDto payload){
-        participationService.changeParticipationStatus(payload.id(), payload.status());
+    public void updateVolunteerParticipation(UpdateParticipantDto payload, String organizationId){
+        Organization organization = em.getReference(Organization.class, organizationId);
+        participationService.changeOrgParticipationStatus(payload.id(), organization, payload.status());
     }
     public List<VolunteerApplicationDto> getProjectApplications (SecurityDetails details){
         Organization organization = repo.findById(details.getId()).orElseThrow();
@@ -225,8 +219,9 @@ public class OrganizationService {
     }
 
     @Transactional
-    public ProjectResponseDto updateProject(Long projectId, ProjectRequestDto projectRequestDto) {
-        return projectMapper.toProjectDto(projectService.updateProject(projectId, projectRequestDto));
+    public ProjectResponseDto updateProject(Long projectId, ProjectRequestDto projectRequestDto, String orgId) {
+        Organization organization = em.getReference(Organization.class, orgId);
+        return projectMapper.toProjectDto(projectService.orgUpdateProject(projectId, organization, projectRequestDto));
     }
     @Cacheable(cacheNames = "organizationList")
     public List<OrganizationResponseDTOv> getOrganizations() {
@@ -256,7 +251,7 @@ public class OrganizationService {
     public void confirmEmail(SecurityDetails details, String Otp){
         otpService.verifyOtp(details.getUsername(), Otp, AccountType.ORGANIZATION, OtpPurpose.EMAIL_VERIFICATION);
 
-        Organization organization = repo.findById(details.getId()).orElseThrow(()->new EntityNotFoundException("User with email does not exist"));
+        Organization organization = repo.findById(details.getId()).orElseThrow(()->new EntityNotFoundException("GivrUser with email does not exist"));
         organization.setEmailVerified(true);
         repo.save(organization);
     }
@@ -276,7 +271,7 @@ public class OrganizationService {
      * 1. Save organization claims temporarily
      * 2. Initialize payment and returns checkout url*/
     @Transactional
-    public CheckoutResponse initiateOrganizationVerification(OrganizationUpdateDto organizationDto, SecurityDetails details) {
+    public CheckoutResponse initiateOrganizationVerification(OrganizationUpdateDto organizationDto, SecurityDetails details){
         Organization organization = em.getReference(Organization.class, details.getId());
         return verificationService.createVerificationSession(organization, organizationDto);
     }

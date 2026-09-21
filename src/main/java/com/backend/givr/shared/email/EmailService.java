@@ -1,7 +1,6 @@
 package com.backend.givr.shared.email;
 
-import com.backend.givr.organization.entity.Project;
-import com.backend.givr.shared.entity.GivrMessage;
+import com.backend.givr.shared.entity.Project;
 import com.backend.givr.shared.enums.*;
 import com.backend.givr.shared.exceptions.FailedToSendOTPException;
 import com.backend.givr.shared.otp.OTP;

@@ -1,7 +1,5 @@
 package com.backend.givr.shared.entity;
 
-import com.backend.givr.organization.entity.Participation;
-import com.backend.givr.organization.entity.Project;
 import com.backend.givr.volunteer.entity.Volunteer;
 import jakarta.persistence.*;
 import lombok.Getter;

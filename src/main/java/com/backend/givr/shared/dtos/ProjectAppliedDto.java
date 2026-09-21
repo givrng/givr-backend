@@ -1,6 +1,6 @@
 package com.backend.givr.shared.dtos;
 
-import com.backend.givr.organization.entity.ProjectApplication;
+import com.backend.givr.shared.entity.ProjectApplication;
 import com.backend.givr.shared.enums.ApplicationStatus;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

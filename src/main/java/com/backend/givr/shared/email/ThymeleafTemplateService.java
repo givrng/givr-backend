@@ -1,6 +1,6 @@
 package com.backend.givr.shared.email;
 
-import com.backend.givr.organization.entity.Project;
+import com.backend.givr.shared.entity.Project;
 import com.backend.givr.shared.enums.ReviewStatus;
 import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
@@ -111,7 +111,7 @@ public class ThymeleafTemplateService {
     }
     public String notificationForAuthUser() {
         Context context = new Context();
-        context.setVariable("firstname", "User");
+        context.setVariable("firstname", "GivrUser");
         return engine.process("email/oauthNotification", context);
     }
 

@@ -1,8 +1,12 @@
-package com.backend.givr.organization.entity;
+package com.backend.givr.shared.entity;
 
-import com.backend.givr.shared.entity.Location;
-import com.backend.givr.shared.entity.Skill;
+import com.backend.givr.organization.entity.AttendanceHours;
+import com.backend.givr.organization.entity.Category;
+import com.backend.givr.organization.entity.Organization;
 import com.backend.givr.shared.enums.ProjectStatus;
+import com.backend.givr.shared.enums.ProjectType;
+import com.backend.givr.volunteer.entity.Individual;
+import com.backend.givr.volunteer.entity.Volunteer;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
@@ -30,6 +34,10 @@ public class Project {
     @ManyToOne
     @JoinColumn(name = "organization_id")
     private Organization organization;
+
+    @ManyToOne
+    @JoinColumn(name = "individual_id")
+    private Individual individual;
 
     @Column(nullable = false, unique = true)
     private String title;
@@ -97,8 +105,8 @@ public class Project {
     private String shareableLink;
     private ZonedDateTime createdAt;
     private ZonedDateTime modifiedAt;
-
-
+    @Enumerated(EnumType.STRING)
+    private ProjectType type;
     @PrePersist
     private void setCreatedAt(){
         this.createdAt = ZonedDateTime.now(ZoneOffset.UTC);

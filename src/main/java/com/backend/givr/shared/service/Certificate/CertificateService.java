@@ -1,10 +1,8 @@
 package com.backend.givr.shared.service.Certificate;
 
-import com.backend.givr.admin.dtos.BatchCertificateRequest;
-import com.backend.givr.organization.entity.Participation;
+import com.backend.givr.shared.entity.Participation;
 import com.backend.givr.organization.repo.ParticipationRepo;
 import com.backend.givr.shared.dtos.RenderCertificateDto;
-import com.backend.givr.shared.dtos.VolunteerCertificateDto;
 import com.backend.givr.shared.dtos.VolunteerCertificateVerificationDTO;
 import com.backend.givr.shared.entity.VolunteerCertificate;
 import com.backend.givr.shared.enums.CertificationStatus;
@@ -21,10 +19,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
-import reactor.core.publisher.Flux;
 import tools.jackson.databind.ObjectMapper;
-
-import java.time.Duration;
 
 @Service
 @Slf4j

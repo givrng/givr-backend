@@ -2,9 +2,9 @@ package com.backend.givr.organization.controllers;
 
 import com.backend.givr.organization.dtos.*;
 
-import com.backend.givr.organization.service.ApplicationService;
+import com.backend.givr.shared.service.ApplicationService;
 import com.backend.givr.organization.service.OrganizationService;
-import com.backend.givr.organization.service.ParticipationService;
+import com.backend.givr.shared.service.ParticipationService;
 import com.backend.givr.shared.dtos.ParticipationDto;
 import com.backend.givr.shared.dtos.PasswordUpdateDto;
 import com.backend.givr.shared.dtos.VolunteerApplicationDto;
@@ -16,11 +16,9 @@ import com.backend.givr.shared.otp.OtpDto;
 import com.backend.givr.shared.service.GivrMessageService;
 import com.backend.givr.shared.service.LogoutService;
 import com.backend.givr.volunteer.dtos.AuthDetailsDto;
-import com.resend.core.exception.ResendException;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.annotation.Cacheable;
-import org.springframework.data.domain.Page;
 import org.springframework.data.web.PagedModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -28,10 +26,8 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
-import java.net.URL;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 @RestController
 @RequestMapping("/${api.version}/api/organization")
@@ -81,7 +77,7 @@ public class OrganizationController {
     }
 
     @PostMapping("/verification/initiate")
-    public ResponseEntity<CheckoutResponse> initiateOrganizationVerification(@RequestBody OrganizationUpdateDto organizationDto, @AuthenticationPrincipal SecurityDetails details){
+    public ResponseEntity<CheckoutResponse> initiateOrganizationVerification(@RequestBody OrganizationUpdateDto organizationDto, @AuthenticationPrincipal SecurityDetails details)  {
         return ResponseEntity.ok(service.initiateOrganizationVerification(organizationDto, details));
     }
 
@@ -109,8 +105,8 @@ public class OrganizationController {
         return ResponseEntity.ok(service.getProjectParticipants(details));
     }
     @PatchMapping("/projects/participant")
-    public ResponseEntity<Void> updateParticipation(@RequestBody UpdateParticipantDto payload){
-        service.updateVolunteerParticipation(payload);
+    public ResponseEntity<Void> updateParticipation(@RequestBody UpdateParticipantDto payload, @AuthenticationPrincipal SecurityDetails details){
+        service.updateVolunteerParticipation(payload, details.getId());
         return ResponseEntity.noContent().build();
     }
 
@@ -126,8 +122,8 @@ public class OrganizationController {
     }
 
     @PatchMapping("/projects/{projectId}")
-    public ResponseEntity<ProjectResponseDto> updateProject(@PathVariable("projectId") Long projectId, @RequestBody ProjectRequestDto projectRequestDto){
-        return ResponseEntity.accepted().body(service.updateProject(projectId, projectRequestDto));
+    public ResponseEntity<ProjectResponseDto> updateProject(@PathVariable("projectId") Long projectId, @RequestBody ProjectRequestDto projectRequestDto, @AuthenticationPrincipal SecurityDetails details){
+        return ResponseEntity.accepted().body(service.updateProject(projectId, projectRequestDto, details.getId()));
     }
 
     @PatchMapping("/projects/{projectId}/completed")
@@ -183,7 +179,7 @@ public class OrganizationController {
         return ResponseEntity.accepted().build();
     }
 
-    @PatchMapping("/verify/email")
+    @PatchMapping("/verifyOrganization/email")
     public ResponseEntity<Void> confirmEmail(@RequestBody @Valid OtpDto otpDto, @AuthenticationPrincipal SecurityDetails details){
         service.confirmEmail(details, otpDto.otp());
         return ResponseEntity.noContent().build();

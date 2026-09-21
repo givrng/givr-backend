@@ -4,6 +4,7 @@ import com.backend.givr.shared.entity.Location;
 import com.backend.givr.shared.entity.Skill;
 import com.backend.givr.shared.entity.VolunteerCertificate;
 import com.backend.givr.shared.enums.AuthProviderType;
+import com.backend.givr.shared.enums.VerificationStatus;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import lombok.Getter;
@@ -13,7 +14,6 @@ import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -50,6 +50,11 @@ public class Volunteer {
     @URL
     private String profileUrl;
     private double rating = 0.0;
+
+    // Volunteer verification
+    @OneToMany
+    private List<VolunteerVerificationSession> verificationSessions;
+    private VerificationStatus verificationStatus;
 
     @ManyToMany(cascade = CascadeType.MERGE)
     @JoinTable(name = "volunteer_skills", joinColumns = @JoinColumn(name = "volunteer_id"), inverseJoinColumns = @JoinColumn(name = "skill_id"))

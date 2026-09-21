@@ -1,6 +1,6 @@
 package com.backend.givr.organization.security;
 
-import com.backend.givr.organization.entity.Project;
+import com.backend.givr.shared.entity.Project;
 import com.backend.givr.organization.repo.ProjectRepo;
 import com.backend.givr.shared.email.EmailService;
 import com.backend.givr.shared.mapper.ProjectMapper;

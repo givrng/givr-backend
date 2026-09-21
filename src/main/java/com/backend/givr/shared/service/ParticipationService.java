@@ -1,9 +1,9 @@
-package com.backend.givr.organization.service;
+package com.backend.givr.shared.service;
 
 import com.backend.givr.organization.entity.Organization;
-import com.backend.givr.organization.entity.Participation;
-import com.backend.givr.organization.entity.Project;
-import com.backend.givr.organization.entity.ProjectApplication;
+import com.backend.givr.shared.entity.Participation;
+import com.backend.givr.shared.entity.Project;
+import com.backend.givr.shared.entity.ProjectApplication;
 import com.backend.givr.organization.repo.ParticipationRepo;
 import com.backend.givr.organization.repo.ProjectApplicationRepo;
 import com.backend.givr.redis.RedisService;
@@ -16,18 +16,16 @@ import com.backend.givr.shared.enums.ProjectStatus;
 import com.backend.givr.shared.exceptions.IllegalOperationException;
 import com.backend.givr.shared.email.EmailService;
 import com.backend.givr.shared.mapper.ProjectMapper;
-import com.backend.givr.shared.service.RatingService;
+import com.backend.givr.volunteer.entity.Individual;
 import com.backend.givr.volunteer.entity.Volunteer;
 import com.backend.givr.volunteer.security.VolunteerDetailsService;
 import com.resend.core.exception.ResendException;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -84,7 +82,9 @@ public class ParticipationService {
         participation.setVolunteer(volunteer);
         participation.setProjectApplication(application);
         participation.setProject(project);
-        participation.setOrganization(project.getOrganization());
+        if(project.getOrganization() != null){
+            participation.setOrganization(project.getOrganization());
+        }
         participation.setParticipationStatus(ParticipationStatus.IN_PROGRESS);
 
         try{
@@ -111,8 +111,7 @@ public class ParticipationService {
     }
 
     @Transactional
-    public void changeParticipationStatus( Long participationId, ParticipationStatus status){
-        Participation participation = repo.findById(participationId).orElseThrow(()->new EntityNotFoundException(String.format("Participant with participationId %s, not not found", participationId)));
+    private void updateParticipationStatus(Participation participation, ParticipationStatus status){
         Project project = participation.getProject();
         Volunteer volunteer = participation.getVolunteer();
 
@@ -139,6 +138,16 @@ public class ParticipationService {
             redisService.removeAuthorizedUserProject(volunteer.getVolunteerId(), project.getProjectId());
             emailService.sendParticipationUpdate(volunteer, project, ParticipationStatus.REJECTED);
         }
+    }
+
+    public void changeIndParticipationStatus(Long participationId, Individual individual, ParticipationStatus status){
+        Participation participation = repo.findByIdAndProjectIndividual(participationId, individual).orElseThrow(()->new EntityNotFoundException(String.format("Participant with participationId %s, not not found", participationId)));
+        updateParticipationStatus(participation, status);
+    }
+
+    public void changeOrgParticipationStatus(Long participationId, Organization organization, ParticipationStatus status){
+        Participation participation = repo.findByIdAndOrganization(participationId, organization).orElseThrow(()->new EntityNotFoundException(String.format("Participant with participationId %s, not not found", participationId)));
+        updateParticipationStatus(participation, status);
     }
 
     @Async
@@ -195,5 +204,10 @@ public class ParticipationService {
             participation = repo.findAllByCertificationStatusAndParticipationStatus(null, ParticipationStatus.COMPLETED, pageable);
 
         return new PagedModel<>(participation.map(mapper::toParticipationDto));
+    }
+
+    public @Nullable List<ParticipationDto> getParticipantsByIndividualId(String individualId) {
+        Individual individual = em.getReference(Individual.class, individualId);
+        return mapper.toParticipationDto(repo.findAllByProjectIndividual(individual));
     }
 }

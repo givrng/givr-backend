@@ -2,6 +2,7 @@ package com.backend.givr.volunteer.dtos;
 
 import com.backend.givr.organization.dtos.LocationDto;
 import com.backend.givr.shared.dtos.SkillDto;
+import com.backend.givr.shared.enums.VerificationStatus;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -20,5 +21,5 @@ public class VolunteerDto {
     private String email;
     private LocationDto location;
     private List<SkillDto> skills;
-
+    private VerificationStatus verificationStatus;
 }

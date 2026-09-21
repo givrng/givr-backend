@@ -3,6 +3,7 @@ package com.backend.givr.organization.entity;
 import com.backend.givr.shared.dtos.TransactionStatus;
 import com.backend.givr.shared.enums.Merchant;
 import com.backend.givr.shared.enums.PaymentMethod;
+import com.backend.givr.volunteer.entity.Volunteer;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -24,6 +25,8 @@ public class VerificationPayment {
 
     @ManyToOne
     private Organization organization;
+    @ManyToOne
+    private Volunteer volunteer;
 
     @Enumerated(EnumType.STRING)
     private TransactionStatus status;
@@ -70,7 +73,16 @@ public class VerificationPayment {
         this.description = description;
         this.merchant = Merchant.PAYSTACK;
         this.organization = organization;
-        this.transactionRef = UUID.randomUUID().toString();
+        this.transactionRef = String.format("ORG_%s", UUID.randomUUID().toString());
+    }
+
+    public VerificationPayment(BigDecimal amount, String description, Volunteer volunteer){
+        this.status = TransactionStatus.PENDING;
+        this.amount = amount;
+        this.description = description;
+        this.merchant = Merchant.PAYSTACK;
+        this.volunteer = volunteer;
+        this.transactionRef = String.format("VOL_%s", UUID.randomUUID().toString());
     }
 
     public void updateStatus(TransactionStatus status){

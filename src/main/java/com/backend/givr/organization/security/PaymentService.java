@@ -11,6 +11,8 @@ import com.backend.givr.shared.enums.VerificationStatus;
 import com.backend.givr.shared.repo.GivrTransactionRepo;
 import com.backend.givr.shared.repo.OrganizationVerificationSessionRepo;
 import com.backend.givr.shared.service.VerificationWorker;
+import com.backend.givr.volunteer.entity.Volunteer;
+import com.backend.givr.volunteer.service.VolunteerVerificationSessionService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -50,6 +52,8 @@ public class PaymentService {
     @Autowired
     private OrganizationVerificationSessionRepo verificationSessionRepo;
 
+    @Autowired
+    private VolunteerVerificationSessionService volunteerVerificationSessionService;
     private void handleSuccessfulTransaction(){
 
     }
@@ -67,19 +71,30 @@ public class PaymentService {
         String transactionRef = eventData.path("reference").asText().trim();
         double amountPaid = eventData.path("amount").asDouble();
         logger.info("MerchantId {}", transactionRef);
-        VerificationPayment payment = repo.findByMerchantRefId(transactionRef).orElseThrow();
-        Organization organization = manager.getReference(payment.getOrganization());
-        organization.setStatus(VerificationStatus.PENDING);
-        String email = detailsService.getEmail(payment.getOrganization());
 
+        VerificationPayment payment = repo.findByMerchantRefId(transactionRef).orElseThrow();
         payment.updateStatus(TransactionStatus.SUCCESSFUL);
         payment.setAmountPaid(new BigDecimal(amountPaid));
-        createGivrTransaction(payment, TransactionType.ORGANIZATION_PAYMENT);
+        String email;
 
+        if(transactionRef.startsWith("ORG")){
+            Organization organization = manager.getReference(payment.getOrganization());
+            organization.setStatus(VerificationStatus.PENDING);
+            email = detailsService.getEmail(payment.getOrganization());
+            var session = verificationSessionRepo.findByOrganization(organization);
+            createGivrTransaction(payment, TransactionType.ORGANIZATION_PAYMENT);
+            session.ifPresent(verificationSession -> verificationWorker.verifyContactPersonInformation(verificationSession));
+        } else {
+            Volunteer volunteer = manager.getReference(payment.getVolunteer());
+            volunteer.setVerificationStatus(VerificationStatus.PENDING);
+            email = volunteer.getEmail();
+
+            var session = volunteerVerificationSessionService.getVerificationSessionByVolunteer(volunteer);
+            createGivrTransaction(payment, TransactionType.VOLUNTEER_PAYMENT);
+
+            session.ifPresent(verificationSession->verificationWorker.verifyVolunteer(verificationSession));
+        }
         emailService.sendVerificationStatusUpdate(email, email, ReviewStatus.Pending, "");
-        var session = verificationSessionRepo.findByOrganization(organization);
-
-        session.ifPresent(verificationSession -> verificationWorker.verifyContactPersonInformation(verificationSession));
     }
 
     /**

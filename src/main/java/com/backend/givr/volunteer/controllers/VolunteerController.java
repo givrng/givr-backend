@@ -1,13 +1,12 @@
 package com.backend.givr.volunteer.controllers;
 
+import com.backend.givr.organization.dtos.CheckoutResponse;
+import com.backend.givr.organization.dtos.ProjectRequestDto;
 import com.backend.givr.organization.dtos.ProjectResponseDto;
 import com.backend.givr.organization.service.OrganizationService;
-import com.backend.givr.organization.service.ParticipationService;
-import com.backend.givr.organization.service.ProjectService;
-import com.backend.givr.shared.dtos.ParticipationDto;
-import com.backend.givr.shared.dtos.PasswordUpdateDto;
-import com.backend.givr.shared.dtos.ProjectApplicationForm;
-import com.backend.givr.shared.dtos.RatingDTO;
+import com.backend.givr.shared.dtos.*;
+import com.backend.givr.shared.service.ParticipationService;
+import com.backend.givr.shared.service.ProjectService;
 import com.backend.givr.shared.entity.GivrMessage;
 import com.backend.givr.shared.enums.OtpPurpose;
 import com.backend.givr.shared.interfaces.SecurityDetails;
@@ -91,6 +90,10 @@ public class VolunteerController {
         return ResponseEntity.ok(service.updateProfile(details.getId(), profile, details));
     }
 
+    @PostMapping("/profile/initiate/verification")
+    public ResponseEntity<CheckoutResponse> initiateAccountVerification(@RequestBody @Valid VolunteerVerificationDto verificationDto, @AuthenticationPrincipal SecurityDetails securityDetails){
+        return ResponseEntity.ok(service.initiateVerification(verificationDto, securityDetails));
+    }
 
     @GetMapping("/share/project/{id}")
     public ResponseEntity<String> shareProject(@PathVariable("id") Long projectId){
@@ -163,7 +166,7 @@ public class VolunteerController {
         return ResponseEntity.accepted().build();
     }
 
-    @PatchMapping("/verify/email")
+    @PatchMapping("/verifyOrganization/email")
     public ResponseEntity<Void> confirmEmail(@RequestBody @Valid OtpDto otpDto, @AuthenticationPrincipal SecurityDetails details){
         service.confirmEmail(details, otpDto.otp());
         return ResponseEntity.noContent().build();

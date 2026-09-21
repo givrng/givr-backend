@@ -1,9 +1,9 @@
 package com.backend.givr;
 
-import com.backend.givr.organization.entity.Participation;
-import com.backend.givr.organization.entity.Project;
+import com.backend.givr.shared.entity.Participation;
+import com.backend.givr.shared.entity.Project;
 import com.backend.givr.organization.repo.ProjectRepo;
-import com.backend.givr.organization.service.ParticipationService;
+import com.backend.givr.shared.service.ParticipationService;
 import com.backend.givr.redis.RedisService;
 import com.backend.givr.shared.email.EmailService;
 import com.backend.givr.shared.enums.ProjectStatus;
@@ -13,10 +13,7 @@ import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.ApplicationArguments;
-import org.springframework.boot.ApplicationRunner;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Flux;
 
 
@@ -72,11 +69,6 @@ public class Script {
         if(action.equals("send-notification")){
             sendNotificationToVolunteers();
         }
-
-        if(action.equals("authorize-active-projects")){
-            authorizeActiveProjects();
-        }
-
     }
 
 }

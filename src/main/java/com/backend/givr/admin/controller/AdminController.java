@@ -6,14 +6,13 @@ import com.backend.givr.admin.dtos.ReviewDto;
 import com.backend.givr.admin.dtos.ReviewResponseDto;
 import com.backend.givr.admin.entity.AdminDetails;
 import com.backend.givr.admin.service.AdminService;
-import com.backend.givr.organization.service.ParticipationService;
+import com.backend.givr.shared.service.ParticipationService;
 import com.backend.givr.shared.dtos.ParticipationDto;
 import com.backend.givr.shared.dtos.VerificationSessionDto;
 import com.backend.givr.shared.enums.ReviewStatus;
 import com.backend.givr.shared.interfaces.SecurityDetails;
 import com.backend.givr.shared.jwt.GivrCookie;
 import com.backend.givr.shared.service.Certificate.CertificateIssuingService;
-import com.backend.givr.shared.service.Certificate.CertificateService;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -61,7 +60,7 @@ public class AdminController {
         return ResponseEntity.accepted().build();
     }
 
-    @PostMapping("/auth/verify-otp")
+    @PostMapping("/auth/verifyOrganization-otp")
     public ResponseEntity<Void> authenticateAdmin(@RequestBody AdminAuthDto payload, HttpServletResponse response) throws IOException {
         AdminDetails user = service.validateOtp(payload);
         givrCookie.addCookieToResponse(user, response);
@@ -69,7 +68,7 @@ public class AdminController {
     }
 
 
-    @GetMapping("/verify")
+    @GetMapping("/verifyOrganization")
     public ResponseEntity<Void> verify(){
         return ResponseEntity.ok().build();
     }

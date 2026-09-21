@@ -2,6 +2,7 @@ package com.backend.givr.volunteer.dtos;
 
 import com.backend.givr.organization.dtos.LocationDto;
 import com.backend.givr.shared.dtos.VolunteerCertificateDto;
+import com.backend.givr.shared.enums.VerificationStatus;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -32,4 +33,5 @@ public class VolunteerProfile {
     private boolean emailIsVerified;
     private boolean phoneIsVerified;
     private LocalDateTime createdAt;
+    private VerificationStatus verificationStatus;
 }

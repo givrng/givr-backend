@@ -1,7 +1,8 @@
-package com.backend.givr.organization.entity;
+package com.backend.givr.shared.entity;
 
-import com.backend.givr.shared.entity.Skill;
+import com.backend.givr.organization.entity.Organization;
 import com.backend.givr.shared.enums.ApplicationStatus;
+import com.backend.givr.volunteer.entity.Individual;
 import com.backend.givr.volunteer.entity.Volunteer;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -30,8 +31,12 @@ public class ProjectApplication {
     private Project project;
 
     @ManyToOne
-    @JoinColumn(nullable = false, name = "organization")
+    @JoinColumn(nullable = true, name = "organization")
     private Organization organization;
+
+    @ManyToOne
+    @JoinColumn(nullable = true, name = "individual")
+    private Individual individual;
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
@@ -65,7 +70,11 @@ public class ProjectApplication {
         this.project = project;
         this.volunteer = volunteer;
         this.status = ApplicationStatus.APPLIED;
-        this.organization = project.getOrganization();
+        if(project.getOrganization() != null){
+            this.organization = project.getOrganization();
+        }else{
+            this.individual = project.getIndividual();
+        }
         this.email = email;
     }
 

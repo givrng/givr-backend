@@ -1,0 +1,1 @@
+alter table participation alter column organization_id drop not null;

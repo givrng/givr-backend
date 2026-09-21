@@ -15,6 +15,10 @@ import com.backend.givr.shared.mapper.VerificationMapper;
 import com.backend.givr.shared.repo.OrganizationVerificationSessionRepo;
 import com.backend.givr.shared.email.EmailService;
 import com.backend.givr.shared.enums.ReviewStatus;
+import com.backend.givr.volunteer.dtos.VolunteerVerificationDto;
+import com.backend.givr.volunteer.entity.Volunteer;
+import com.backend.givr.volunteer.entity.VolunteerVerificationSession;
+import com.backend.givr.volunteer.service.VolunteerVerificationSessionService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -29,6 +33,8 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
+
+import javax.swing.text.html.Option;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
@@ -55,6 +61,9 @@ public class VerificationService {
     private VerificationPaymentRepo paymentRepo;
     @Autowired
     private OrganizationVerificationSessionRepo verificationSessionRepo;
+
+    @Autowired
+    private VolunteerVerificationSessionService volunteerVerificationSessionService;
 
     @Autowired
     private PaymentService paymentService;
@@ -84,7 +93,7 @@ public class VerificationService {
      * initializing payment and returning checkout url
      * */
     @Transactional
-    public CheckoutResponse createVerificationSession(Organization organization, OrganizationUpdateDto organizationUpdateDto){
+    public CheckoutResponse createVerificationSession(Organization organization, OrganizationUpdateDto organizationUpdateDto) {
         if(organizationUpdateDto.getLocation() == null || organizationUpdateDto.getCacRegNumber() == null || organizationUpdateDto.getCacDocUrl() ==null )
             return null;
 
@@ -112,6 +121,29 @@ public class VerificationService {
         var checkoutUrl = merchant.initializePayment( email, payment);
         paymentRepo.save(payment);
         return new CheckoutResponse(checkoutUrl);
+    }
+
+    @Transactional
+    public CheckoutResponse createVolunteerVerificationSession(VolunteerVerificationDto verificationDto, Volunteer volunteer){
+
+        if(volunteerVerificationSessionService.existsByIdentification(verificationDto.idNumber(), verificationDto.idType()))
+            throw new DuplicateAccountException("Volunteer verification session exists");
+
+        Optional<VolunteerVerificationSession> optionalSession = volunteerVerificationSessionService.getVerificationSessionByVolunteer(volunteer);
+        VolunteerVerificationSession verificationSession;
+        if(optionalSession.isPresent()){
+            verificationSession = optionalSession.get();
+            verificationSession.setIdNumber(verificationDto.idNumber());
+            verificationSession.setIdType(verificationDto.idType());
+        }
+        verificationSession = new VolunteerVerificationSession(verificationDto, volunteer);
+        volunteerVerificationSessionService.save(verificationSession);
+        VerificationPayment payment = new VerificationPayment(BigDecimal.valueOf(amount), String.format("Verification of %s account", volunteer.getVolunteerId()), volunteer);
+
+        String email = volunteer.getEmail();
+        var checkout = merchant.initializePayment(email, payment);
+        paymentRepo.save(payment);
+        return new CheckoutResponse(checkout);
     }
 
     @Async

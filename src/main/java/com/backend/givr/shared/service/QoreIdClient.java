@@ -6,6 +6,7 @@ import com.backend.givr.shared.enums.IDType;
 import com.backend.givr.shared.enums.VerificationStatus;
 import com.backend.givr.shared.exceptions.VerificationFailedException;
 import com.backend.givr.shared.interfaces.VerificationClient;
+import com.backend.givr.volunteer.entity.VolunteerVerificationSession;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -68,10 +69,10 @@ public class QoreIdClient implements VerificationClient {
     }
 
 
-    // Check for the expiration or the presence of access tokens before attempting to verify
-    public void verify(OrganizationVerificationSession session) throws JsonProcessingException {
+    // Check for the expiration or the presence of access tokens before attempting to verifyOrganization
+    public void verifyOrganization(OrganizationVerificationSession session) throws JsonProcessingException {
         String path = switch (session.getIdType()){
-            case NIN -> String.format("v1/ng/identities/virtual-nin/%s", session.getIdNumber());
+            case NIN -> String.format("v1/ng/identities/nin-premium/%s", session.getIdNumber());
 
             case DL -> String.format("v1/ng/identities/drivers-license/%s", session.getIdNumber());
 
@@ -107,7 +108,55 @@ public class QoreIdClient implements VerificationClient {
             Map<String, Object> errBody= mapper.readValue(responseBody, Map.class);
             String msg = (String) errBody.get("message");
 
-            logger.error("Failed to verify user because {}", msg);
+            logger.error("Failed to verifyOrganization user because {}", msg);
+
+            session.setVerificationStatus(VerificationStatus.AUTOMATIC_VERIFICATION_FAILED);
+            session.setRemark(String.format("%s", msg));
+        }
+    }
+
+    public void verifyVolunteer(VolunteerVerificationSession session) throws JsonProcessingException {
+        String path = switch (session.getIdType()){
+            case NIN -> String.format("v1/ng/identities/nin-premium/%s", session.getIdNumber());
+
+            case DL -> String.format("v1/ng/identities/drivers-license/%s", session.getIdNumber());
+
+            case VOTER_CARD -> String.format("v1/ng/identities/vin/%s", session.getIdNumber());
+
+            case PASSPORT -> String.format("v1/ng/identities/passport/%s", session.getIdNumber());
+
+            case null, default -> "";
+        };
+
+        if(session.getIdNumber()==null || session.getIdNumber().isEmpty())
+            return;
+
+        if(expiresAt == null || accessToken == null)
+            authenticate();
+
+        if(expiresAt.isAfter(LocalDateTime.now()))
+            authenticate();
+
+        Map<String, Object> payload = session.getIdType() == IDType.VOTER_CARD? Map.of("idNumber", session.getIdNumber(), "firstname", session.getFirstname(),"lastname", session.getLastname(), "middlename", session.getMiddleName()==null?"":session.getMiddleName(), "dateOfBirth", session.getDateOfBirth()):
+                Map.of( "firstname", session.getFirstname(),"lastname", session.getLastname(), "middlename", session.getMiddleName()==null?"":session.getMiddleName());
+
+        try{
+            var response = fetch(HttpMethod.POST, path, payload, String.class);
+
+            if(response.getStatusCode().is2xxSuccessful()){
+                session.setVerificationStatus(VerificationStatus.VERIFIED);
+                session.getVolunteer().setVerificationStatus(VerificationStatus.VERIFIED);
+            }
+
+        }catch (HttpClientErrorException e){
+            String responseBody = e.getResponseBodyAsString();
+            System.out.println(responseBody);
+            Map<String, Object> errBody= mapper.readValue(responseBody, Map.class);
+            String msg = (String) errBody.get("message");
+
+            logger.info(mapper.writeValueAsString(payload));
+            logger.info("Request path: {}", path);
+            logger.error("Failed to verify volunteer user because {}", msg);
 
             session.setVerificationStatus(VerificationStatus.AUTOMATIC_VERIFICATION_FAILED);
             session.setRemark(String.format("%s", msg));

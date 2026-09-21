@@ -1,32 +1,23 @@
 package com.backend.givr.volunteer.service;
 
+import com.backend.givr.organization.dtos.CheckoutResponse;
+import com.backend.givr.organization.dtos.ProjectRequestDto;
 import com.backend.givr.organization.dtos.ProjectResponseDto;
-import com.backend.givr.organization.entity.Project;
-import com.backend.givr.organization.entity.ProjectApplication;
-import com.backend.givr.organization.service.ApplicationService;
-import com.backend.givr.organization.service.ParticipationService;
-import com.backend.givr.organization.service.ProjectService;
-import com.backend.givr.shared.dtos.VolunteerCertificateDto;
+import com.backend.givr.shared.dtos.*;
+import com.backend.givr.shared.entity.Project;
+import com.backend.givr.shared.entity.ProjectApplication;
+import com.backend.givr.shared.enums.*;
+import com.backend.givr.shared.service.*;
 import com.backend.givr.shared.entity.Location;
 import com.backend.givr.shared.entity.Skill;
-import com.backend.givr.shared.dtos.ParticipationDto;
-import com.backend.givr.shared.dtos.PasswordUpdateDto;
-import com.backend.givr.shared.dtos.ProjectApplicationForm;
 import com.backend.givr.shared.email.EmailService;
-import com.backend.givr.shared.enums.AccountType;
-import com.backend.givr.shared.enums.OtpPurpose;
-import com.backend.givr.shared.enums.ProjectStatus;
 import com.backend.givr.shared.exceptions.DuplicateAccountException;
 import com.backend.givr.shared.exceptions.IllegalOperationException;
 import com.backend.givr.shared.interfaces.SecurityDetails;
 import com.backend.givr.shared.mapper.CertificateMapper;
 import com.backend.givr.shared.mapper.ProjectMapper;
-import com.backend.givr.shared.enums.AuthProviderType;
 import com.backend.givr.shared.otp.OTPService;
 import com.backend.givr.shared.repo.SkillRepo;
-import com.backend.givr.shared.service.LocationService;
-import com.backend.givr.shared.service.SkillService;
-import com.backend.givr.shared.service.TokenIdService;
 import com.backend.givr.volunteer.dtos.*;
 import com.backend.givr.volunteer.entity.Volunteer;
 import com.backend.givr.volunteer.mappings.VolunteerMapper;
@@ -37,6 +28,7 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -81,6 +73,9 @@ public class VolunteerService {
     private RedisTemplate<String, Object> redisTemplate;
     @Autowired
     private TokenIdService tokenService;
+
+    @Autowired
+    private VerificationService verificationService;
 
     @Autowired
     private SkillService skillService;
@@ -206,7 +201,7 @@ public class VolunteerService {
                 emailService.sendPasswordChangeNotificationForOauthUser(email);
         }
         else
-            throw new IllegalOperationException("User does not have an account");
+            throw new IllegalOperationException("GivrUser does not have an account");
     }
 
     public void confirmEmail(SecurityDetails details, @Email String otp) {
@@ -264,4 +259,11 @@ public class VolunteerService {
     public List<Volunteer> getAllByLocation(Location location){
         return repo.findAllByLocationState(location.getState());
     }
+
+    public @Nullable CheckoutResponse initiateVerification(VolunteerVerificationDto verificationDto, SecurityDetails details) {
+        Volunteer volunteer = getVolunteer(details.getId());
+        return verificationService.createVolunteerVerificationSession(verificationDto, volunteer);
+    }
+
+
 }

@@ -1,8 +1,12 @@
 package com.backend.givr.shared.service;
 
 import com.backend.givr.shared.entity.OrganizationVerificationSession;
-import com.backend.givr.shared.interfaces.VerificationClient;
+import com.backend.givr.shared.enums.VerificationStatus;
 import com.backend.givr.shared.repo.OrganizationVerificationSessionRepo;
+import com.backend.givr.volunteer.entity.Individual;
+import com.backend.givr.volunteer.entity.VolunteerVerificationSession;
+import com.backend.givr.volunteer.repo.IndividualRepo;
+import com.backend.givr.volunteer.repo.VolunteerVerificationSessionRepo;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
@@ -21,7 +25,11 @@ public class VerificationWorker {
     private QoreIdClient verificationClient;
 
     @Autowired
-    private OrganizationVerificationSessionRepo verificationSessionRepo;
+    private OrganizationVerificationSessionRepo organizationVerificationSessionRepo;
+    @Autowired
+    private IndividualRepo individualRepo;
+    @Autowired
+    private VolunteerVerificationSessionRepo volunteerVerificationSessionRepo;
 
     private final Logger logger = LoggerFactory.getLogger(VerificationWorker.class);
 //
@@ -36,11 +44,31 @@ public class VerificationWorker {
     )
     public void verifyContactPersonInformation(OrganizationVerificationSession verificationSession){
         try{
-            verificationClient.verify(verificationSession);
+            verificationClient.verifyOrganization(verificationSession);
         } catch (JsonProcessingException e) {
             logger.error("Verification for {} failed because of {}", verificationSession.getSessionId(), e.getLocalizedMessage());
         }finally {
-            verificationSessionRepo.save(verificationSession);
+            organizationVerificationSessionRepo.save(verificationSession);
+        }
+    }
+
+    @Async
+    @Retryable(
+            retryFor = Exception.class,
+            maxAttempts = 3,
+            backoff = @Backoff(delay = 2000)
+    )
+    public void verifyVolunteer(VolunteerVerificationSession verificationSession) {
+        try{
+            verificationClient.verifyVolunteer(verificationSession);
+            if(verificationSession.getVerificationStatus() == VerificationStatus.VERIFIED){
+                Individual individual = new Individual(verificationSession);
+                individualRepo.save(individual);
+            }
+        } catch (JsonProcessingException e) {
+            logger.error("Volunteer verification for {} failed because of {}", verificationSession.getVerificationSessionId(), e.getLocalizedMessage());
+        }finally {
+            volunteerVerificationSessionRepo.save(verificationSession);
         }
     }
 }

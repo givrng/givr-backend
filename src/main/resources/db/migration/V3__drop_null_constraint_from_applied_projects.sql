@@ -1,0 +1,1 @@
+alter table applied_projects alter column organization drop not null;

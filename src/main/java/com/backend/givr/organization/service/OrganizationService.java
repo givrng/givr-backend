@@ -209,6 +209,12 @@ public class OrganizationService {
                 .sorted(Comparator.comparing(Project::getCreatedAt))
                 .toList()));
 
+        projectDtoMap.put("closedProjects", projectMapper.toDtos(organization.getProjects()
+                .stream()
+                .filter(project-> project.getStatus() == ProjectStatus.CLOSE)
+                .sorted(Comparator.comparing(Project::getCreatedAt))
+                .toList()));
+
         ApplicationStats stats = applicationService.getVolunteerStats(organization);
 
         return new OrganizationDashboard(organization.getOrganizationName(), projectDtoMap, ratingService.getOrganizationRatingScore(organization), stats ,organization.getStatus());

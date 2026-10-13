@@ -135,7 +135,10 @@ public class ParticipationService {
         emailService.sendParticipationUpdate(volunteer, project, status);
 
         if(status == ParticipationStatus.REJECTED){
+            participation.getProjectApplication().setStatus(ApplicationStatus.REJECTED);
+            applicationRepo.save(participation.getProjectApplication());
             repo.delete(participation);
+
             redisService.removeAuthorizedUserProject(volunteer.getVolunteerId(), project.getProjectId());
             emailService.sendParticipationUpdate(volunteer, project, ParticipationStatus.REJECTED);
         }

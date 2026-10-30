@@ -186,7 +186,11 @@ public class VolunteerService {
     }
 
     public void apply(SecurityDetails details, @Valid ProjectApplicationForm applicationForm) {
-        Volunteer volunteer = manager.getReference(Volunteer.class, details.getId());
+        Volunteer volunteer = getVolunteer(details.getId());
+        if(applicationForm.phoneNumber()!=null && volunteer.getPhoneNumber()!=null && !volunteer.getPhoneNumber().isEmpty()){
+            volunteer.setPhoneNumber(applicationForm.phoneNumber());
+            repo.save(volunteer);
+        }
         applicationService.apply(volunteer, applicationForm, details.getUsername());
     }
 

@@ -128,7 +128,6 @@ public class ProjectService {
     @Transactional
     public Project updateProject(Long projectId, ProjectRequestDto projectRequestDto){
         Project project = findProjectById(projectId);
-        mapper.updateProject(projectRequestDto, project);
 
         if(!project.getTitle().equals(projectRequestDto.getTitle()) || !project.getDescription().equals(projectRequestDto.getDescription()))
             worker.createProjectCard(project);
@@ -138,6 +137,7 @@ public class ProjectService {
             project.setStatus(ProjectStatus.OPEN);
             worker.sendProjectListing(project).subscribe();
         }
+        mapper.updateProject(projectRequestDto, project);
         return project;
     }
     private boolean projectDatesValid(Project project) {

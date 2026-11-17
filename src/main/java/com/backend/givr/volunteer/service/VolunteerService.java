@@ -187,7 +187,7 @@ public class VolunteerService {
 
     public void apply(SecurityDetails details, @Valid ProjectApplicationForm applicationForm) {
         Volunteer volunteer = getVolunteer(details.getId());
-        if(applicationForm.phoneNumber()!=null && volunteer.getPhoneNumber()!=null && !volunteer.getPhoneNumber().isEmpty()){
+        if(applicationForm.phoneNumber()!=null && volunteer.getPhoneNumber()==null){
             volunteer.setPhoneNumber(applicationForm.phoneNumber());
             repo.save(volunteer);
         }

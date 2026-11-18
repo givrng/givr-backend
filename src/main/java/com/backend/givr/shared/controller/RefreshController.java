@@ -88,11 +88,11 @@ public class RefreshController {
             if(Objects.equals(authority, "VOLUNTEER")){
                 Volunteer volunteer = manager.getReference(Volunteer.class, userId);
                 userDetails = new VolunteerDetails(username, null, volunteer);
-                userDetails.setAuthorities();
+                userDetails.setAuthorities(volunteer.getVerificationStatus());
             }else if(Objects.equals(authority, "ORGANIZATION" )){
                 Organization organization = manager.getReference(Organization.class, userId);
                 userDetails = new OrganizationDetails(username, null, organization);
-                userDetails.setAuthorities();
+                userDetails.setAuthorities(organization.getStatus());
             }else{
                 userDetails = new AdminDetails(username, userId, authority);
             }

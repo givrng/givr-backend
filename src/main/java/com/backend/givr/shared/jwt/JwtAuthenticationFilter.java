@@ -40,7 +40,6 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
             UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(auth.email(), auth.password());
             return Objects.requireNonNull(authManager.authenticate(token));
         } catch (IOException e) {
-
             throw new RuntimeException(e);
         }catch (AuthenticationException e){
             throw new BadCredentialsException("Invalid credentials", e);

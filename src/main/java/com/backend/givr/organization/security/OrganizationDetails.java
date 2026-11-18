@@ -1,6 +1,7 @@
 package com.backend.givr.organization.security;
 
 import com.backend.givr.organization.entity.Organization;
+import com.backend.givr.shared.enums.VerificationStatus;
 import com.backend.givr.shared.interfaces.SecurityDetails;
 import com.backend.givr.shared.enums.AuthProviderType;
 import jakarta.persistence.*;
@@ -78,7 +79,7 @@ public class OrganizationDetails implements SecurityDetails {
     }
 
     @Override
-    public void setAuthorities() {
+    public void setAuthorities(VerificationStatus status) {
         this.roles = List.of(new SimpleGrantedAuthority("ORGANIZATION"));
     }
 

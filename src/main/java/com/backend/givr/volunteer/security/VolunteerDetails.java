@@ -16,7 +16,7 @@ import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import java.util.Collection;
 import java.util.List;
 
-@NoArgsConstructor
+
 public class VolunteerDetails implements SecurityDetails {
     @Setter
     private String email;
@@ -26,10 +26,10 @@ public class VolunteerDetails implements SecurityDetails {
     private Collection<GrantedAuthority> roles;
 
     @Getter
-    private Volunteer volunteer;
+    private final Volunteer volunteer;
     @Getter
 
-    private AuthProviderType authProvider;
+    private final AuthProviderType authProvider;
     @Getter
     private String providerId;
 
@@ -48,6 +48,8 @@ public class VolunteerDetails implements SecurityDetails {
         this.providerId = volunteer.getProviderId();
         this.password = volunteer.getPassword();
         this.volunteer = volunteer;
+        this.roles = volunteer.getVerificationStatus() != null && volunteer.getVerificationStatus().equals(VerificationStatus.VERIFIED)?
+                List.of(new SimpleGrantedAuthority("VOLUNTEER"), new SimpleGrantedAuthority("INDIVIDUAL")) : List.of(new SimpleGrantedAuthority("VOLUNTEER"));
     }
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -70,8 +72,9 @@ public class VolunteerDetails implements SecurityDetails {
     }
 
     @Override
-    public void setAuthorities() {
-        this.roles = List.of(new SimpleGrantedAuthority("VOLUNTEER"));
+    public void setAuthorities(VerificationStatus status) {
+        this.roles = status.equals(VerificationStatus.VERIFIED)?List.of(new SimpleGrantedAuthority("VOLUNTEER"), new SimpleGrantedAuthority("INDIVIDUAL")) :
+                List.of(new SimpleGrantedAuthority("VOLUNTEER"));
     }
 
     @Override

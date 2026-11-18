@@ -1,6 +1,7 @@
 package com.backend.givr.admin.entity;
 
 import com.backend.givr.shared.enums.AuthProviderType;
+import com.backend.givr.shared.enums.VerificationStatus;
 import com.backend.givr.shared.interfaces.SecurityDetails;
 import org.jetbrains.annotations.NotNull;
 import org.jspecify.annotations.Nullable;
@@ -33,7 +34,7 @@ public class AdminDetails implements SecurityDetails {
     }
 
     @Override
-    public void setAuthorities() {
+    public void setAuthorities(VerificationStatus status) {
 
     }
 

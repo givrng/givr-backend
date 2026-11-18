@@ -1,21 +1,22 @@
 package com.backend.givr.shared.service;
 
-import com.backend.givr.organization.dtos.ProjectRequestDto;
-import com.backend.givr.organization.dtos.ProjectResponseDto;
+import com.backend.givr.shared.dtos.ProjectRequestDto;
+import com.backend.givr.shared.dtos.ProjectResponseDto;
 import com.backend.givr.organization.entity.Organization;
-import com.backend.givr.shared.entity.Project;
+import com.backend.givr.shared.entity.Creator;
 import com.backend.givr.organization.repo.ProjectRepo;
 import com.backend.givr.organization.security.ProjectServiceWorker;
 import com.backend.givr.shared.email.EmailService;
 import com.backend.givr.shared.entity.Location;
+import com.backend.givr.shared.entity.projects.Initiative;
+import com.backend.givr.shared.entity.projects.Project;
 import com.backend.givr.shared.enums.ProjectStatus;
-import com.backend.givr.shared.enums.ProjectType;
 import com.backend.givr.shared.exceptions.IllegalOperationException;
 import com.backend.givr.shared.exceptions.InconsistentProjectDatesException;
-import com.backend.givr.shared.interfaces.SecurityDetails;
 import com.backend.givr.shared.mapper.ProjectMapper;
+import com.backend.givr.shared.repo.ResourceRepo;
+import com.backend.givr.shared.repo.InitiativeRepo;
 import com.backend.givr.volunteer.dtos.ProjectViewResponse;
-import com.backend.givr.volunteer.entity.Individual;
 import com.backend.givr.volunteer.entity.Volunteer;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityNotFoundException;
@@ -23,7 +24,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.web.PagedModel;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -40,7 +46,14 @@ public class ProjectService {
     @Autowired
     private ProjectRepo repo;
     @Autowired
+    private InitiativeRepo initiativeRepo;
+    @Autowired
+    private ResourceRepo commodityRepo;
+
+    @Autowired
     private ProjectMapper mapper;
+    @Autowired
+    private CreatorService creatorService;
     @Autowired
     private SkillService skillService;
     @Autowired
@@ -55,22 +68,17 @@ public class ProjectService {
     @Autowired
     private RedisTemplate<String, Object> redisTemplate;
 
-    private Logger logger = LoggerFactory.getLogger(ProjectService.class);
-
     public List<ProjectResponseDto> getAllProjects(){
         return mapper.toDtos(repo.findAll());
     }
 
-    public List<ProjectResponseDto> getAllProjectsForVolunteer(){
+    public PagedModel<ProjectResponseDto> getAllProjectsForVolunteer(PageRequest pageRequest){
+        pageRequest = pageRequest.withSort(Sort.by("deadline").ascending());
         Instant now = Instant.now();
-        List<Project> result = repo.findAllByStatus(ProjectStatus.OPEN).stream()
-                .filter(project -> {
-                    LocalDateTime endOfDay = project.getDeadline().atTime(23, 59, 59);
-                    return endOfDay.isAfter(LocalDateTime.now());
-                })
-                .sorted(Comparator.comparing(Project::getCreatedAt))
-                .toList();
-        return mapper.toDtos(result);
+        Page<Project> result = repo.findAllByStatusAndDeadlineAfter(ProjectStatus.OPEN, now, pageRequest);
+
+        PageImpl<ProjectResponseDto> responseDtos = new PageImpl<>(mapper.toDtos(result.getContent()), result.getPageable(), result.getTotalElements());
+        return new PagedModel<>(responseDtos);
     }
 
     public List<Project> getProjectByOrganizationAndStatus(Organization organization, ProjectStatus status){
@@ -105,10 +113,10 @@ public class ProjectService {
         return repo.findAllByOrganizationOrderByCreatedAtAsc(organization);
     }
 
-    private void handleProject(Project project, ProjectRequestDto projectRequestDto){
+    protected void handleProject(Project project, ProjectRequestDto projectRequestDto){
         // Verify application date are valid
         if(!projectDatesValid(project))
-            throw new InconsistentProjectDatesException("Project dates are invalid. Start and end dates cannot be in the past, the application deadline must be before the start date, and the start date must be before the end date.");
+            throw new InconsistentProjectDatesException("BaseProject dates are invalid. Start and end dates cannot be in the past, the application deadline must be before the start date, and the start date must be before the end date.");
         Location savedLocation = locationService.createLocation(projectRequestDto.getLocation());
         project.setLocation(savedLocation);
 
@@ -119,29 +127,19 @@ public class ProjectService {
     public void createProject(ProjectRequestDto projectRequestDto, Organization organization){
         Project project = mapper.toProject(projectRequestDto);
         handleProject(project, projectRequestDto);
+
+        Creator creator = creatorService.createOrReturnCreator(organization);
+        project.setCreator(creator);
         project.setOrganization(organization);
         project.setStatus(ProjectStatus.DRAFT);
-        project.setBroadcastEnabled(repo.count() <= 3);
-        project.setType(ProjectType.Project);
-        Project savedProject = repo.save(project);
-        worker.createProjectCard(savedProject);
-    }
-
-    public void createProject(ProjectRequestDto projectRequestDto, Individual individual){
-        Project project = mapper.toProject(projectRequestDto);
-        handleProject(project, projectRequestDto);
-        project.setIndividual(individual);
-        project.setStatus(ProjectStatus.DRAFT);
-        project.setType(ProjectType.Initiative);
+        project.setOrganizerName(organization.getOrganizationName());
         Project savedProject = repo.save(project);
         worker.createProjectCard(savedProject);
     }
 
 
     @Transactional
-    private Project updateProject(Project project, ProjectRequestDto projectRequestDto){
-
-        mapper.updateProject(projectRequestDto, project);
+    protected Project updateProject(Project project, ProjectRequestDto projectRequestDto){
 
         if(!project.getTitle().equals(projectRequestDto.getTitle()) || !project.getDescription().equals(projectRequestDto.getDescription()))
             worker.createProjectCard(project);
@@ -151,18 +149,21 @@ public class ProjectService {
             project.setStatus(ProjectStatus.OPEN);
             worker.sendProjectListing(project).subscribe();
         }
+        mapper.updateProject(projectRequestDto, project);
+
         return project;
     }
 
     public Project orgUpdateProject(Long projectId, Organization organization, ProjectRequestDto projectRequestDto){
         Project project = findProjectByIdAndOrganization(projectId, organization);
-        return updateProject(project, projectRequestDto);
+        var updatedProject =  updateProject(project, projectRequestDto);
+
+        if(updatedProject instanceof Project p)
+            return p;
+        else
+            return null;
     }
 
-    public Project indUpdateProject(Long projectId, Individual individual, ProjectRequestDto projectRequestDto){
-        Project project = findProjectByIdAndIndividual(projectId, individual);
-        return updateProject(project, projectRequestDto);
-    }
 
     private boolean projectDatesValid(Project project) {
         LocalDate today = LocalDate.now(ZoneId.of("Africa/Lagos"));
@@ -184,14 +185,12 @@ public class ProjectService {
                 && dateRangeValid
                 && deadlineValid;
     }
-    public  Project findProjectById(Long projectId){
-        return repo.findById(projectId).orElseThrow(()-> new EntityNotFoundException(String.format("Project with id [%s] does not exist", projectId)));
+
+    public Project findProjectById(Long projectId){
+        return repo.findById(projectId).orElseThrow(()-> new EntityNotFoundException(String.format("BaseProject with id [%s] does not exist", projectId)));
     }
-    public  Project findProjectByIdAndOrganization(Long projectId, Organization organization){
-        return repo.findByProjectIdAndOrganization(projectId, organization).orElseThrow(()-> new EntityNotFoundException(String.format("Project with id [%s] does not exist", projectId)));
-    }
-    public  Project findProjectByIdAndIndividual(Long projectId, Individual individual){
-        return repo.findByProjectIdAndIndividual(projectId, individual).orElseThrow(()-> new EntityNotFoundException(String.format("Project with id [%s] does not exist", projectId)));
+    public Project findProjectByIdAndOrganization(Long projectId, Organization organization){
+        return repo.findByProjectIdAndOrganization(projectId, organization).orElseThrow(()-> new EntityNotFoundException(String.format("BaseProject with id [%s] does not exist", projectId)));
     }
 
     public void save(Project project){
@@ -200,18 +199,12 @@ public class ProjectService {
 
 
     public void deleteProject(Long projectId, Organization organization) {
-        Project project = repo.findByProjectIdAndOrganization(projectId, organization).orElseThrow(()->new EntityNotFoundException("Project not found"));
+        Project project = repo.findByProjectIdAndOrganization(projectId, organization).orElseThrow(()->new EntityNotFoundException("BaseProject not found"));
         if(project.getStatus() != ProjectStatus.DRAFT && project.getStatus() != ProjectStatus.OPEN)
             throw new IllegalOperationException("Only DRAFT or OPEN projects can be deleted");
         repo.delete(project);
     }
 
-    public void deleteProject(Long projectId, Individual individual) {
-        Project project = repo.findByProjectIdAndIndividual(projectId, individual).orElseThrow(()->new EntityNotFoundException("Project not found"));
-        if(project.getStatus() != ProjectStatus.DRAFT && project.getStatus() != ProjectStatus.OPEN)
-            throw new IllegalOperationException("Only DRAFT or OPEN projects can be deleted");
-        repo.delete(project);
-    }
 
     @Scheduled(cron = "0 0 1 * * *", zone = "Africa/Lagos")
     @Transactional
@@ -251,8 +244,5 @@ public class ProjectService {
         return repo.findAllByStatus(status);
     }
 
-    public List<Project> getProjectByIndividualAndStatus(Individual individual, ProjectStatus projectStatus) {
-        return repo.findAllByIndividualAndStatus(individual, projectStatus);
-    }
 
 }

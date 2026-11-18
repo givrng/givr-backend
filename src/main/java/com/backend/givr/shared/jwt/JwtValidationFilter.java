@@ -18,6 +18,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -63,11 +64,11 @@ public class JwtValidationFilter extends OncePerRequestFilter {
                 }
             }
             if(StringUtils.hasText(accessToken)) {
-                String role = jwtUtil.extractRoles(accessToken);
+                String[] roles = jwtUtil.extractRoles(accessToken);
                 SecurityDetails user;
-                if(role.equals("VOLUNTEER"))
+                if(Arrays.stream(roles).toList().contains("VOLUNTEER"))
                     user = volunteerDetailsService.loadUserByUsername(jwtUtil.extractUsername(accessToken));
-                else if (role.equals("ORGANIZATION"))
+                else if (Arrays.stream(roles).toList().contains("ORGANIZATION"))
                     user = organizationDetailsService.loadUserByUsername(jwtUtil.extractUsername(accessToken));
                 else{
                     user = adminDetailsService.loadUserByUsername(jwtUtil.extractUsername(accessToken));

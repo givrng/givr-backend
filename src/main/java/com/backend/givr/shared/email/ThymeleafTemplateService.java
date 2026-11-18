@@ -1,6 +1,6 @@
 package com.backend.givr.shared.email;
 
-import com.backend.givr.shared.entity.Project;
+import com.backend.givr.shared.entity.projects.Project;
 import com.backend.givr.shared.enums.ReviewStatus;
 import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
@@ -142,7 +142,7 @@ public class ThymeleafTemplateService {
         context.setVariable("projectCardUrl", p.getProjectCardUrl());
         context.setVariable("firstname", volunteerFirstname);
         context.setVariable("projectName", p.getTitle());
-        context.setVariable("organizationName", p.getOrganization().getOrganizationName());
+        context.setVariable("organizationName", p.getOrganizerName());
         context.setVariable("address", p.getAddress());
         context.setVariable("startDate", p.getStartDate().toString());
         context.setVariable("endDate", p.getEndDate().toString());

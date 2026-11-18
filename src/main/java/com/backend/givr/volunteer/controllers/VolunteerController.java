@@ -1,20 +1,16 @@
 package com.backend.givr.volunteer.controllers;
 
 import com.backend.givr.organization.dtos.CheckoutResponse;
-import com.backend.givr.organization.dtos.ProjectRequestDto;
-import com.backend.givr.organization.dtos.ProjectResponseDto;
+import com.backend.givr.shared.dtos.ProjectResponseDto;
 import com.backend.givr.organization.service.OrganizationService;
 import com.backend.givr.shared.dtos.*;
-import com.backend.givr.shared.service.ParticipationService;
-import com.backend.givr.shared.service.ProjectService;
+import com.backend.givr.shared.service.*;
 import com.backend.givr.shared.entity.GivrMessage;
 import com.backend.givr.shared.enums.OtpPurpose;
 import com.backend.givr.shared.interfaces.SecurityDetails;
 import com.backend.givr.shared.enums.AuthProviderType;
 import com.backend.givr.shared.mapper.ProjectMapper;
 import com.backend.givr.shared.otp.OtpDto;
-import com.backend.givr.shared.service.GivrMessageService;
-import com.backend.givr.shared.service.LogoutService;
 import com.backend.givr.volunteer.dtos.*;
 import com.backend.givr.volunteer.entity.Volunteer;
 import com.backend.givr.volunteer.security.VolunteerDetails;
@@ -22,7 +18,8 @@ import com.backend.givr.volunteer.service.VolunteerService;
 import jakarta.annotation.security.PermitAll;
 import jakarta.persistence.EntityManager;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.web.PagedModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -37,24 +34,26 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/${api.version}/api/volunteer")
+@RequiredArgsConstructor
 public class VolunteerController {
-    @Autowired
-    private VolunteerService service;
-    @Autowired
-    private OrganizationService organizationService;
-    @Autowired
-    private ParticipationService participationService;
-    @Autowired
-    private ProjectMapper projectMapper;
-    @Autowired
-    private LogoutService logoutService;
-    @Autowired
-    private GivrMessageService messageService;
-    @Autowired
-    private EntityManager em;
+    private final VolunteerService service;
+    private final OrganizationService organizationService;
+    private final ParticipationService participationService;
+    private final ProjectMapper projectMapper;
+    private final LogoutService logoutService;
+    private final GivrMessageService messageService;
+    private final EntityManager em;
 
-    @Autowired
-    private ProjectService projectService;
+    private final ProjectService projectService;
+    private final InitiativeService initiativeService;
+
+    private final CloudinaryService cloudinaryService;
+
+    @GetMapping("/media/upload/signature")
+    public ResponseEntity<MediaUploadResponse> generateUploadSignature(){
+        return ResponseEntity.ok(cloudinaryService.generateSignedUploadKey(""));
+    }
+
     @PostMapping("/auth/signup")
     public ResponseEntity<Void> createVolunteerAccount(@RequestBody @Validated CreateVolunteerRequestDto payload){
         service.createAccount(payload);
@@ -103,15 +102,29 @@ public class VolunteerController {
     public ResponseEntity<ProjectResponseDto> getProject(@PathVariable("id") Long projectId){
         return ResponseEntity.ok(projectMapper.toProjectDto(projectService.getProject(projectId)));
     }
-    @PostMapping("/projects/apply")
+
+    @PostMapping("/projects/applyForProject")
     public ResponseEntity<Void> applyForProject(@AuthenticationPrincipal VolunteerDetails volunteerDetails, @RequestBody @Valid ProjectApplicationForm applicationForm){
-        service.apply(volunteerDetails, applicationForm);
+        service.applyToProject(volunteerDetails, applicationForm);
         return ResponseEntity.ok().build();
     }
 
+    @PostMapping("/initiative/applyForProject")
+    public ResponseEntity<Void> applyForInitiative(@AuthenticationPrincipal VolunteerDetails volunteerDetails, @RequestBody @Valid InitiativeApplicationForm applicationForm){
+        service.applyToInitiative(volunteerDetails, applicationForm);
+        return ResponseEntity.accepted().build();
+    }
+
     @GetMapping("/projects")
-    public ResponseEntity<List<ProjectResponseDto>> getAvailableProjects(){
-        return ResponseEntity.ok(projectService.getAllProjectsForVolunteer());
+    public ResponseEntity<PagedModel<ProjectResponseDto>> getAvailableProjects(@RequestParam(name = "pageNum", defaultValue = "0") int pageNum,
+                                                                               @RequestParam(name = "pageSize", defaultValue = "30") int pageSize){
+        PageRequest pageRequest = PageRequest.of(pageNum, pageSize);
+        return ResponseEntity.ok(projectService.getAllProjectsForVolunteer(pageRequest));
+    }
+
+    @GetMapping("/initiative/{initiativeId}/resources")
+    public ResponseEntity<InitiativeResourceResponseDto> getInitiativeResources(@PathVariable("initiativeId") Long initiativeId){
+        return ResponseEntity.ok(initiativeService.getInitiativeResources(initiativeId));
     }
 
     @GetMapping("/projects/recommended")

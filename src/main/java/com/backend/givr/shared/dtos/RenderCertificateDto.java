@@ -1,6 +1,7 @@
 package com.backend.givr.shared.dtos;
 
-import com.backend.givr.shared.entity.Project;
+import com.backend.givr.shared.entity.projects.Project;
+import com.backend.givr.shared.entity.projects.Initiative;
 import com.backend.givr.volunteer.entity.Volunteer;
 import lombok.Data;
 
@@ -25,8 +26,20 @@ public class RenderCertificateDto{
         this.projectTitle = project.getTitle();
         this.startDate = project.getStartDate();
         this.endDate = project.getEndDate();
-        this.organizationLogo = project.getOrganization()!=null? project.getOrganization().getProfileUrl(): project.getIndividual().getLogo();
-        this.orgName = project.getProjectId() !=null? project.getOrganization().getOrganizationName(): project.getIndividual().getFirstname();
+        this.organizationLogo = project.getCreator().getOrganization().getProfileUrl();
+        this.orgName = project.getOrganization().getOrganizationName();
+        this.impactArea = String.format("%s", project.getCategories().getFirst().getCategory());
+    }
+
+    public RenderCertificateDto(Initiative project, Volunteer volunteer, String certId){
+        this.certId = certId;
+        this.firstName = volunteer.getFirstname();
+        this.lastName = volunteer.getLastname();
+        this.projectTitle = project.getTitle();
+        this.startDate = project.getStartDate();
+        this.endDate = project.getEndDate();
+        this.organizationLogo =  project.getCreator().getIndividual().getLogo();
+        this.orgName = project.getOrganizerName();
         this.impactArea = String.format("%s", project.getCategories().getFirst().getCategory());
     }
 }

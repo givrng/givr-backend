@@ -47,13 +47,17 @@ public class Volunteer {
 
     private Boolean emailIsVerified;
     private Boolean phoneIsVerified;
+
     @URL
     private String profileUrl;
+    private String logo;
     private double rating = 0.0;
 
     // Volunteer verification
     @OneToMany
     private List<VolunteerVerificationSession> verificationSessions;
+
+    @Enumerated(EnumType.STRING)
     private VerificationStatus verificationStatus;
 
     @ManyToMany(cascade = CascadeType.MERGE)
@@ -85,5 +89,14 @@ public class Volunteer {
     @PreUpdate
     private void setUpdatedAt() {
         this.updatedAt = LocalDateTime.now(ZoneId.of("Africa/Lagos"));
+    }
+
+    public void updateDetails(VolunteerVerificationSession session){
+        if(session == null)
+            return;
+        firstname = session.getFirstname();
+        middleName = session.getMiddleName();
+        lastname = session.getLastname();
+        verificationStatus = VerificationStatus.VERIFIED;
     }
 }

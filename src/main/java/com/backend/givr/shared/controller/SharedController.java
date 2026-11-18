@@ -1,6 +1,6 @@
 package com.backend.givr.shared.controller;
 
-import com.backend.givr.shared.entity.Project;
+import com.backend.givr.shared.entity.projects.Project;
 import com.backend.givr.shared.service.ProjectService;
 import com.backend.givr.shared.email.ThymeleafTemplateService;
 import jakarta.servlet.http.HttpServletRequest;

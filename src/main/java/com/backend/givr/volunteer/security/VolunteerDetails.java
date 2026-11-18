@@ -1,5 +1,6 @@
 package com.backend.givr.volunteer.security;
 
+import com.backend.givr.shared.enums.VerificationStatus;
 import com.backend.givr.shared.interfaces.SecurityDetails;
 import com.backend.givr.shared.enums.AuthProviderType;
 import com.backend.givr.volunteer.entity.Volunteer;
@@ -22,7 +23,7 @@ public class VolunteerDetails implements SecurityDetails {
 
     @Setter
     private String password;
-    private Collection<GrantedAuthority> roles = List.of(new SimpleGrantedAuthority("VOLUNTEER"));
+    private Collection<GrantedAuthority> roles;
 
     @Getter
     private Volunteer volunteer;
@@ -37,6 +38,8 @@ public class VolunteerDetails implements SecurityDetails {
         this.password = password;
         this.volunteer = volunteer;
         this.authProvider = AuthProviderType.LOCAL;
+        this.roles = volunteer.getVerificationStatus().equals(VerificationStatus.VERIFIED)?
+                List.of(new SimpleGrantedAuthority("VOLUNTEER"), new SimpleGrantedAuthority("INDIVIDUAL")) : List.of(new SimpleGrantedAuthority("VOLUNTEER"));
     }
 
     public VolunteerDetails(Volunteer volunteer){

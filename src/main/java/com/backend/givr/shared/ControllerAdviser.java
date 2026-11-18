@@ -50,7 +50,7 @@ public class ControllerAdviser {
 
     @ExceptionHandler(ProjectDeadlinePastException.class)
     public ResponseEntity<ErrorMessage> handleProjectDeadlinePastException(ProjectDeadlinePastException e){
-        return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE.value()).body(new ErrorMessage(String.format("Deadline for this project as passed, cannot apply: %s", e.getLocalizedMessage())));
+        return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE.value()).body(new ErrorMessage(String.format("Deadline for this project as passed, cannot applyForProject: %s", e.getLocalizedMessage())));
     }
     @ExceptionHandler(DuplicateAccountException.class)
     public ResponseEntity<ErrorMessage> handleDuplicateAccountException(DuplicateAccountException e){
@@ -67,7 +67,7 @@ public class ControllerAdviser {
     }
     @ExceptionHandler(value = ParseException.class)
     public ResponseEntity<ErrorMessage> handleParseException(ParseException e){
-        return ResponseEntity.unprocessableEntity().body(new ErrorMessage(String.format("Incompatible date format, expected format yyyy-MM-dd. %s", e.getLocalizedMessage())));
+        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_CONTENT).body(new ErrorMessage(String.format("Incompatible date format, expected format yyyy-MM-dd. %s", e.getLocalizedMessage())));
     }
 
     @ExceptionHandler(value = InvalidOtpException.class)

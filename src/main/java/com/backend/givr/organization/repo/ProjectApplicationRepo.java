@@ -1,11 +1,12 @@
 package com.backend.givr.organization.repo;
 
 import com.backend.givr.organization.entity.Organization;
-import com.backend.givr.shared.entity.Project;
 import com.backend.givr.shared.entity.ProjectApplication;
+import com.backend.givr.shared.entity.projects.Project;
 import com.backend.givr.shared.enums.ApplicationStatus;
-import com.backend.givr.volunteer.entity.Individual;
 import com.backend.givr.volunteer.entity.Volunteer;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
@@ -20,7 +21,7 @@ public interface ProjectApplicationRepo extends JpaRepository<ProjectApplication
 
     List<ProjectApplication> findAllByOrganizationAndStatus(Organization organization, ApplicationStatus status);
 
-    List<ProjectApplication> findAllByIndividualAndStatus(Individual individual, ApplicationStatus status);
+    Page<ProjectApplication> findAllByCreatorIndividualAndStatus(Volunteer individual, ApplicationStatus status, Pageable pageable);
 
     int countByStatusAndOrganization(ApplicationStatus applicationStatus, Organization organization);
 

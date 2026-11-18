@@ -1,6 +1,6 @@
 package com.backend.givr.shared.email;
 
-import com.backend.givr.shared.entity.Project;
+import com.backend.givr.shared.entity.projects.Project;
 import com.backend.givr.shared.enums.*;
 import com.backend.givr.shared.exceptions.FailedToSendOTPException;
 import com.backend.givr.shared.otp.OTP;
@@ -101,21 +101,21 @@ public class EmailService {
 
     public void sendApplicationSubmittedEmail(String firstname,String projectName, String organizationName, String address, String recipient){
         String html = emailTemplateService.applicationSubmittedEmail(firstname, projectName, organizationName, address);
-        sendEmail(html, recipient, "Project application submitted");
+        sendEmail(html, recipient, "BaseProject application submitted");
     }
 
     public void sendApplicationNotificationEmail(String organizationName,String projectName, String recipient){
         String html = emailTemplateService.applicationNotificationEmail(organizationName, projectName);
-        sendEmail(html, recipient, "Project application notification");
+        sendEmail(html, recipient, "BaseProject application notification");
     }
     public void sendApplicationApproved(String firstname,String projectName, String organizationName, String address, String recipient){
         String html = emailTemplateService.applicationApproved(firstname, projectName, organizationName, address);
-        sendEmail(html, recipient, "Project application approved");
+        sendEmail(html, recipient, "BaseProject application approved");
     }
 
     public void sendApplicationRejected(String firstname,String projectName, String organizationName, String recipient){
         String html = emailTemplateService.applicationRejected(firstname, projectName, organizationName);
-        sendEmail(html, recipient, "Project application rejected");
+        sendEmail(html, recipient, "BaseProject application rejected");
     }
 
     private void sendEmail (String html, String recipient, String subject){
@@ -144,18 +144,18 @@ public class EmailService {
         String html = switch (status){
             case COMPLETED -> {
                 updateGivrAdmin(project, volunteer);
-                yield emailTemplateService.projectCompleted(volunteer.getFirstname(), project.getTitle(), project.getOrganization().getOrganizationName());
+                yield emailTemplateService.projectCompleted(volunteer.getFirstname(), project.getTitle(), project.getOrganizerName());
             }
-            case REJECTED -> emailTemplateService.participationRejected(volunteer.getFirstname(), project.getTitle(), project.getOrganization().getOrganizationName());
+            case REJECTED -> emailTemplateService.participationRejected(volunteer.getFirstname(), project.getTitle(), project.getOrganizerName());
             case null, default -> null;
         };
-        String subject = status== ParticipationStatus.COMPLETED? "Congratulations on completing a project": "Project participation Update";
+        String subject = status== ParticipationStatus.COMPLETED? "Congratulations on completing a project": "BaseProject participation Update";
         sendEmail(html, volunteer.getEmail(), subject );
     }
 
 
     public void sendCertificateReadyNotification(Volunteer volunteer, Project project){
-        String html = emailTemplateService.certificateReady(volunteer.getFirstname(), project.getTitle(), project.getOrganization().getOrganizationName());
+        String html = emailTemplateService.certificateReady(volunteer.getFirstname(), project.getTitle(), project.getOrganizerName());
         sendEmail(html, volunteer.getEmail(), "Congratulations! Your certificate is now available.🎉");
     }
 

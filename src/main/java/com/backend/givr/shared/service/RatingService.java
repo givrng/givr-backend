@@ -2,7 +2,7 @@ package com.backend.givr.shared.service;
 
 import com.backend.givr.organization.entity.Organization;
 import com.backend.givr.shared.entity.Participation;
-import com.backend.givr.shared.entity.Project;
+import com.backend.givr.shared.entity.projects.Project;
 import com.backend.givr.organization.repo.ParticipationRepo;
 import com.backend.givr.shared.entity.Rating;
 import com.backend.givr.shared.enums.ParticipationStatus;

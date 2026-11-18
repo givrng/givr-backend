@@ -1,17 +1,16 @@
 package com.backend.givr.shared.mapper;
 
 import com.backend.givr.organization.dtos.ProjectApplicationDto;
-import com.backend.givr.organization.dtos.ProjectRequestDto;
-import com.backend.givr.organization.dtos.ProjectResponseDto;
+import com.backend.givr.shared.dtos.*;
 import com.backend.givr.organization.entity.Category;
-import com.backend.givr.shared.dtos.InitiativeResponseDto;
 import com.backend.givr.shared.entity.Participation;
-import com.backend.givr.shared.entity.Project;
+import com.backend.givr.shared.entity.projects.Donation;
+import com.backend.givr.shared.entity.projects.Initiative;
 import com.backend.givr.shared.entity.ProjectApplication;
 import com.backend.givr.organization.mappings.OrganizationMapper;
-import com.backend.givr.shared.dtos.ParticipationDto;
-import com.backend.givr.shared.dtos.RenderProjectDto;
 import com.backend.givr.shared.entity.Skill;
+import com.backend.givr.shared.entity.projects.Project;
+import com.backend.givr.shared.enums.ProjectType;
 import com.backend.givr.volunteer.dtos.ProjectResponseDTOv;
 import com.backend.givr.volunteer.dtos.ProjectViewResponse;
 import com.backend.givr.volunteer.mappings.VolunteerMapper;
@@ -30,6 +29,24 @@ public interface ProjectMapper {
     @Mapping(target = "endDate", ignore = true)
     @Mapping(target = "deadline", ignore = true)
     Project toProject (ProjectRequestDto projectRequestDto);
+
+    @Mapping(target = "requiredSkills",ignore = true)
+    @Mapping(target = "startDate", ignore = true)
+    @Mapping(target = "endDate", ignore = true)
+    @Mapping(target = "deadline", ignore = true)
+    @Mapping(target = "media", ignore = true)
+    Initiative toInitiative(InitiativeRequestDto initiativeRequestDto);
+
+    @Mapping(source = "quantity", target = "quantityDonated")
+    DonationDto toDonationDto(Donation donation);
+
+    List<DonationDto> toDonationDtos(List<Donation> donations);
+
+    default void updateDonationItemName(Donation donation, @MappingTarget DonationDto dto){
+        dto.setItemName(donation.getItem().getResource().getName());
+        dto.setInitiative(toInitiative(donation.getItem().getInitiative()));
+    }
+
 
     default List<Category> toCategories (List<String> cats){
         return cats.stream().map(Category::new).toList();
@@ -66,7 +83,7 @@ public interface ProjectMapper {
     @Mapping(target = "requiredSkills", ignore = true)
     @Mapping(target = "id", source = "projectId")
     @Mapping(source = "deadline", target = "applicationDeadline")
-    InitiativeResponseDto toInitiative(Project project);
+    InitiativeResponseDto toInitiative(Initiative project);
 
     @Mapping(target = "requiredSkills", ignore = true)
     @Mapping(target = "id", source = "projectId")
@@ -92,6 +109,9 @@ public interface ProjectMapper {
     @AfterMapping
     default void mapSkills(Project project, @MappingTarget ProjectResponseDto dto){
         dto.setRequiredSkills(project.getRequiredSkills().stream().map(Skill::toString).collect(Collectors.toSet()));
+        if(project instanceof Initiative)
+            dto.setType(ProjectType.Initiative);
+        dto.setType(ProjectType.Project);
     }
 
     List<ProjectResponseDto> toDtos(List<Project> projects);
@@ -121,11 +141,11 @@ public interface ProjectMapper {
 
     @AfterMapping
     default void updateRenderProjectDto(Project project, @MappingTarget RenderProjectDto renderProjectDto){
-        String name = project.getOrganization() != null? project.getOrganization().getOrganizationName() : project.getIndividual().getFirstname();
+        String name = project.getOrganization().getOrganizationName();
         renderProjectDto.setOrganizationName(name);
     }
 
-    List<InitiativeResponseDto> toInitiativeReponses(List<Project> projectByVolunteerAndStatus);
+    List<InitiativeResponseDto> toInitiativeReponses(List<Initiative> initiatives);
 
     // Organization Participation
 }

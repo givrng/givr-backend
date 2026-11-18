@@ -1,40 +1,50 @@
-package com.backend.givr.organization.dtos;
+package com.backend.givr.shared.dtos;
 
+import com.backend.givr.organization.dtos.LocationDto;
 import com.backend.givr.organization.entity.AttendanceHours;
 import com.backend.givr.shared.enums.ProjectStatus;
-import com.backend.givr.shared.enums.ProjectType;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.time.ZonedDateTime;
 import java.util.List;
-import java.util.Set;
 
 @Getter
 @Setter
-public class ProjectResponseDto {
-    Long id;
+public class ProjectRequestDto {
+    @NotBlank
     private String title;
 
-    private OrganizationDto organization;
     private String description;
+
+    @NotNull
     private List<String> categories;
+
+    @Min(value = 1, message = "Cannot create a project for no volunteer")
     private Integer maxVolunteers;
+
+    @NotNull
     private LocationDto location;
-    private String startDate;
-    private String endDate;
-    private String applicationDeadline;
-    private AttendanceHours attendanceHours;
-    private Set<String> requiredSkills;
-    private String specialRequirements;
-    private int totalApplicants;
-    private ProjectStatus status;
-    private ZonedDateTime createdAt;
-    private ZonedDateTime updatedAt;
+    @NotNull
     private String address;
-    private Boolean broadcastEnabled;
-    private double rating;
+    @NotNull
+    private String startDate;
+    @NotNull
+    private String endDate;
+    @NotNull
+    private String applicationDeadline;
+
+    @NotNull
+    private AttendanceHours attendanceHours;
+
+    @NotNull
+    private List<String> requiredSkills;
+
+    private LocationDto locationDto;
+    private String specialRequirements;
+    private ProjectStatus status;
     private String projectFlierUrl;
-    private String projectCardUrl;
-    private ProjectType type;
+
 }

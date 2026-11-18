@@ -60,7 +60,7 @@ public class AdminController {
         return ResponseEntity.accepted().build();
     }
 
-    @PostMapping("/auth/verify-otp")
+    @PostMapping("/auth/verifyOrganization-otp")
     public ResponseEntity<Void> authenticateAdmin(@RequestBody AdminAuthDto payload, HttpServletResponse response) throws IOException {
         AdminDetails user = service.validateOtp(payload);
         givrCookie.addCookieToResponse(user, response);
@@ -68,7 +68,7 @@ public class AdminController {
     }
 
 
-    @GetMapping("/verify")
+    @GetMapping("/verifyOrganization")
     public ResponseEntity<Void> verify(){
         return ResponseEntity.ok().build();
     }

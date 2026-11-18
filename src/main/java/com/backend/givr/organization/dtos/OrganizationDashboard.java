@@ -1,5 +1,6 @@
 package com.backend.givr.organization.dtos;
 
+import com.backend.givr.shared.dtos.ProjectResponseDto;
 import com.backend.givr.shared.enums.VerificationStatus;
 
 import java.util.List;

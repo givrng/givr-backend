@@ -71,7 +71,7 @@ public class VolunteerDetails implements SecurityDetails {
 
     @Override
     public void setAuthorities(VerificationStatus status) {
-        this.roles = status.equals(VerificationStatus.VERIFIED)?List.of(new SimpleGrantedAuthority("VOLUNTEER"), new SimpleGrantedAuthority("INDIVIDUAL")) :
+        this.roles = status!=null && status.equals(VerificationStatus.VERIFIED)?List.of(new SimpleGrantedAuthority("VOLUNTEER"), new SimpleGrantedAuthority("INDIVIDUAL")) :
                 List.of(new SimpleGrantedAuthority("VOLUNTEER"));
     }
 

@@ -183,12 +183,27 @@ public class VolunteerService {
     }
 
     public void applyToProject(SecurityDetails details, @Valid ProjectApplicationForm applicationForm) {
-        Volunteer volunteer = manager.getReference(Volunteer.class, details.getId());
+        Volunteer volunteer = getVolunteer(details.getId());
+
+        if(volunteer.getPhoneNumber() == null && applicationForm.getPhoneNumber() == null)
+            throw new IllegalOperationException("Please provide phone number");
+
+        if(volunteer.getPhoneNumber()==null){
+            volunteer.setPhoneNumber(applicationForm.getPhoneNumber());
+            repo.save(volunteer);
+        }
         applicationService.apply(volunteer, applicationForm, details.getUsername());
     }
 
     public void applyToInitiative(VolunteerDetails details, InitiativeApplicationForm applicationForm){
         Volunteer volunteer = getVolunteer(details.getId());
+        if(volunteer.getPhoneNumber() == null && applicationForm.getPhoneNumber() == null)
+            throw new IllegalOperationException("Please provide phone number");
+
+        if(volunteer.getPhoneNumber()==null){
+            volunteer.setPhoneNumber(applicationForm.getPhoneNumber());
+            repo.save(volunteer);
+        }
         initiativeApplicationService.apply(volunteer, applicationForm);
     }
     public List<ParticipationDto> getMyVolunteering(SecurityDetails details){

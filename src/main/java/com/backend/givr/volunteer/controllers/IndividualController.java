@@ -1,15 +1,18 @@
 package com.backend.givr.volunteer.controllers;
 
-import com.backend.givr.organization.dtos.ProjectRequestDto;
 import com.backend.givr.organization.dtos.UpdateParticipantDto;
-import com.backend.givr.shared.dtos.InitiativeResponseDto;
-import com.backend.givr.shared.dtos.ParticipationDto;
-import com.backend.givr.shared.dtos.VolunteerApplicationDto;
+import com.backend.givr.shared.dtos.*;
+import com.backend.givr.shared.enums.ProjectStatus;
 import com.backend.givr.shared.interfaces.SecurityDetails;
+import com.backend.givr.shared.service.CloudinaryService;
 import com.backend.givr.shared.service.ParticipationService;
 import com.backend.givr.volunteer.service.IndividualService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.web.PagedModel;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,19 +21,34 @@ import java.util.List;
 @RestController
 @RequestMapping("/${api.version}/api/individual")
 @RequiredArgsConstructor
+@PreAuthorize("hasRole('INDIVIDUAL')")
 public class IndividualController {
     private final IndividualService service;
     private final ParticipationService participationService;
-
+    private final CloudinaryService cloudinaryService;
     // Initiative
     @PostMapping("/initiative")
-    ResponseEntity<List<InitiativeResponseDto>> createInitiative(@RequestBody ProjectRequestDto payload, @AuthenticationPrincipal SecurityDetails authContext){
+    ResponseEntity<List<InitiativeResponseDto>> createInitiative(@RequestBody InitiativeRequestDto payload, @AuthenticationPrincipal SecurityDetails authContext){
         return ResponseEntity.ok(service.createInitiative(payload, authContext));
     }
 
+    @GetMapping("/media/upload/signature")
+    public ResponseEntity<MediaUploadResponse> generateUploadSignature(){
+        return ResponseEntity.ok(cloudinaryService.generateSignedUploadKey(""));
+    }
+
+    @GetMapping("/initiative")
+    public ResponseEntity<PagedModel<InitiativeResponseDto>> getInitiatives(
+            @RequestParam(name = "status", defaultValue = "draft") ProjectStatus status,
+            @RequestParam(name = "pageNum", defaultValue = "0") int pageNum,
+            @RequestParam(name = "pageSize", defaultValue = "20") int pageSize,
+            @AuthenticationPrincipal SecurityDetails details){
+        return ResponseEntity.ok(service.getInitiatives(status, pageNum, pageSize, details.getId()));
+    }
+
+
     @PatchMapping("/initiative/{initiativeId}/publish")
     public ResponseEntity<Void> publicProject(@PathVariable("initiativeId") Long id, @AuthenticationPrincipal SecurityDetails details){
-
         service.publishProject(id, details);
         return ResponseEntity.noContent().build();
     }
@@ -47,37 +65,58 @@ public class IndividualController {
     }
 
     @PatchMapping("/initiative/{initiativeId}")
-    public ResponseEntity<InitiativeResponseDto> updateProject(@PathVariable("projectId") Long projectId, @RequestBody ProjectRequestDto projectRequestDto, @AuthenticationPrincipal SecurityDetails details){
+    public ResponseEntity<InitiativeResponseDto> updateProject(@PathVariable("projectId") Long projectId, @RequestBody InitiativeRequestDto projectRequestDto, @AuthenticationPrincipal SecurityDetails details){
         return ResponseEntity.accepted().body(service.updateProject(projectId, projectRequestDto, details.getId()));
     }
 
     @PatchMapping("/initiative/{initiative}/completed")
-    public ResponseEntity<Void> markProjectCompleted(@PathVariable("initiative") Long projectId){
-        participationService.markProjectCompleted(projectId);
+    public ResponseEntity<Void> markProjectCompleted(@PathVariable("initiative") Long projectId, @AuthenticationPrincipal SecurityDetails details){
+        service.markInitiativeComplete(projectId, details.getId());
         return ResponseEntity.accepted().build();
     }
 
 
-    @GetMapping("/initiative/applicants")
-    public ResponseEntity<List<VolunteerApplicationDto>> getProjectApplication(@AuthenticationPrincipal SecurityDetails details){
-        return ResponseEntity.ok(service.getProjectApplications(details));
+    @GetMapping("/initiative/applications")
+    public ResponseEntity<PagedModel<VolunteerApplicationDto>> getProjectApplication(@AuthenticationPrincipal SecurityDetails details,
+                                                                               @RequestParam(name = "pageNum", defaultValue = "0") int pageNum,
+                                                                               @RequestParam(name = "pageSize", defaultValue = "30") int pageSize){
+        PageRequest request = PageRequest.of(pageNum, pageSize);
+        return ResponseEntity.ok(service.getProjectApplications(details, request));
     }
 
-    @PatchMapping("/initiative/application/{id}/accept")
-    public ResponseEntity<Void> acceptApplication(@AuthenticationPrincipal SecurityDetails details, @PathVariable("id") Long id){
+    @GetMapping("/initiative/donations")
+    public ResponseEntity<PagedModel<DonationDto>> getProjectApplicationDonations(@AuthenticationPrincipal SecurityDetails details,
+                                                                                  @RequestParam(name = "pageNum", defaultValue = "0") int pageNum,
+                                                                                  @RequestParam(name = "pageSize", defaultValue = "30") int pageSize){
+        PageRequest request = PageRequest.of(pageNum, pageSize);
+        return ResponseEntity.ok(service.getDonations(details.getId(), request));
+    }
+
+    @GetMapping("/initiative/donations/{donationId}")
+    public ResponseEntity<DonationDto> getDonation(@PathVariable(name = "donationId") String donationId){
+        return ResponseEntity.ok(service.getDonation(donationId));
+    }
+
+    @PatchMapping("/initiative/donations/{donationId}")
+    public ResponseEntity<DonationDto> updateDonationStatus(@Valid @RequestBody DonationUpdateDto donationUpdateDto, @AuthenticationPrincipal SecurityDetails details){
+        return ResponseEntity.accepted().body(service.updateDonationStatus(donationUpdateDto, details.getId()));
+    }
+
+    @PatchMapping("/initiative/applications/{id}/accept")
+    public ResponseEntity<Void> acceptApplication(@AuthenticationPrincipal SecurityDetails details, @PathVariable("id") String id){
         service.approveApplication(id);
         return ResponseEntity.noContent().build();
     }
 
-    @PatchMapping("/projects/application/{id}/reject")
-    public ResponseEntity<Void> rejectApplication(@PathVariable("id") Long id){
+    @PatchMapping("/projects/applications/{id}/reject")
+    public ResponseEntity<Void> rejectApplication(@PathVariable("id") String id){
         service.rejectApplication(id);
         return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/initiative/{initiativeId}")
     private ResponseEntity<Void> deleteProject(@PathVariable("projectId") Long projectId, @AuthenticationPrincipal SecurityDetails details){
-        service.deleteProject(projectId, details.getId());
+        service.deleteInitiative(projectId, details.getId());
         return ResponseEntity.noContent().build();
     }
 }

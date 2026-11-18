@@ -3,9 +3,9 @@ package com.backend.givr.shared.service;
 import com.backend.givr.shared.entity.OrganizationVerificationSession;
 import com.backend.givr.shared.enums.VerificationStatus;
 import com.backend.givr.shared.repo.OrganizationVerificationSessionRepo;
-import com.backend.givr.volunteer.entity.Individual;
+import com.backend.givr.volunteer.entity.Volunteer;
 import com.backend.givr.volunteer.entity.VolunteerVerificationSession;
-import com.backend.givr.volunteer.repo.IndividualRepo;
+import com.backend.givr.volunteer.repo.VolunteerRepo;
 import com.backend.givr.volunteer.repo.VolunteerVerificationSessionRepo;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.extern.slf4j.Slf4j;
@@ -27,7 +27,7 @@ public class VerificationWorker {
     @Autowired
     private OrganizationVerificationSessionRepo organizationVerificationSessionRepo;
     @Autowired
-    private IndividualRepo individualRepo;
+    private VolunteerRepo volunteerRepo;
     @Autowired
     private VolunteerVerificationSessionRepo volunteerVerificationSessionRepo;
 
@@ -62,8 +62,8 @@ public class VerificationWorker {
         try{
             verificationClient.verifyVolunteer(verificationSession);
             if(verificationSession.getVerificationStatus() == VerificationStatus.VERIFIED){
-                Individual individual = new Individual(verificationSession);
-                individualRepo.save(individual);
+//                Volunteer individual = new Individual(verificationSession);
+//                volunteerRepo.save(individual);
             }
         } catch (JsonProcessingException e) {
             logger.error("Volunteer verification for {} failed because of {}", verificationSession.getVerificationSessionId(), e.getLocalizedMessage());

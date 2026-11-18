@@ -2,26 +2,22 @@ package com.backend.givr.organization.controllers;
 
 import com.backend.givr.organization.dtos.*;
 
-import com.backend.givr.shared.service.ApplicationService;
+import com.backend.givr.shared.dtos.*;
+import com.backend.givr.shared.service.*;
 import com.backend.givr.organization.service.OrganizationService;
-import com.backend.givr.shared.service.ParticipationService;
-import com.backend.givr.shared.dtos.ParticipationDto;
-import com.backend.givr.shared.dtos.PasswordUpdateDto;
-import com.backend.givr.shared.dtos.VolunteerApplicationDto;
 import com.backend.givr.shared.entity.GivrMessage;
 import com.backend.givr.shared.enums.OtpPurpose;
 import com.backend.givr.shared.interfaces.SecurityDetails;
 import com.backend.givr.shared.mapper.ProjectMapper;
 import com.backend.givr.shared.otp.OtpDto;
-import com.backend.givr.shared.service.GivrMessageService;
-import com.backend.givr.shared.service.LogoutService;
 import com.backend.givr.volunteer.dtos.AuthDetailsDto;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.web.PagedModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -31,6 +27,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/${api.version}/api/organization")
+@RequiredArgsConstructor
 public class OrganizationController {
 
     @Autowired
@@ -43,11 +40,17 @@ public class OrganizationController {
     @Autowired
     private ParticipationService participationService;
 
+    private final CloudinaryService cloudinaryService;
     @Autowired
     private LogoutService logoutService;
 
     @Autowired
     private GivrMessageService messageService;
+
+    @GetMapping("/media/upload/signature")
+    public ResponseEntity<MediaUploadResponse> generateUploadSignature(){
+        return ResponseEntity.ok(cloudinaryService.generateSignedUploadKey(""));
+    }
 
     @PostMapping("/auth/signup")
     public ResponseEntity<Void> createOrganizationAccount(@RequestBody @Valid CreateOrganizationDto createOrganizationDto){
@@ -91,20 +94,27 @@ public class OrganizationController {
     public ResponseEntity<EmailExists> emailExists(@RequestParam("email") String email,@AuthenticationPrincipal SecurityDetails details){
         return ResponseEntity.ok(service.emailExists(email, details));
     }
+
     @GetMapping("/share/project/{id}")
     public ResponseEntity<String> shareProject(@PathVariable("id") Long projectId){
         return ResponseEntity.ok(service.shareProject(projectId));
     }
+
     @GetMapping("/projects")
+    @PreAuthorize(value = "isAuthenticated()")
     public ResponseEntity<List<ProjectResponseDto>> getOrganizationProjects(@AuthenticationPrincipal SecurityDetails details){
         return ResponseEntity.ok(mapper.toDtos(service.getProjects(details)));
     }
 
     @GetMapping("/projects/participants")
-    public ResponseEntity<List<ParticipationDto>> getProjectParticipants(@AuthenticationPrincipal SecurityDetails details){
-        return ResponseEntity.ok(service.getProjectParticipants(details));
+    @PreAuthorize(value = "isAuthenticated()")
+    public ResponseEntity<PagedModel<ParticipationDto>> getProjectParticipants(@AuthenticationPrincipal SecurityDetails details,
+                                                                         @RequestParam(value = "pageNumber", required = false, defaultValue = "0") int pageNum,
+                                                                         @RequestParam(value = "pageSize", required = false, defaultValue = "40") int pageSize){
+        return ResponseEntity.ok(service.getProjectParticipants(details, pageNum, pageSize));
     }
     @PatchMapping("/projects/participant")
+    @PreAuthorize(value = "isAuthenticated()")
     public ResponseEntity<Void> updateParticipation(@RequestBody UpdateParticipantDto payload, @AuthenticationPrincipal SecurityDetails details){
         service.updateVolunteerParticipation(payload, details.getId());
         return ResponseEntity.noContent().build();
@@ -117,6 +127,7 @@ public class OrganizationController {
     }
 
     @PostMapping("/projects")
+    @PreAuthorize(value = "isAuthenticated()")
     public ResponseEntity<List<ProjectResponseDto>> createProject(@RequestBody @Valid ProjectRequestDto projectRequestDto, @AuthenticationPrincipal SecurityDetails details){
         return ResponseEntity.ok(service.createProject(projectRequestDto, details));
     }
@@ -127,8 +138,9 @@ public class OrganizationController {
     }
 
     @PatchMapping("/projects/{projectId}/completed")
-    public ResponseEntity<Void> markProjectCompleted(@PathVariable("projectId") Long projectId){
-        participationService.markProjectCompleted(projectId);
+    @PreAuthorize(value = "isAuthenticated()")
+    public ResponseEntity<Void> markProjectCompleted(@PathVariable("projectId") Long projectId, @AuthenticationPrincipal SecurityDetails details){
+        service.markProjectCompleted(projectId, details.getId());
         return ResponseEntity.accepted().build();
     }
 

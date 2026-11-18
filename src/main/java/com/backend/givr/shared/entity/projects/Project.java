@@ -1,49 +1,52 @@
-package com.backend.givr.shared.entity;
+package com.backend.givr.shared.entity.projects;
 
 import com.backend.givr.organization.entity.AttendanceHours;
 import com.backend.givr.organization.entity.Category;
 import com.backend.givr.organization.entity.Organization;
+import com.backend.givr.shared.entity.Creator;
+import com.backend.givr.shared.entity.Location;
+import com.backend.givr.shared.entity.ProjectApplication;
+import com.backend.givr.shared.entity.Skill;
 import com.backend.givr.shared.enums.ProjectStatus;
-import com.backend.givr.shared.enums.ProjectType;
-import com.backend.givr.volunteer.entity.Individual;
-import com.backend.givr.volunteer.entity.Volunteer;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
-import lombok.ToString;
 import org.hibernate.annotations.SQLRestriction;
 
-import java.time.*;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-@Entity
+
 @Getter
 @Setter
-@NoArgsConstructor
-@ToString
+@Entity
+@Inheritance(strategy = InheritanceType.JOINED)
+@SQLRestriction("isDeleted=true")
 public class Project {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long projectId;
+    protected Long projectId;
 
     @ManyToOne
     @JoinColumn(name = "organization_id")
-    private Organization organization;
-
-    @ManyToOne
-    @JoinColumn(name = "individual_id")
-    private Individual individual;
+    protected Organization organization;
 
     @Column(nullable = false, unique = true)
-    private String title;
+    protected String title;
+
+    @ManyToOne
+    @JoinColumn(name = "creator_id")
+    protected Creator creator;
 
     @Column(nullable = false, length = 1000)
-    private String description;
+    protected String description;
 
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(
@@ -51,73 +54,84 @@ public class Project {
             joinColumns = @JoinColumn(name = "project_id"),
             inverseJoinColumns = @JoinColumn(name = "category_id")
     )
-    private List<Category> categories = new ArrayList<>();
+    protected List<Category> categories = new ArrayList<>();
 
-    private String category;
+    protected String category;
 
     @Min(value = 1, message = "Cannot create a project for no volunteer")
     @Column(nullable = false)
-    private Integer maxVolunteers;
+    protected Integer maxVolunteers;
 
     @NotNull
     @ManyToOne
     @JoinColumn(name = "location", nullable = false)
-    private Location location;
+    protected Location location;
 
     @Column(nullable = false)
-    private LocalDate startDate;
+    protected LocalDate startDate;
     @Column(nullable = false)
-    private LocalDate endDate;
+    protected LocalDate endDate;
     @Column(nullable = false)
-    private LocalDate deadline;
+    protected LocalDate deadline;
 
-    private String address;
-    @Transient
-    private Boolean reviewable;
+    protected String address;
+
     @Embedded
-    private AttendanceHours attendanceHours;
-
-    private Boolean orgNotifiedOfDeadline;
+    protected AttendanceHours attendanceHours;
 
     @Enumerated(EnumType.STRING)
-    private ProjectStatus status;
+    protected ProjectStatus status;
 
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(name = "project_skills", joinColumns = @JoinColumn(name = "project_id"), inverseJoinColumns = @JoinColumn(name = "skill_id"))
-    private Set<Skill> requiredSkills;
+    protected Set<Skill> requiredSkills;
 
     @Column(length = 300)
-    private String specialRequirements;
+    protected String specialRequirements;
+
+    protected String organizerName;
+
+    protected Boolean reviewable;
+
+    protected boolean isDeleted = false;
+    protected Double rating;
+    protected String projectFlierUrl;
+    protected String projectCardUrl;
+    protected String shareableLink;
+    protected ZonedDateTime createdAt;
+    protected ZonedDateTime modifiedAt;
+
 
     @OneToMany(mappedBy = "project")
-    private Set<ProjectApplication> applicationList;
+    protected Set<ProjectApplication> applicationList;
 
     @OneToMany(mappedBy = "project")
     @SQLRestriction(value = "status = 'APPROVED'")
-    private Set<ProjectApplication> approvedList;
+    protected Set<ProjectApplication> approvedList;
 
-    private String segmentId;
-    private Boolean broadcastEnabled;
+    private Boolean orgNotifiedOfDeadline;
 
-    private Double rating;
-    private String projectFlierUrl;
-    private String projectCardUrl;
-    private String shareableLink;
-    private ZonedDateTime createdAt;
-    private ZonedDateTime modifiedAt;
-    @Enumerated(EnumType.STRING)
-    private ProjectType type;
+
+    public void markOrgNotifiedOfDeadline(){
+        this.orgNotifiedOfDeadline = true;
+    }
+    public boolean shouldNotifyDeadline(){
+        return status==ProjectStatus.CLOSE && !orgNotifiedOfDeadline;
+    }
+    public int getVolunteerCount(){
+        return this.approvedList==null? 0 : approvedList.size();
+    }
     @PrePersist
-    private void setCreatedAt(){
+    protected void setCreatedAt(){
         this.createdAt = ZonedDateTime.now(ZoneOffset.UTC);
     }
     @PreUpdate
-    private void setModifiedAt(){
+    protected void setModifiedAt(){
         this.modifiedAt = ZonedDateTime.now(ZoneOffset.UTC);
     }
 
-    public int getVolunteerCount(){
-        return approvedList==null? 0 : approvedList.size();
+    public Boolean getReviewable(){
+        return LocalDate.now().plusDays(7).isAfter(this.endDate);
     }
 
     public boolean shouldClose(LocalDateTime now){
@@ -133,15 +147,4 @@ public class Project {
         this.status = ProjectStatus.CLOSE;
     }
 
-    public boolean shouldNotifyDeadline(){
-        return status==ProjectStatus.CLOSE && !orgNotifiedOfDeadline;
-    }
-
-    public void markOrgNotifiedOfDeadline(){
-        this.orgNotifiedOfDeadline = true;
-    }
-
-    public boolean getReviewable(){
-        return LocalDate.now().plusDays(7).isAfter(this.getEndDate());
-    }
 }

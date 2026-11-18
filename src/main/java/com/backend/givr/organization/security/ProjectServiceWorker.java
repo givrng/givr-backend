@@ -1,9 +1,11 @@
 package com.backend.givr.organization.security;
 
-import com.backend.givr.shared.entity.Project;
+import com.backend.givr.shared.entity.projects.Initiative;
 import com.backend.givr.organization.repo.ProjectRepo;
 import com.backend.givr.shared.email.EmailService;
+import com.backend.givr.shared.entity.projects.Project;
 import com.backend.givr.shared.mapper.ProjectMapper;
+import com.backend.givr.shared.repo.InitiativeRepo;
 import com.backend.givr.shared.service.CloudinaryService;
 import com.backend.givr.shared.service.GivrImageRendererService;
 import com.backend.givr.volunteer.entity.Volunteer;
@@ -34,6 +36,8 @@ public class ProjectServiceWorker {
     @Autowired
     private ProjectRepo repo;
     @Autowired
+    private InitiativeRepo initiativeRepo;
+    @Autowired
     private VolunteerRepo volunteerService;
     @Value("${givr.baseUrl}")
     private String apiBaseUrl;
@@ -52,12 +56,13 @@ public class ProjectServiceWorker {
             maxAttempts = 3,
             backoff = @Backoff(delay = 2000)
     )
+    @Deprecated(forRemoval = true)
     public void createProjectSegment(Project project){
-        if(!project.getBroadcastEnabled())
-            return;
+//        if(!project.getBroadcastEnabled())
+//            return;
         try{
             String segmentId = emailService.createProjectSegment(project.getTitle());
-            project.setSegmentId(segmentId);
+//            project.setSegmentId(segmentId);
             repo.save(project);
         } catch (ResendException e) {
             System.err.printf("Failed to create segment for project %s", e.getLocalizedMessage());
@@ -71,7 +76,7 @@ public class ProjectServiceWorker {
     public CompletableFuture<String> createProjectCard(Project project){
         if (project.getProjectFlierUrl() != null && !project.getProjectFlierUrl().isEmpty()) {
             String shareableLink = String.format("%s/%s/share/project/%s", apiBaseUrl, apiVersion, project.getProjectId());
-            saveUrl(project.getProjectId(), null, shareableLink);
+            saveUrl(project, null, shareableLink);
             return CompletableFuture.completedFuture(shareableLink);
         }
         try{
@@ -80,20 +85,26 @@ public class ProjectServiceWorker {
             String securedUrl = cloudinaryService.uploadImage(imageByte, "projects",project.getProjectId());
             String shareableLink = String.format("%s/%s/share/project/%s", apiBaseUrl, apiVersion, project.getProjectId());
 
-            saveUrl(project.getProjectId(), securedUrl, shareableLink);
+            saveUrl(project, securedUrl, shareableLink);
             return CompletableFuture.completedFuture(shareableLink);
         } catch (RuntimeException e) {
             System.err.printf("Failed to create project card %s", e.getLocalizedMessage());
             throw new RuntimeException(e);
         }
-
     }
 
     @Transactional
-    private void saveUrl(Long projectId, String secureUrl, String shareableLink){
-        Project project = repo.findById(projectId).orElseThrow();
-        project.setProjectCardUrl(secureUrl);
-        project.setShareableLink(shareableLink);
+    private void saveUrl(Project baseProject, String secureUrl, String shareableLink){
+        if(baseProject instanceof Initiative initiative){
+            Initiative i = initiativeRepo.findById(initiative.getProjectId()).orElseThrow();
+            i.setProjectCardUrl(secureUrl);
+            i.setShareableLink(shareableLink);
+        } else {
+            Project p = repo.findById(baseProject.getProjectId()).orElseThrow();
+            p.setProjectCardUrl(secureUrl);
+            p.setShareableLink(shareableLink);
+        }
+
     }
 
     public Mono<Void> sendProjectListing(Project project) {

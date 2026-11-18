@@ -2,8 +2,9 @@ package com.backend.givr.organization.mappings;
 
 import com.backend.givr.organization.dtos.*;
 import com.backend.givr.organization.entity.Organization;
+import com.backend.givr.shared.dtos.ProjectResponseDto;
 import com.backend.givr.shared.entity.OrganizationVerificationSession;
-import com.backend.givr.shared.entity.Project;
+import com.backend.givr.shared.entity.projects.Project;
 import com.backend.givr.shared.entity.Location;
 import com.backend.givr.shared.entity.Skill;
 import com.backend.givr.shared.mapper.SkillMapper;

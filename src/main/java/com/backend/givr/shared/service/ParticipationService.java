@@ -2,13 +2,14 @@ package com.backend.givr.shared.service;
 
 import com.backend.givr.organization.entity.Organization;
 import com.backend.givr.shared.entity.Participation;
-import com.backend.givr.shared.entity.Project;
+import com.backend.givr.shared.entity.projects.Initiative;
 import com.backend.givr.shared.entity.ProjectApplication;
 import com.backend.givr.organization.repo.ParticipationRepo;
 import com.backend.givr.organization.repo.ProjectApplicationRepo;
 import com.backend.givr.redis.RedisService;
 import com.backend.givr.shared.dtos.ParticipationDto;
 import com.backend.givr.shared.dtos.RatingDTO;
+import com.backend.givr.shared.entity.projects.Project;
 import com.backend.givr.shared.enums.ApplicationStatus;
 import com.backend.givr.shared.enums.CertificationStatus;
 import com.backend.givr.shared.enums.ParticipationStatus;
@@ -16,7 +17,6 @@ import com.backend.givr.shared.enums.ProjectStatus;
 import com.backend.givr.shared.exceptions.IllegalOperationException;
 import com.backend.givr.shared.email.EmailService;
 import com.backend.givr.shared.mapper.ProjectMapper;
-import com.backend.givr.volunteer.entity.Individual;
 import com.backend.givr.volunteer.entity.Volunteer;
 import com.backend.givr.volunteer.security.VolunteerDetailsService;
 import com.resend.core.exception.ResendException;
@@ -27,10 +27,7 @@ import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.*;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.web.PagedModel;
 import org.springframework.scheduling.annotation.Async;
@@ -52,6 +49,10 @@ public class ParticipationService {
     private ProjectApplicationRepo applicationRepo;
     @Autowired
     private ProjectService projectService;
+    @Autowired
+    private CreatorService creatorService;
+    @Autowired
+    private InitiativeService initiativeService;
     @Autowired
     private VolunteerDetailsService detailsService;
     @Autowired
@@ -76,20 +77,18 @@ public class ParticipationService {
         Participation participation = new Participation();
         Volunteer volunteer = application.getVolunteer();
         String email = volunteer.getEmail();
-        String segmentId = project.getSegmentId();
 
         redisService.addProjectParticipantEmail(project.getProjectId(), List.of(email));
         participation.setVolunteer(volunteer);
         participation.setProjectApplication(application);
         participation.setProject(project);
-        if(project.getOrganization() != null){
-            participation.setOrganization(project.getOrganization());
+        if(project.getCreator() != null){
+            participation.setCreator(project.getCreator());
         }
         participation.setParticipationStatus(ParticipationStatus.IN_PROGRESS);
 
         try{
             String contactId = emailService.createContact(email, volunteer.getFirstname(), volunteer.getLastname());
-            emailService.addContactToSegment(segmentId, contactId);
             participation.setContactId(contactId);
             participation.setIsUnSubscribed(false);
             repo.save(participation);
@@ -106,8 +105,15 @@ public class ParticipationService {
     }
 
 
-    public List<Participation> getParticipantsByOrganization(Organization organization){
-        return repo.findAllByOrganization(organization);
+    public PagedModel<ParticipationDto> getParticipantsByOrgOrCreator(Organization organization, PageRequest pageRequest){
+        // Try retrieving using old and new field
+        Page<Participation> participationPage = repo.getAllByCreatorOrOrganization(organization, pageRequest);
+        // Create a creator for older records
+        // Save to database
+        // Convert to DTO
+        // Never mind, this will be done while fetching projects
+        List<ParticipationDto> dtos = mapper.toParticipationDto(participationPage.getContent());
+        return new PagedModel<>(new PageImpl<>(dtos, participationPage.getPageable(), participationPage.getTotalElements()));
     }
 
     @Transactional
@@ -134,29 +140,43 @@ public class ParticipationService {
         emailService.sendParticipationUpdate(volunteer, project, status);
 
         if(status == ParticipationStatus.REJECTED){
-            participation.getProjectApplication().setStatus(ApplicationStatus.REJECTED);
-            applicationRepo.save(participation.getProjectApplication());
             repo.delete(participation);
-
             redisService.removeAuthorizedUserProject(volunteer.getVolunteerId(), project.getProjectId());
             emailService.sendParticipationUpdate(volunteer, project, ParticipationStatus.REJECTED);
         }
     }
 
-    public void changeIndParticipationStatus(Long participationId, Individual individual, ParticipationStatus status){
-        Participation participation = repo.findByIdAndProjectIndividual(participationId, individual).orElseThrow(()->new EntityNotFoundException(String.format("Participant with participationId %s, not not found", participationId)));
+    public void changeIndParticipationStatus(Long participationId, Volunteer individual, ParticipationStatus status){
+        Participation participation = repo.findByIdAndCreatorIndividual(participationId, individual)
+                .orElseThrow(()->new EntityNotFoundException(String.format("Participant with participationId %s, not not found", participationId)));
         updateParticipationStatus(participation, status);
     }
 
     public void changeOrgParticipationStatus(Long participationId, Organization organization, ParticipationStatus status){
-        Participation participation = repo.findByIdAndOrganization(participationId, organization).orElseThrow(()->new EntityNotFoundException(String.format("Participant with participationId %s, not not found", participationId)));
+        Participation participation = repo.findByIdAndOrganizationOrCreatorOrganization(participationId, organization, organization)
+                .orElseThrow(()->new EntityNotFoundException(String.format("Participant with participationId %s, not not found", participationId)));
         updateParticipationStatus(participation, status);
     }
 
     @Async
     @Transactional
-    public void markProjectCompleted(Long projectId) {
-        Project project = projectService.findProjectById(projectId);
+    public void markInitiativeCompleted(Long initiativeId, Volunteer individual){
+        Initiative initiative = initiativeService.getInitiative(initiativeId, individual);
+        markProjectCompleted(initiative);
+    }
+
+    @Async
+    @Transactional
+    public void markProjectCompleted(Long projectId, Organization organization){
+        Project project = projectService.getProject(projectId);
+
+        if(!project.getOrganization().equals(organization) && !project.getCreator().getOrganization().equals(organization))
+            throw new EntityNotFoundException("BaseProject not found for organization "+ organization.getOrganizationId());
+
+        markProjectCompleted(project);
+    }
+
+    public void markProjectCompleted(Project project) {
         project.setStatus(ProjectStatus.COMPLETED);
         Flux<Participation> participationList = Flux.fromIterable(getParticipationByProject(project));
 
@@ -182,7 +202,7 @@ public class ParticipationService {
     }
 
     public List<Participation> getParticipationByProject( Project project){
-        return repo.findAllByProject( project);
+        return repo.findAllByProjectProjectId(project.getProjectId());
     }
 
     @Cacheable(
@@ -210,7 +230,7 @@ public class ParticipationService {
     }
 
     public @Nullable List<ParticipationDto> getParticipantsByIndividualId(String individualId) {
-        Individual individual = em.getReference(Individual.class, individualId);
-        return mapper.toParticipationDto(repo.findAllByProjectIndividual(individual));
+        Volunteer individual = em.getReference(Volunteer.class, individualId);
+        return mapper.toParticipationDto(repo.findAllByProjectCreatorIndividual(individual));
     }
 }

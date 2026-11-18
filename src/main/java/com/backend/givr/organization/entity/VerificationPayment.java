@@ -73,7 +73,7 @@ public class VerificationPayment {
         this.description = description;
         this.merchant = Merchant.PAYSTACK;
         this.organization = organization;
-        this.transactionRef = String.format("ORG_%s", UUID.randomUUID().toString());
+        this.transactionRef = String.format("ORG_%s", UUID.randomUUID());
     }
 
     public VerificationPayment(BigDecimal amount, String description, Volunteer volunteer){
@@ -82,7 +82,7 @@ public class VerificationPayment {
         this.description = description;
         this.merchant = Merchant.PAYSTACK;
         this.volunteer = volunteer;
-        this.transactionRef = String.format("VOL_%s", UUID.randomUUID().toString());
+        this.transactionRef = String.format("VOL_%s", UUID.randomUUID());
     }
 
     public void updateStatus(TransactionStatus status){

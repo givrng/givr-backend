@@ -8,8 +8,10 @@ import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
+import tools.jackson.core.type.TypeReference;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
@@ -33,7 +35,7 @@ public class JwtUtil {
     }
     public String generateToken(SecurityDetails user, String id, long jwtExpiration) {
         Map<String, Object> claims = new HashMap<>();
-        claims.put("role", user.getAuthorities().stream().toList().getFirst().getAuthority());
+        claims.put("roles", user.getAuthorities().stream().map(GrantedAuthority::getAuthority).toList());
         claims.put("userId", user.getId());
         return Jwts.builder()
                 .subject(user.getUsername())
@@ -53,13 +55,13 @@ public class JwtUtil {
                 .getPayload()
                 .getSubject();
     }
-    public String extractRoles(String token) throws JsonProcessingException {
+    public String[] extractRoles(String token) throws JsonProcessingException {
         return Jwts.parser()
                 .verifyWith(secretKey)
                 .build()
                 .parseSignedClaims(token)
                 .getPayload()
-                .get("role", String.class);
+                .get("roles", String[].class);
     }
 
     public String extractUserId(String token){

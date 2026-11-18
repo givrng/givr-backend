@@ -7,6 +7,7 @@ import org.jspecify.annotations.Nullable;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -21,9 +22,9 @@ public class AdminDetails implements SecurityDetails {
         this.authorities = List.of(new SimpleGrantedAuthority(admin.getRole().name()));
     }
 
-    public AdminDetails(String username, String id, String authority){
+    public AdminDetails(String username, String id, String[] authority){
         this.username = username;
-        this.authorities =  List.of(new SimpleGrantedAuthority(authority));
+        this.authorities = Arrays.stream(authority).map(SimpleGrantedAuthority::new).toList();
         this.id = id;
     }
     @Override

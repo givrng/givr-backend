@@ -1,11 +1,10 @@
 package com.backend.givr.volunteer.service;
 
 import com.backend.givr.organization.dtos.CheckoutResponse;
-import com.backend.givr.organization.dtos.ProjectRequestDto;
-import com.backend.givr.organization.dtos.ProjectResponseDto;
+import com.backend.givr.shared.dtos.ProjectResponseDto;
 import com.backend.givr.shared.dtos.*;
-import com.backend.givr.shared.entity.Project;
 import com.backend.givr.shared.entity.ProjectApplication;
+import com.backend.givr.shared.entity.projects.Project;
 import com.backend.givr.shared.enums.*;
 import com.backend.givr.shared.service.*;
 import com.backend.givr.shared.entity.Location;
@@ -25,6 +24,7 @@ import com.backend.givr.volunteer.repo.VolunteerRepo;
 import com.backend.givr.volunteer.security.VolunteerDetails;
 import com.backend.givr.volunteer.security.VolunteerDetailsService;
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.persistence.PersistenceContext;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
@@ -67,6 +67,8 @@ public class VolunteerService {
     @Autowired
     private ProjectService projectService;
 
+    @Autowired
+    private InitiativeApplicationService initiativeApplicationService;
     @Autowired
     private PasswordEncoder encoder;
     @Autowired
@@ -180,18 +182,15 @@ public class VolunteerService {
         return mapper.toProfile(volunteer);
     }
 
-    public void apply(SecurityDetails details, @Valid ProjectApplicationForm applicationForm) {
-        Volunteer volunteer = getVolunteer(details.getId());
-        if(volunteer.getPhoneNumber() == null && applicationForm.phoneNumber() == null)
-            throw new IllegalOperationException("Please provide phone number");
-
-        if(volunteer.getPhoneNumber()==null){
-            volunteer.setPhoneNumber(applicationForm.phoneNumber());
-            repo.save(volunteer);
-        }
+    public void applyToProject(SecurityDetails details, @Valid ProjectApplicationForm applicationForm) {
+        Volunteer volunteer = manager.getReference(Volunteer.class, details.getId());
         applicationService.apply(volunteer, applicationForm, details.getUsername());
     }
 
+    public void applyToInitiative(VolunteerDetails details, InitiativeApplicationForm applicationForm){
+        Volunteer volunteer = getVolunteer(details.getId());
+        initiativeApplicationService.apply(volunteer, applicationForm);
+    }
     public List<ParticipationDto> getMyVolunteering(SecurityDetails details){
         Volunteer volunteer = manager.getReference(Volunteer.class, details.getId());
         return projectMapper.toParticipationDto(participationService.getVolunteerParticipation(volunteer));
@@ -273,4 +272,8 @@ public class VolunteerService {
     }
 
 
+    public Volunteer getIndividual(String volunteerId) {
+        return repo.findByVolunteerIdAndVerificationStatus(volunteerId, VerificationStatus.VERIFIED)
+                .orElseThrow(()->new EntityNotFoundException("Volunteer does not have an individual account"));
+    }
 }

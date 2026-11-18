@@ -1,45 +1,42 @@
 package com.backend.givr.shared.service.Certificate;
 
+import com.backend.givr.organization.repo.ProjectRepo;
 import com.backend.givr.shared.entity.Participation;
 import com.backend.givr.organization.repo.ParticipationRepo;
 import com.backend.givr.shared.dtos.RenderCertificateDto;
 import com.backend.givr.shared.dtos.VolunteerCertificateVerificationDTO;
 import com.backend.givr.shared.entity.VolunteerCertificate;
+import com.backend.givr.shared.entity.projects.Initiative;
+import com.backend.givr.shared.entity.projects.Project;
 import com.backend.givr.shared.enums.CertificationStatus;
 import com.backend.givr.shared.mapper.CertificateMapper;
+import com.backend.givr.shared.repo.InitiativeRepo;
 import com.backend.givr.shared.repo.VolunteerCertificateRepo;
 import com.backend.givr.shared.email.EmailService;
 import com.backend.givr.shared.service.CloudinaryService;
 import com.backend.givr.shared.service.GivrImageRendererService;
 import com.backend.givr.volunteer.entity.Volunteer;
 import jakarta.persistence.EntityNotFoundException;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
-import tools.jackson.databind.ObjectMapper;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class CertificateService {
-    @Autowired
-    private RestTemplate restTemplate;
-    @Autowired
-    private VolunteerCertificateRepo repo;
-    @Autowired
-    private EmailService emailService;
-    @Autowired
-    private CloudinaryService cloudinaryService;
-    @Autowired
-    private GivrImageRendererService imageRendererService;
-    @Autowired
-    private ParticipationRepo participationRepo;
-    @Autowired
-    private CertificateMapper certMapper;
-    @Autowired
-    private ObjectMapper mapper;
+    private final RestTemplate restTemplate;
+    private final VolunteerCertificateRepo repo;
+    private final EmailService emailService;
+    private final CloudinaryService cloudinaryService;
+    private final GivrImageRendererService imageRendererService;
+    private final ParticipationRepo participationRepo;
+    private final CertificateMapper certMapper;
+    private final ProjectRepo projectRepo;
+    private final InitiativeRepo initiativeRepo;
 
     @Transactional
     @Async
@@ -50,8 +47,18 @@ public class CertificateService {
 
         try{
             VolunteerCertificate certificate = new VolunteerCertificate(participant);
-            RenderCertificateDto certificateDto = new RenderCertificateDto(participant.getProject(),
-                    participant.getVolunteer(), certificate.getCertId());
+            RenderCertificateDto certificateDto;
+            Long projectId = participant.getProject().getProjectId();
+
+            if(participant.getProject() instanceof Initiative){
+                Initiative project = initiativeRepo.findById(projectId).orElseThrow();
+                certificateDto = new RenderCertificateDto(project,
+                        participant.getVolunteer(), certificate.getCertId());
+            } else {
+                Project project = projectRepo.findById(projectId).orElseThrow();
+                certificateDto = new RenderCertificateDto(project,
+                        participant.getVolunteer(), certificate.getCertId());
+            }
 
             byte[] certificateImg = imageRendererService.renderCertificate(certificateDto);
 

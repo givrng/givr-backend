@@ -1,6 +1,7 @@
 package com.backend.givr.shared.entity;
 
 import com.backend.givr.organization.entity.Organization;
+import com.backend.givr.shared.entity.projects.Project;
 import com.backend.givr.shared.enums.CertificationStatus;
 import com.backend.givr.shared.enums.ParticipationStatus;
 import com.backend.givr.volunteer.entity.Volunteer;
@@ -39,6 +40,11 @@ public class Participation {
     @JoinColumn(name = "organization_id", nullable = true)
     @Setter
     private Organization organization;
+
+    // Introducing a creator field to track Individual/Organization creators
+    @Setter
+    @ManyToOne
+    private Creator creator;
 
     @ManyToOne(optional = false)
     @Setter

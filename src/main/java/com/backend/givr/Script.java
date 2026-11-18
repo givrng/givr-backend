@@ -1,7 +1,7 @@
 package com.backend.givr;
 
 import com.backend.givr.shared.entity.Participation;
-import com.backend.givr.shared.entity.Project;
+import com.backend.givr.shared.entity.projects.Project;
 import com.backend.givr.organization.repo.ProjectRepo;
 import com.backend.givr.shared.service.ParticipationService;
 import com.backend.givr.redis.RedisService;

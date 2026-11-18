@@ -2,7 +2,6 @@ package com.backend.givr.shared.service;
 
 import com.backend.givr.organization.dtos.ApplicationStats;
 import com.backend.givr.organization.entity.Organization;
-import com.backend.givr.shared.entity.Project;
 import com.backend.givr.shared.entity.ProjectApplication;
 import com.backend.givr.organization.repo.ProjectApplicationRepo;
 import com.backend.givr.organization.security.OrganizationDetailsService;
@@ -11,22 +10,25 @@ import com.backend.givr.shared.dtos.ProjectApplicationForm;
 import com.backend.givr.shared.dtos.VolunteerApplicationDto;
 import com.backend.givr.shared.email.EmailService;
 import com.backend.givr.shared.entity.Skill;
+import com.backend.givr.shared.entity.projects.Project;
 import com.backend.givr.shared.enums.ApplicationStatus;
-import com.backend.givr.shared.enums.ProjectType;
 import com.backend.givr.shared.exceptions.DuplicateAccountException;
 import com.backend.givr.shared.exceptions.IllegalOperationException;
 import com.backend.givr.shared.exceptions.MaxApplicantsReachedException;
 import com.backend.givr.shared.exceptions.ProjectDeadlinePastException;
 import com.backend.givr.shared.mapper.SkillMapper;
-import com.backend.givr.volunteer.entity.Individual;
 import com.backend.givr.volunteer.entity.Volunteer;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PagedModel;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -58,22 +60,22 @@ public class ApplicationService {
     private ObjectMapper objectMapper;
 
     public ProjectApplication apply(Volunteer volunteer, ProjectApplicationForm applicationForm, String email){
-        Project project = em.getReference(Project.class, applicationForm.projectId());
-        String organizerName = project.getOrganization() != null? project.getOrganization().getOrganizationName(): project.getIndividual().getFirstname();
+        Project project = em.getReference(Project.class, applicationForm.getProjectId());
+        String organizerName = project.getOrganizerName();
 
         if(LocalDateTime.now().isAfter(project.getDeadline().atTime(23, 59, 59)))
-            throw new ProjectDeadlinePastException("Cannot apply for a project past it's application period");
+            throw new ProjectDeadlinePastException("Cannot applyForProject for a project past it's application period");
 
         var application = new ProjectApplication(project, volunteer, email);
-        application.setApplicationReason(applicationForm.reason());
-        application.setIsAvailable(applicationForm.isAvailable());
-        application.setAboutVolunteer(applicationForm.aboutMe());
+        application.setApplicationReason(applicationForm.getReason());
+        application.setIsAvailable(applicationForm.getIsAvailable());
+        application.setAboutVolunteer(applicationForm.getAboutMe());
 
-        if(Objects.nonNull(applicationForm.additionalInfo()))
-            application.setAdditionalInfo(applicationForm.additionalInfo());
+        if(Objects.nonNull(applicationForm.getAdditionalInfo()))
+            application.setAdditionalInfo(applicationForm.getAdditionalInfo());
 
-        if(Objects.nonNull(applicationForm.mySkills())) {
-            Set<Skill> specialSkillSet = skillService.updateSkills(applicationForm.mySkills());
+        if(Objects.nonNull(applicationForm.getMySkills())) {
+            Set<Skill> specialSkillSet = skillService.updateSkills(applicationForm.getMySkills());
             application.setSpecialSkills(specialSkillSet.stream().toList());
         }
         try{
@@ -85,7 +87,7 @@ public class ApplicationService {
             return projectApplication;
         }catch (DataIntegrityViolationException e){
             log.info(e.getLocalizedMessage());
-            throw new DuplicateAccountException("Cannot apply to a project more than once");
+            throw new DuplicateAccountException("Cannot applyForProject to a project more than once");
         }
     }
 
@@ -98,13 +100,13 @@ public class ApplicationService {
 
         switch (status){
             case APPROVED -> {
-                String name = project.getOrganization() != null? project.getOrganization().getOrganizationName(): project.getIndividual().getFirstname();
+                String name = project.getOrganizerName();
                 String address = String.format("%s, %S", project.getAddress(), project.getLocation().getState());
                 emailService.sendApplicationApproved(application.getVolunteer().getFirstname(), project.getTitle(),
                         name,address, application.getEmail());
             }
             case REJECTED -> {
-                String name = project.getOrganization() != null? project.getOrganization().getOrganizationName(): project.getIndividual().getFirstname();
+                String name = project.getOrganizerName();
                 emailService.sendApplicationRejected(application.getVolunteer().getFirstname(), project.getTitle(),
                         name, application.getEmail());
             }
@@ -118,6 +120,11 @@ public class ApplicationService {
 
         ProjectApplication application = repo.findById(applicationId).orElseThrow();
 
+        changeApplicationStatus(application, status);
+    }
+
+
+    protected void changeApplicationStatus(ProjectApplication application, ApplicationStatus status){
         Project project = application.getProject();
 
         if(project.getApprovedList().size() >= project.getMaxVolunteers())
@@ -137,7 +144,6 @@ public class ApplicationService {
         }
         notifyApplicationChange(application, project, status);
     }
-
     private void checkNull(Project project, Volunteer volunteer){
         if(Objects.isNull(volunteer) && Objects.isNull(project))
             throw new IllegalArgumentException("Null values are not accepted");
@@ -151,8 +157,14 @@ public class ApplicationService {
         return repo.findAllByOrganizationAndStatus(organization, ApplicationStatus.APPLIED).stream().map(VolunteerApplicationDto::new).toList();
     }
 
-    public List<VolunteerApplicationDto> getInitiativeApplications(Individual individual){
-        return repo.findAllByIndividualAndStatus(individual, ApplicationStatus.APPLIED).stream().map(VolunteerApplicationDto::new).toList();
+    public PagedModel<VolunteerApplicationDto> getInitiativeApplications(Volunteer individual, PageRequest pageRequest){
+        Page<ProjectApplication> page = repo.findAllByCreatorIndividualAndStatus(individual, ApplicationStatus.APPLIED, pageRequest);
+        pageRequest = pageRequest.withSort(Sort.by("appliedAt").descending());
+
+        PageImpl<VolunteerApplicationDto> volunteerApplicationDtos = new PageImpl<>(page.getContent().stream().map(VolunteerApplicationDto::new).toList(),
+                page.getPageable(), page.getTotalElements());
+
+        return new PagedModel<>(volunteerApplicationDtos);
     }
 
     public ApplicationStats getVolunteerStats(Organization organization){

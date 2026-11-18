@@ -1,14 +1,17 @@
 package com.backend.givr.organization.repo;
 
 import com.backend.givr.organization.entity.Organization;
-import com.backend.givr.shared.entity.Project;
+import com.backend.givr.shared.entity.projects.Project;
 import com.backend.givr.shared.enums.ProjectStatus;
-import com.backend.givr.volunteer.entity.Individual;
 import com.backend.givr.volunteer.entity.Volunteer;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
+import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -16,9 +19,10 @@ public interface ProjectRepo extends JpaRepository<Project, Long> {
     List<Project> findAllByOrganizationOrderByCreatedAtAsc(Organization organization);
 
     Optional<Project> findByProjectIdAndOrganization(Long projectId, Organization organization);
-    Optional<Project> findByProjectIdAndIndividual(Long projectId, Individual individual);
+
     List<Project> findAllByStatus(ProjectStatus projectStatus);
 
+    Page<Project> findAllByStatusAndDeadlineAfter(ProjectStatus projectStatus, Instant deadline, Pageable pageable);
     @Query("""
             SELECT p from Project p
             WHERE p.deadline < :today
@@ -50,6 +54,4 @@ public interface ProjectRepo extends JpaRepository<Project, Long> {
     List<Project> findAllByOrganizationAndStatus(Organization organization, ProjectStatus status);
 
     List<Project> findAllByOrganizationAndStatusNot(Organization organization, ProjectStatus projectStatus);
-
-    List<Project> findAllByIndividualAndStatus(Individual individual, ProjectStatus projectStatus);
 }

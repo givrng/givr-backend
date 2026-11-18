@@ -4,18 +4,15 @@ import com.backend.givr.organization.dtos.*;
 import com.backend.givr.organization.entity.Organization;
 import com.backend.givr.organization.security.ProjectServiceWorker;
 import com.backend.givr.redis.RedisService;
-import com.backend.givr.shared.dtos.ParticipationDto;
-import com.backend.givr.shared.entity.Project;
+import com.backend.givr.shared.dtos.*;
 import com.backend.givr.organization.mappings.OrganizationMapper;
 import com.backend.givr.organization.repo.OrganizationRepo;
 import com.backend.givr.organization.security.OrganizationDetails;
 import com.backend.givr.organization.security.OrganizationDetailsService;
-import com.backend.givr.shared.dtos.PasswordUpdateDto;
-import com.backend.givr.shared.dtos.VolunteerApplicationDto;
 import com.backend.givr.shared.email.EmailService;
 import com.backend.givr.shared.entity.OrganizationVerificationSession;
+import com.backend.givr.shared.entity.projects.Project;
 import com.backend.givr.shared.enums.*;
-import com.backend.givr.shared.exceptions.BroadcastFailedException;
 import com.backend.givr.shared.exceptions.DuplicateAccountException;
 import com.backend.givr.shared.exceptions.IllegalOperationException;
 import com.backend.givr.shared.interfaces.SecurityDetails;
@@ -24,8 +21,6 @@ import com.backend.givr.shared.enums.AuthProviderType;
 import com.backend.givr.shared.otp.OTPService;
 import com.backend.givr.shared.service.*;
 import com.backend.givr.volunteer.dtos.OrganizationResponseDTOv;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.resend.core.exception.ResendException;
 import jakarta.annotation.security.PermitAll;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityNotFoundException;
@@ -37,7 +32,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.web.PagedModel;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -142,9 +139,10 @@ public class OrganizationService {
         applicationService.changeApplicationStatus(applicationId, ApplicationStatus.REJECTED);
     }
 
-    public List<ParticipationDto> getProjectParticipants(SecurityDetails details){
+    public PagedModel<ParticipationDto> getProjectParticipants(SecurityDetails details, int pageNum, int pageSize){
         Organization organization = repo.findById(details.getId()).orElseThrow();
-        return projectMapper.toParticipationDto(participationService.getParticipantsByOrganization(organization));
+        PageRequest request = PageRequest.of(pageNum, pageSize);
+        return participationService.getParticipantsByOrgOrCreator(organization, request);
     }
     public void updateVolunteerParticipation(UpdateParticipantDto payload, String organizationId){
         Organization organization = em.getReference(Organization.class, organizationId);
@@ -209,11 +207,6 @@ public class OrganizationService {
                 .sorted(Comparator.comparing(Project::getCreatedAt))
                 .toList()));
 
-        projectDtoMap.put("closedProjects", projectMapper.toDtos(organization.getProjects()
-                .stream()
-                .filter(project -> project.getStatus() == ProjectStatus.CLOSE)
-                .sorted(Comparator.comparing(Project::getCreatedAt))
-                .toList()));
         ApplicationStats stats = applicationService.getVolunteerStats(organization);
 
         return new OrganizationDashboard(organization.getOrganizationName(), projectDtoMap, ratingService.getOrganizationRatingScore(organization), stats ,organization.getStatus());
@@ -348,16 +341,7 @@ public class OrganizationService {
     }
 
     public void sendBroadcast(SecurityDetails details, Long projectId, String message) {
-        Project project = projectService.findProjectById(projectId);
-        if(!project.getBroadcastEnabled())
-            return;
 
-        Organization organization = repo.findById(details.getId()).get();
-        try{
-            emailService.broadcastToParticipants(message, project.getSegmentId(), organization.getOrganizationName());
-        }catch (ResendException e){
-            throw new BroadcastFailedException(e.getLocalizedMessage());
-        }
     }
 
     public String shareProject(Long projectId){
@@ -367,5 +351,11 @@ public class OrganizationService {
             System.err.printf("Failed to create shareable link, %s", e.getLocalizedMessage());
             throw new RuntimeException(e);
         }
+    }
+
+    public void markProjectCompleted(Long projectId, String id) {
+        Organization organization = repo.findById(id).orElseThrow();
+        participationService.markProjectCompleted(projectId, organization);
+
     }
 }

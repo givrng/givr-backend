@@ -27,7 +27,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.io.IOException;
 import java.time.Duration;
+import java.util.Arrays;
 import java.util.Objects;
+import java.util.function.Predicate;
 
 @RestController
 @RequestMapping("/${api.version}/api/auth")
@@ -73,7 +75,7 @@ public class RefreshController {
         if(service.isTokenValid(util.extractTokenId(refreshToken))){// validates, revokes, and set used
             String username;
             String userId;
-            String authority;
+            String[] authority;
             try{
                 authority = util.extractRoles(refreshToken);
                 username = util.extractUsername(refreshToken);
@@ -124,5 +126,9 @@ public class RefreshController {
             return ResponseEntity.ok().headers(headers).build();
         }
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+    }
+
+    private boolean container(String[] roles, String predicate){
+        return Arrays.stream(roles).anyMatch(Predicate.isEqual(predicate));
     }
 }

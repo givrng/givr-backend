@@ -55,13 +55,15 @@ public class JwtUtil {
                 .getPayload()
                 .getSubject();
     }
-    public String[] extractRoles(String token) throws JsonProcessingException {
-        return Jwts.parser()
+    public List<String> extractRoles(String token) throws JsonProcessingException {
+        List<?> roles = Jwts.parser()
                 .verifyWith(secretKey)
                 .build()
                 .parseSignedClaims(token)
                 .getPayload()
-                .get("roles", String[].class);
+                .get("roles", List.class);
+
+        return roles == null? List.of() : roles.stream().map(String.class::cast).toList();
     }
 
     public String extractUserId(String token){

@@ -28,6 +28,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 import java.util.function.Predicate;
 
@@ -75,7 +76,7 @@ public class RefreshController {
         if(service.isTokenValid(util.extractTokenId(refreshToken))){// validates, revokes, and set used
             String username;
             String userId;
-            String[] authority;
+            List<String> authority;
             try{
                 authority = util.extractRoles(refreshToken);
                 username = util.extractUsername(refreshToken);

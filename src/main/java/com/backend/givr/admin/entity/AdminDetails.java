@@ -23,9 +23,9 @@ public class AdminDetails implements SecurityDetails {
         this.authorities = List.of(new SimpleGrantedAuthority(admin.getRole().name()));
     }
 
-    public AdminDetails(String username, String id, String[] authority){
+    public AdminDetails(String username, String id, List<String> authority){
         this.username = username;
-        this.authorities = Arrays.stream(authority).map(SimpleGrantedAuthority::new).toList();
+        this.authorities = authority.stream().map(SimpleGrantedAuthority::new).toList();
         this.id = id;
     }
     @Override

@@ -68,25 +68,20 @@ public class JwtValidationFilter extends OncePerRequestFilter {
             for(Cookie cookie: cookies){
                 if(cookie.getName().equals("AccessToken")){
                     accessToken = cookie.getValue();
-                    log.info("Access token found {}", accessToken);
                     break;
                 }
             }
-            log.info("Token has text {}", StringUtils.hasText(accessToken));
 
             if(StringUtils.hasText(accessToken)) {
                 List<String> roles;
+
                 try{
-                    log.info("Attempting to extract roles");
-
-                     roles = jwtUtil.extractRoles(accessToken);
-
-                    log.info("User with {} roles attempting validation", roles.size());
-
+                    roles = jwtUtil.extractRoles(accessToken);
                 }catch (Exception e){
                     log.error("JWT role extraction failed", e);
                     throw e;
                 }
+
                 SecurityDetails user;
                 if(roles.contains("VOLUNTEER"))
                     user = volunteerDetailsService.loadUserByUsername(jwtUtil.extractUsername(accessToken));

@@ -28,7 +28,7 @@ import java.util.Set;
 @Setter
 @Entity
 @Inheritance(strategy = InheritanceType.JOINED)
-@SQLRestriction("isDeleted=true")
+@SQLRestriction("is_deleted=true")
 public class Project {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

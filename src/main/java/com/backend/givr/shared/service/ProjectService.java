@@ -74,7 +74,7 @@ public class ProjectService {
 
     public PagedModel<ProjectResponseDto> getAllProjectsForVolunteer(PageRequest pageRequest){
         pageRequest = pageRequest.withSort(Sort.by("deadline").ascending());
-        Instant now = Instant.now();
+        LocalDateTime now = LocalDateTime.now();
         Page<Project> result = repo.findAllByStatusAndDeadlineAfter(ProjectStatus.OPEN, now, pageRequest);
 
         PageImpl<ProjectResponseDto> responseDtos = new PageImpl<>(mapper.toDtos(result.getContent()), result.getPageable(), result.getTotalElements());

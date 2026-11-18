@@ -75,10 +75,20 @@ public class JwtValidationFilter extends OncePerRequestFilter {
             log.info("Token has text {}", StringUtils.hasText(accessToken));
 
             if(StringUtils.hasText(accessToken)) {
-                String[] roles = jwtUtil.extractRoles(accessToken);
+                String[] roles;
+                try{
+                    log.info("Attempting to extract roles");
 
+                     roles = jwtUtil.extractRoles(accessToken);
 
-                log.info("User with {} roles attempting validation", roles.length);
+                    log.info("Extracted roles: {}", Arrays.toString(roles));
+
+                    log.info("User with {} roles attempting validation", roles.length);
+
+                }catch (Exception e){
+                    log.error("JWT role extraction failed", e);
+                    throw e;
+                }
                 SecurityDetails user;
                 if(Arrays.stream(roles).toList().contains("VOLUNTEER"))
                     user = volunteerDetailsService.loadUserByUsername(jwtUtil.extractUsername(accessToken));

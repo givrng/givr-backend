@@ -72,9 +72,11 @@ public class JwtValidationFilter extends OncePerRequestFilter {
                     break;
                 }
             }
+            log.info("Token has text {}", StringUtils.hasText(accessToken));
+
             if(StringUtils.hasText(accessToken)) {
                 String[] roles = jwtUtil.extractRoles(accessToken);
-                assert roles != null;
+
 
                 log.info("User with {} roles attempting validation", roles.length);
                 SecurityDetails user;

@@ -174,7 +174,7 @@ public class ThymeleafTemplateService {
     public String sendNotification(String firstName){
         Context context = new Context();
         context.setVariable("firstName", firstName);
-        return engine.process("email/notification",context);
+        return engine.process("email/orphanageProjectNewsletter",context);
     }
 }
 

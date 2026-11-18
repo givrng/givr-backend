@@ -15,6 +15,7 @@ springdoc:
     enabled: ${SWAGGER_DOCS_ENABLED}
 spring:
   flyway:
+    enabled: ${FLYWAY_ENABLED}
     baseline-on-migrate: true
     validate-migration-naming: true
   application:

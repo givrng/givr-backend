@@ -1,21 +1,19 @@
-package com.backend.givr.shared.service;
+package com.backend.givr.organization.service;
 
 import com.backend.givr.organization.dtos.ProjectRequestDto;
 import com.backend.givr.organization.dtos.ProjectResponseDto;
 import com.backend.givr.organization.entity.Organization;
-import com.backend.givr.shared.entity.Project;
+import com.backend.givr.organization.entity.Project;
 import com.backend.givr.organization.repo.ProjectRepo;
 import com.backend.givr.organization.security.ProjectServiceWorker;
 import com.backend.givr.shared.email.EmailService;
 import com.backend.givr.shared.entity.Location;
 import com.backend.givr.shared.enums.ProjectStatus;
-import com.backend.givr.shared.enums.ProjectType;
 import com.backend.givr.shared.exceptions.IllegalOperationException;
 import com.backend.givr.shared.exceptions.InconsistentProjectDatesException;
-import com.backend.givr.shared.interfaces.SecurityDetails;
 import com.backend.givr.shared.mapper.ProjectMapper;
+import com.backend.givr.shared.service.*;
 import com.backend.givr.volunteer.dtos.ProjectViewResponse;
-import com.backend.givr.volunteer.entity.Individual;
 import com.backend.givr.volunteer.entity.Volunteer;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityNotFoundException;
@@ -122,26 +120,14 @@ public class ProjectService {
         project.setOrganization(organization);
         project.setStatus(ProjectStatus.DRAFT);
         project.setBroadcastEnabled(repo.count() <= 3);
-        project.setType(ProjectType.Project);
-        Project savedProject = repo.save(project);
-        worker.createProjectCard(savedProject);
-    }
-
-    public void createProject(ProjectRequestDto projectRequestDto, Individual individual){
-        Project project = mapper.toProject(projectRequestDto);
-        handleProject(project, projectRequestDto);
-        project.setIndividual(individual);
-        project.setStatus(ProjectStatus.DRAFT);
-        project.setType(ProjectType.Initiative);
         Project savedProject = repo.save(project);
         worker.createProjectCard(savedProject);
     }
 
 
     @Transactional
-    private Project updateProject(Project project, ProjectRequestDto projectRequestDto){
-
-        mapper.updateProject(projectRequestDto, project);
+    public Project updateProject(Long projectId, ProjectRequestDto projectRequestDto){
+        Project project = findProjectById(projectId);
 
         if(!project.getTitle().equals(projectRequestDto.getTitle()) || !project.getDescription().equals(projectRequestDto.getDescription()))
             worker.createProjectCard(project);
@@ -151,19 +137,9 @@ public class ProjectService {
             project.setStatus(ProjectStatus.OPEN);
             worker.sendProjectListing(project).subscribe();
         }
+        mapper.updateProject(projectRequestDto, project);
         return project;
     }
-
-    public Project orgUpdateProject(Long projectId, Organization organization, ProjectRequestDto projectRequestDto){
-        Project project = findProjectByIdAndOrganization(projectId, organization);
-        return updateProject(project, projectRequestDto);
-    }
-
-    public Project indUpdateProject(Long projectId, Individual individual, ProjectRequestDto projectRequestDto){
-        Project project = findProjectByIdAndIndividual(projectId, individual);
-        return updateProject(project, projectRequestDto);
-    }
-
     private boolean projectDatesValid(Project project) {
         LocalDate today = LocalDate.now(ZoneId.of("Africa/Lagos"));
 
@@ -187,12 +163,6 @@ public class ProjectService {
     public  Project findProjectById(Long projectId){
         return repo.findById(projectId).orElseThrow(()-> new EntityNotFoundException(String.format("Project with id [%s] does not exist", projectId)));
     }
-    public  Project findProjectByIdAndOrganization(Long projectId, Organization organization){
-        return repo.findByProjectIdAndOrganization(projectId, organization).orElseThrow(()-> new EntityNotFoundException(String.format("Project with id [%s] does not exist", projectId)));
-    }
-    public  Project findProjectByIdAndIndividual(Long projectId, Individual individual){
-        return repo.findByProjectIdAndIndividual(projectId, individual).orElseThrow(()-> new EntityNotFoundException(String.format("Project with id [%s] does not exist", projectId)));
-    }
 
     public void save(Project project){
         repo.save(project);
@@ -201,13 +171,6 @@ public class ProjectService {
 
     public void deleteProject(Long projectId, Organization organization) {
         Project project = repo.findByProjectIdAndOrganization(projectId, organization).orElseThrow(()->new EntityNotFoundException("Project not found"));
-        if(project.getStatus() != ProjectStatus.DRAFT && project.getStatus() != ProjectStatus.OPEN)
-            throw new IllegalOperationException("Only DRAFT or OPEN projects can be deleted");
-        repo.delete(project);
-    }
-
-    public void deleteProject(Long projectId, Individual individual) {
-        Project project = repo.findByProjectIdAndIndividual(projectId, individual).orElseThrow(()->new EntityNotFoundException("Project not found"));
         if(project.getStatus() != ProjectStatus.DRAFT && project.getStatus() != ProjectStatus.OPEN)
             throw new IllegalOperationException("Only DRAFT or OPEN projects can be deleted");
         repo.delete(project);
@@ -250,9 +213,4 @@ public class ProjectService {
     public List<Project> getAllProjectsByStatus(ProjectStatus status){
         return repo.findAllByStatus(status);
     }
-
-    public List<Project> getProjectByIndividualAndStatus(Individual individual, ProjectStatus projectStatus) {
-        return repo.findAllByIndividualAndStatus(individual, projectStatus);
-    }
-
 }

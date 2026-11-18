@@ -38,8 +38,7 @@ public class VolunteerDetails implements SecurityDetails {
         this.password = password;
         this.volunteer = volunteer;
         this.authProvider = AuthProviderType.LOCAL;
-        this.roles = volunteer.getVerificationStatus() != null && volunteer.getVerificationStatus().equals(VerificationStatus.VERIFIED)?
-                List.of(new SimpleGrantedAuthority("VOLUNTEER"), new SimpleGrantedAuthority("INDIVIDUAL")) : List.of(new SimpleGrantedAuthority("VOLUNTEER"));
+        setAuthorities(volunteer.getVerificationStatus());
     }
 
     public VolunteerDetails(Volunteer volunteer){
@@ -48,8 +47,7 @@ public class VolunteerDetails implements SecurityDetails {
         this.providerId = volunteer.getProviderId();
         this.password = volunteer.getPassword();
         this.volunteer = volunteer;
-        this.roles = volunteer.getVerificationStatus() != null && volunteer.getVerificationStatus().equals(VerificationStatus.VERIFIED)?
-                List.of(new SimpleGrantedAuthority("VOLUNTEER"), new SimpleGrantedAuthority("INDIVIDUAL")) : List.of(new SimpleGrantedAuthority("VOLUNTEER"));
+        setAuthorities(volunteer.getVerificationStatus());
     }
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

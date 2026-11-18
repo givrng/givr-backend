@@ -38,7 +38,7 @@ public class VolunteerDetails implements SecurityDetails {
         this.password = password;
         this.volunteer = volunteer;
         this.authProvider = AuthProviderType.LOCAL;
-        this.roles = volunteer.getVerificationStatus().equals(VerificationStatus.VERIFIED)?
+        this.roles = volunteer.getVerificationStatus() != null && volunteer.getVerificationStatus().equals(VerificationStatus.VERIFIED)?
                 List.of(new SimpleGrantedAuthority("VOLUNTEER"), new SimpleGrantedAuthority("INDIVIDUAL")) : List.of(new SimpleGrantedAuthority("VOLUNTEER"));
     }
 

@@ -8,6 +8,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -16,6 +17,7 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import java.io.IOException;
+import java.util.Objects;
 
 public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
 
@@ -32,11 +34,11 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 
     }
     @Override
-    public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException {
+    public @NotNull Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException {
         try{
             var auth = mapper.readValue(request.getInputStream(), AuthDTO.class);
             UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(auth.email(), auth.password());
-            return authManager.authenticate(token);
+            return Objects.requireNonNull(authManager.authenticate(token));
         } catch (IOException e) {
 
             throw new RuntimeException(e);

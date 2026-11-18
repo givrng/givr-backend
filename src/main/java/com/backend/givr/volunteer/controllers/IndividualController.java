@@ -32,6 +32,14 @@ public class IndividualController {
         return ResponseEntity.ok(service.createInitiative(payload, authContext));
     }
 
+    @GetMapping("/donations")
+    public ResponseEntity<PagedModel<DonationDto>> getIndividualDonations(@AuthenticationPrincipal SecurityDetails details,
+                                                                          @RequestParam(name = "pageNum", defaultValue = "0") int pageNum,
+                                                                          @RequestParam(name = "pageSize", defaultValue = "20") int pageSize){
+        PageRequest request = PageRequest.of(pageNum, pageSize);
+        return ResponseEntity.ok(service.getDonations(details.getId(), request));
+    }
+
     @GetMapping("/media/upload/signature")
     public ResponseEntity<MediaUploadResponse> generateUploadSignature(){
         return ResponseEntity.ok(cloudinaryService.generateSignedUploadKey(""));
@@ -85,7 +93,7 @@ public class IndividualController {
     }
 
     @GetMapping("/initiative/donations")
-    public ResponseEntity<PagedModel<DonationDto>> getProjectApplicationDonations(@AuthenticationPrincipal SecurityDetails details,
+    public ResponseEntity<PagedModel<DonationDto>> getAllInitiativeDonations(@AuthenticationPrincipal SecurityDetails details,
                                                                                   @RequestParam(name = "pageNum", defaultValue = "0") int pageNum,
                                                                                   @RequestParam(name = "pageSize", defaultValue = "30") int pageSize){
         PageRequest request = PageRequest.of(pageNum, pageSize);
@@ -93,7 +101,7 @@ public class IndividualController {
     }
 
     @GetMapping("/initiative/donations/{donationId}")
-    public ResponseEntity<DonationDto> getDonation(@PathVariable(name = "donationId") String donationId){
+    public ResponseEntity<DonationDto> getInitiativeDonation(@PathVariable(name = "donationId") String donationId){
         return ResponseEntity.ok(service.getDonation(donationId));
     }
 

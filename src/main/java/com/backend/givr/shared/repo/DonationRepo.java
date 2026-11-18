@@ -17,4 +17,6 @@ public interface DonationRepo extends JpaRepository<Donation, String> {
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     Optional<Donation> findByIdAndItemInitiativeCreator(@NotBlank String id, Creator creator);
+
+    Page<Donation> findAllByItemInitiativeCreator(Creator creator, PageRequest pageRequest);
 }

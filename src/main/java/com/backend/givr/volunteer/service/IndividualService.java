@@ -134,10 +134,9 @@ public class IndividualService {
     }
 
     public PagedModel<DonationDto> getDonations(String id, PageRequest pageRequest) {
-        Volunteer volunteer = getIndividual(id);
+        Creator creator = creatorService.getCreatorByIndividualId(id);
         pageRequest = pageRequest.withSort(Sort.by("createdAt").descending());
-
-        Page<Donation> donationsPage = donationRepo.findAllByDonor(volunteer, pageRequest);
+        Page<Donation> donationsPage = donationRepo.findAllByItemInitiativeCreator(creator, pageRequest);
         PageImpl<DonationDto> donationDtoPage = new PageImpl<>(projectMapper.toDonationDtos(donationsPage.getContent()),
                 donationsPage.getPageable(), donationsPage.getTotalElements());
 

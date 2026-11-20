@@ -19,6 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.web.PagedModel;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 
 import org.springframework.web.bind.annotation.*;
@@ -60,7 +61,7 @@ public class AdminController {
         return ResponseEntity.accepted().build();
     }
 
-    @PostMapping("/auth/verifyOrganization-otp")
+    @PostMapping("/auth/verify-otp")
     public ResponseEntity<Void> authenticateAdmin(@RequestBody AdminAuthDto payload, HttpServletResponse response) throws IOException {
         AdminDetails user = service.validateOtp(payload);
         givrCookie.addCookieToResponse(user, response);
@@ -68,7 +69,7 @@ public class AdminController {
     }
 
 
-    @GetMapping("/verifyOrganization")
+    @GetMapping("/verify")
     public ResponseEntity<Void> verify(){
         return ResponseEntity.ok().build();
     }
@@ -84,7 +85,7 @@ public class AdminController {
     }
 
     @DeleteMapping
-    @RolesAllowed({"SUPER_ADMIN"})
+    @PreAuthorize("hasAuthority('SUPER_ADMIN')")
     public ResponseEntity<Void> removeAdmin(){
         return null;
     }

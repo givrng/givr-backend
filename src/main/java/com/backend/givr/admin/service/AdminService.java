@@ -13,6 +13,7 @@ import com.backend.givr.admin.repos.ReviewRepo;
 import com.backend.givr.organization.entity.Organization;
 import com.backend.givr.organization.service.OrganizationService;
 import com.backend.givr.shared.dtos.VerificationSessionDto;
+import com.backend.givr.shared.dtos.VolunteerVerificationSessionDto;
 import com.backend.givr.shared.email.EmailService;
 import com.backend.givr.shared.entity.OrganizationVerificationSession;
 import com.backend.givr.shared.enums.AccountType;
@@ -24,12 +25,18 @@ import com.backend.givr.shared.otp.OTPService;
 import com.backend.givr.shared.service.VerificationService;
 import com.backend.givr.shared.enums.ReviewStatus;
 import com.backend.givr.shared.service.VerificationWorker;
+import com.backend.givr.volunteer.entity.VolunteerVerificationSession;
+import com.backend.givr.volunteer.service.VolunteerVerificationSessionService;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.constraints.Email;
 import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.web.PagedModel;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -62,6 +69,8 @@ public class AdminService {
     private VerificationService verificationService;
     @Autowired
     private VerificationWorker verificationWorker;
+    @Autowired
+    private VolunteerVerificationSessionService volunteerVerificationSessionService;
 
     @Async
     public void requestOtp(String email){
@@ -77,9 +86,22 @@ public class AdminService {
         return repo.findByEmail(email).orElseThrow(()->new EntityNotFoundException(String.format("Admin with %s does not exist", email)));
     }
 
-    public @Nullable List<VerificationSessionDto> getVerificationSession(ReviewStatus status) {
-        return Objects.requireNonNull(verificationService.getVerificationSessions(status)).stream().map(VerificationSessionDto::new).toList();
+    public @Nullable PagedModel<VerificationSessionDto> getVerificationSession(ReviewStatus status, PageRequest request) {
+        Page<OrganizationVerificationSession> pageSessions = verificationService.getVerificationSessions(status, request);
+
+        PageImpl<VerificationSessionDto> verificationImpl = new PageImpl<>(Objects.requireNonNull(pageSessions).getContent().stream().map(VerificationSessionDto::new).toList(),
+                pageSessions.getPageable(), pageSessions.getTotalElements());
+        return new PagedModel<>(verificationImpl);
     }
+
+    public PagedModel<VolunteerVerificationSessionDto> getVolunteerVerificationSession(ReviewStatus status, PageRequest request){
+        Page<VolunteerVerificationSession> pageSessions = volunteerVerificationSessionService.getVerificationSessions(status, request);
+
+        PageImpl<VolunteerVerificationSessionDto> verificationImpl = new PageImpl<>(Objects.requireNonNull(pageSessions).getContent().stream().map(VolunteerVerificationSessionDto::new).toList(),
+                pageSessions.getPageable(), pageSessions.getTotalElements());
+        return new PagedModel<>(verificationImpl);
+    }
+
     public void createAdmin(String email){
         Admin admin = Admin.createAdmin(email, AdminRole.SUPER_ADMIN);
         repo.save(admin);

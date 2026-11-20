@@ -47,11 +47,10 @@ public class InitiativeService {
     @Transactional
     public Initiative createInitiative(InitiativeRequestDto initiativeRequestDto, Volunteer individual){
         Initiative initiative = mapper.toInitiative(initiativeRequestDto);
-        initiative.setOrganizerName(String.format("%S %S", individual.getLastname(), individual.getFirstname()));
+        initiative.setOrganizerName(String.format("%s %s", individual.getLastname(), individual.getFirstname()));
         projectService.handleProject(initiative, initiativeRequestDto);
 
         List<InitiativeItem> items = createInitiativeItems(initiativeRequestDto.getInitiativeItemList(), initiative);
-
         List<InitiativeItem> services = createInitiativeItems(initiativeRequestDto.getInitiativeItemList(), initiative);
 
         MediaDto media = initiativeRequestDto.getMedia();
@@ -60,11 +59,13 @@ public class InitiativeService {
         initiative.getInitiativeServices().addAll(services);
         initiative.setMedia(new Media(media.mediaUrl(), initiative));
 
+
         Creator creator = creatorService.createOrReturnCreator(individual);
         initiative.setCreator(creator);
         initiative.setStatus(ProjectStatus.DRAFT);
-        Initiative savedProject = repo.save(initiative);
-        projectServiceWorker.createProjectCard(savedProject);
+
+        initiative = repo.save(initiative);
+        projectServiceWorker.createProjectCard(initiative);
 
         return  initiative;
     }

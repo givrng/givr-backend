@@ -18,8 +18,7 @@ public class Initiative extends Project {
     @OneToMany(mappedBy = "initiative", cascade = {CascadeType.PERSIST, CascadeType.REFRESH})
     private final List<InitiativeItem> initiativeServices = new ArrayList<>();
 
-    @OneToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = "media", nullable = false)
+    @OneToOne(mappedBy = "initiative", cascade = CascadeType.ALL, optional = false)
     @Setter
     private Media media;
 }

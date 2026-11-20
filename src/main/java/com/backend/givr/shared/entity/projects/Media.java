@@ -3,10 +3,7 @@ package com.backend.givr.shared.entity.projects;
 import com.backend.givr.shared.entity.BaseEntity;
 import com.backend.givr.shared.enums.MediaStatus;
 import com.backend.givr.shared.enums.MediaType;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.OneToOne;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -18,7 +15,8 @@ public class Media extends BaseEntity {
     @Enumerated(EnumType.STRING)
     private MediaType mediaType;
 
-    @OneToOne(optional = false)
+    @OneToOne(optional = false, fetch =  FetchType.LAZY)
+    @JoinColumn(name = "initiative_id", nullable = false)
     private Initiative initiative;
 
     @Enumerated(EnumType.STRING)

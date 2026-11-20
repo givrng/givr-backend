@@ -1,10 +1,14 @@
 package com.backend.givr.volunteer.service;
 
 import com.backend.givr.shared.enums.IDType;
+import com.backend.givr.shared.enums.ReviewStatus;
 import com.backend.givr.volunteer.entity.Volunteer;
 import com.backend.givr.volunteer.entity.VolunteerVerificationSession;
 import com.backend.givr.volunteer.repo.VolunteerVerificationSessionRepo;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -28,5 +32,12 @@ public class VolunteerVerificationSessionService {
 
     public Optional<VolunteerVerificationSession> getVerificationSessionByVolunteer(Volunteer volunteer){
         return repo.findByVolunteer(volunteer);
+    }
+
+    public Page<VolunteerVerificationSession> getVerificationSessions(ReviewStatus status, PageRequest request) {
+        request = request.withSort(Sort.by("createdAt" ).descending());
+        if(status == null)
+            return repo.findAll(request);
+        return repo.findByVerificationStatus(status, request);
     }
 }

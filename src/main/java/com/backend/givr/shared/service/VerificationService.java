@@ -31,6 +31,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -78,14 +80,12 @@ public class VerificationService {
     @Value("${givr.verification.amount}")
     private Double amount;
 
-    private final Logger logger = LoggerFactory.getLogger(VerificationService.class);
 
-    public @Nullable List<OrganizationVerificationSession> getVerificationSessions(ReviewStatus status) {
+    public @Nullable Page<OrganizationVerificationSession> getVerificationSessions(ReviewStatus status, PageRequest request) {
+        request = request.withSort(Sort.by("createdAt" ).descending());
         if(status == null)
-            return verificationSessionRepo.findAll();
-        
-        Sort sort = Sort.by("createdAt" ).descending();
-        return verificationSessionRepo.findByReviewStatus(status, sort);
+            return verificationSessionRepo.findAll(request);
+        return verificationSessionRepo.findByReviewStatus(status, request);
     }
 
     public OrganizationVerificationSession getVerificationSession(Long sessionId){

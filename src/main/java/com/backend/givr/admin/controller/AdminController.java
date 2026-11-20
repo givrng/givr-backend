@@ -6,6 +6,7 @@ import com.backend.givr.admin.dtos.ReviewDto;
 import com.backend.givr.admin.dtos.ReviewResponseDto;
 import com.backend.givr.admin.entity.AdminDetails;
 import com.backend.givr.admin.service.AdminService;
+import com.backend.givr.shared.dtos.VolunteerVerificationSessionDto;
 import com.backend.givr.shared.service.ParticipationService;
 import com.backend.givr.shared.dtos.ParticipationDto;
 import com.backend.givr.shared.dtos.VerificationSessionDto;
@@ -17,6 +18,7 @@ import jakarta.annotation.security.RolesAllowed;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.web.PagedModel;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -43,9 +45,21 @@ public class AdminController {
     @Value("${givr.allowed.admins}")
     private List<String> allowedAdmins;
 
-    @GetMapping
-    public ResponseEntity<List<VerificationSessionDto>> getVerificationSession(@RequestParam(value = "status", required = false) ReviewStatus status){
-        return ResponseEntity.ok(service.getVerificationSession(status));
+    @GetMapping("/verifications/organization")
+    public ResponseEntity<PagedModel<VerificationSessionDto>> getVerificationSession(@RequestParam(value = "status", required = false) ReviewStatus status,
+                                                                               @RequestParam(name = "pageNum", defaultValue = "0") int pageNum,
+                                                                               @RequestParam(name = "pageSize", defaultValue = "30") int pageSize){
+        PageRequest pageRequest = PageRequest.of(pageNum, pageSize);
+        return ResponseEntity.ok(service.getVerificationSession(status, pageRequest));
+    }
+
+
+    @GetMapping("/verifications/individual")
+    public ResponseEntity<PagedModel<VolunteerVerificationSessionDto>> getVolunteerVerificationSession(@RequestParam(value = "status", required = false) ReviewStatus status,
+                                                                                              @RequestParam(name = "pageNum", defaultValue = "0") int pageNum,
+                                                                                              @RequestParam(name = "pageSize", defaultValue = "30") int pageSize){
+        PageRequest pageRequest = PageRequest.of(pageNum, pageSize);
+        return ResponseEntity.ok(service.getVolunteerVerificationSession(status, pageRequest));
     }
 
     @PostMapping("/auth/request-otp")

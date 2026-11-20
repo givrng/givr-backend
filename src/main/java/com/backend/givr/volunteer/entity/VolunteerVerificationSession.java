@@ -1,6 +1,7 @@
 package com.backend.givr.volunteer.entity;
 
 import com.backend.givr.shared.enums.IDType;
+import com.backend.givr.shared.enums.ReviewStatus;
 import com.backend.givr.shared.enums.VerificationStatus;
 import com.backend.givr.volunteer.dtos.VolunteerVerificationDto;
 import jakarta.persistence.*;
@@ -25,12 +26,20 @@ public class VolunteerVerificationSession {
     private Volunteer volunteer;
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private IDType idType;
 
+    @Column(nullable = false)
     private String idNumber;
 
+    @Column(nullable = false)
     private String firstname;
+
+    @Column(nullable = false)
     private String lastname;
+
+    private ReviewStatus reviewStatus;
+
     private String middleName;
     private String individualLogo;
     private String remark;
@@ -46,6 +55,7 @@ public class VolunteerVerificationSession {
         this.lastname = verificationDto.lastname();
         this.middleName = verificationDto.middleName();
         this.volunteer = volunteer;
+        this.reviewStatus = ReviewStatus.Pending;
         this.individualLogo = verificationDto.individualLogo();
         this.dateOfBirth = verificationDto.dateOfBirth();
     }

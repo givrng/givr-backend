@@ -19,6 +19,11 @@ public class ControllerAdviser {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorMessage(String.format("Entity does not exist %s", e.getLocalizedMessage())));
     }
 
+    @ExceptionHandler(VerificationPaymentProcessedException.class)
+    public ResponseEntity<ErrorMessage> handleVerificationPaymentProcessException(VerificationPaymentProcessedException e){
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorMessage(e.getLocalizedMessage()));
+    }
+
     @ExceptionHandler(BroadcastFailedException.class)
     public ResponseEntity<ErrorMessage> handleResendException(BroadcastFailedException e){
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorMessage(String.format("Failed to broadcast email %s", e.getLocalizedMessage())));

@@ -54,8 +54,8 @@ public class Volunteer {
     private double rating = 0.0;
 
     // Volunteer verification
-    @OneToMany
-    private List<VolunteerVerificationSession> verificationSessions;
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "volunteer", orphanRemoval = true)
+    private List<VolunteerVerificationSession> verificationSessions = new ArrayList<>();
 
     @Enumerated(EnumType.STRING)
     private VerificationStatus verificationStatus;

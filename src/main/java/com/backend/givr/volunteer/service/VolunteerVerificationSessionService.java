@@ -14,6 +14,10 @@ public class VolunteerVerificationSessionService {
     @Autowired
     private VolunteerVerificationSessionRepo repo;
 
+    public Optional<VolunteerVerificationSession> findByIdTypAndNumber(IDType type, String idNumber){
+        return repo.findByIdTypeAndIdNumber(type, idNumber);
+    }
+
     public boolean existsByIdentification(String idNumber, IDType idType){
         return repo.existsByIdNumberAndIdType(idNumber, idType);
     }

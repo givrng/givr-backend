@@ -10,7 +10,9 @@ import com.backend.givr.organization.security.OrganizationDetailsService;
 import com.backend.givr.organization.security.PaymentService;
 import com.backend.givr.shared.entity.Location;
 import com.backend.givr.shared.entity.OrganizationVerificationSession;
+import com.backend.givr.shared.enums.IDType;
 import com.backend.givr.shared.exceptions.DuplicateAccountException;
+import com.backend.givr.shared.exceptions.VerificationPaymentProcessedException;
 import com.backend.givr.shared.mapper.VerificationMapper;
 import com.backend.givr.shared.repo.OrganizationVerificationSessionRepo;
 import com.backend.givr.shared.email.EmailService;
@@ -18,6 +20,7 @@ import com.backend.givr.shared.enums.ReviewStatus;
 import com.backend.givr.volunteer.dtos.VolunteerVerificationDto;
 import com.backend.givr.volunteer.entity.Volunteer;
 import com.backend.givr.volunteer.entity.VolunteerVerificationSession;
+import com.backend.givr.volunteer.repo.VolunteerRepo;
 import com.backend.givr.volunteer.service.VolunteerVerificationSessionService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -61,7 +64,8 @@ public class VerificationService {
     private VerificationPaymentRepo paymentRepo;
     @Autowired
     private OrganizationVerificationSessionRepo verificationSessionRepo;
-
+    @Autowired
+    private VolunteerRepo volunteerRepo;
     @Autowired
     private VolunteerVerificationSessionService volunteerVerificationSessionService;
 
@@ -126,18 +130,21 @@ public class VerificationService {
     @Transactional
     public CheckoutResponse createVolunteerVerificationSession(VolunteerVerificationDto verificationDto, Volunteer volunteer){
 
-        if(volunteerVerificationSessionService.existsByIdentification(verificationDto.idNumber(), verificationDto.idType()))
-            throw new DuplicateAccountException("Volunteer verification session exists");
+        IDType type = verificationDto.idType();
+        String number = verificationDto.idNumber().toUpperCase().trim();
+        Optional<VolunteerVerificationSession> optionalVerificationSession = volunteerVerificationSessionService.findByIdTypAndNumber(type, number);
 
-        Optional<VolunteerVerificationSession> optionalSession = volunteerVerificationSessionService.getVerificationSessionByVolunteer(volunteer);
-        VolunteerVerificationSession verificationSession;
-        if(optionalSession.isPresent()){
-            verificationSession = optionalSession.get();
-            verificationSession.setIdNumber(verificationDto.idNumber());
-            verificationSession.setIdType(verificationDto.idType());
+        if(optionalVerificationSession.isPresent() && volunteer.getVerificationStatus() != null){
+            throw new VerificationPaymentProcessedException("Verification has been paid for, await verification update from admin");
         }
-        verificationSession = new VolunteerVerificationSession(verificationDto, volunteer);
-        volunteerVerificationSessionService.save(verificationSession);
+
+        VolunteerVerificationSession verificationSession = new VolunteerVerificationSession(verificationDto, volunteer);
+        volunteer.getVerificationSessions().add(verificationSession);
+        volunteerRepo.save(volunteer);
+        return processCheckoutUrl(volunteer);
+    }
+
+    private CheckoutResponse processCheckoutUrl(Volunteer volunteer){
         VerificationPayment payment = new VerificationPayment(BigDecimal.valueOf(amount), String.format("Verification of %s account", volunteer.getVolunteerId()), volunteer);
 
         String email = volunteer.getEmail();
@@ -145,7 +152,6 @@ public class VerificationService {
         paymentRepo.save(payment);
         return new CheckoutResponse(checkout);
     }
-
     @Async
     public void initiateVerification(String body){
         try{

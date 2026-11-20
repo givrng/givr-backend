@@ -2,6 +2,7 @@ package com.backend.givr.volunteer.controllers;
 
 import com.backend.givr.organization.dtos.UpdateParticipantDto;
 import com.backend.givr.shared.dtos.*;
+import com.backend.givr.shared.enums.MediaUploadPurpose;
 import com.backend.givr.shared.enums.ProjectStatus;
 import com.backend.givr.shared.interfaces.SecurityDetails;
 import com.backend.givr.shared.service.CloudinaryService;
@@ -21,7 +22,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/${api.version}/api/individual")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('INDIVIDUAL')")
+@PreAuthorize("hasAuthority('INDIVIDUAL')")
 public class IndividualController {
     private final IndividualService service;
     private final ParticipationService participationService;
@@ -41,13 +42,13 @@ public class IndividualController {
     }
 
     @GetMapping("/media/upload/signature")
-    public ResponseEntity<MediaUploadResponse> generateUploadSignature(){
-        return ResponseEntity.ok(cloudinaryService.generateSignedUploadKey(""));
+    public ResponseEntity<MediaUploadResponse> generateUploadSignature(@RequestParam(name = "purpose") MediaUploadPurpose purpose){
+        return ResponseEntity.ok(cloudinaryService.generateSignedUploadKey(purpose));
     }
 
     @GetMapping("/initiative")
     public ResponseEntity<PagedModel<InitiativeResponseDto>> getInitiatives(
-            @RequestParam(name = "status", defaultValue = "draft") ProjectStatus status,
+            @RequestParam(name = "status", defaultValue = "DRAFT") ProjectStatus status,
             @RequestParam(name = "pageNum", defaultValue = "0") int pageNum,
             @RequestParam(name = "pageSize", defaultValue = "20") int pageSize,
             @AuthenticationPrincipal SecurityDetails details){
@@ -116,14 +117,14 @@ public class IndividualController {
         return ResponseEntity.noContent().build();
     }
 
-    @PatchMapping("/projects/applications/{id}/reject")
+    @PatchMapping("/initiative/applications/{id}/reject")
     public ResponseEntity<Void> rejectApplication(@PathVariable("id") String id){
         service.rejectApplication(id);
         return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/initiative/{initiativeId}")
-    private ResponseEntity<Void> deleteProject(@PathVariable("projectId") Long projectId, @AuthenticationPrincipal SecurityDetails details){
+    private ResponseEntity<Void> deleteProject(@PathVariable("initiativeId") Long projectId, @AuthenticationPrincipal SecurityDetails details){
         service.deleteInitiative(projectId, details.getId());
         return ResponseEntity.noContent().build();
     }

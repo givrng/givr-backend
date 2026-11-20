@@ -97,7 +97,7 @@ public class IndividualService {
     }
 
     public void deleteInitiative(Long projectId, String volunteerId) {
-        Volunteer individual = em.getReference(Volunteer.class, volunteerId);
+        Volunteer individual = getIndividual(volunteerId);
         initiativeService.deleteInitiative(projectId, individual);
     }
 

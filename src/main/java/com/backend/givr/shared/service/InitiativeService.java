@@ -113,9 +113,6 @@ public class InitiativeService {
         Initiative initiative = repo.findByProjectIdAndCreator(initiativeId, creator)
                 .orElseThrow(()-> new EntityNotFoundException("Initiative not found"));
 
-        if(initiative.getStatus() != ProjectStatus.DRAFT && initiative.getStatus() != ProjectStatus.OPEN)
-            throw new IllegalOperationException("Only DRAFT or OPEN initiatives can be deleted");
-
         switch (initiative.getStatus()){
             case DRAFT -> {
                 repo.delete(initiative);
@@ -124,6 +121,7 @@ public class InitiativeService {
                 initiative.setDeleted(true);
                 repo.save(initiative);
             }
+            default -> throw new IllegalOperationException("Only DRAFT or OPEN initiatives can be deleted");
         }
     }
 

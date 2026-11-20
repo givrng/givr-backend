@@ -108,6 +108,11 @@ public class SecurityConfig {
                     request.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll();
                     request.requestMatchers(HttpMethod.POST, "/v1/api/volunteer/auth/**").permitAll();
                     request.requestMatchers(HttpMethod.GET, "/v1/api/volunteer/profile/image").permitAll();
+//                    request.requestMatchers(HttpMethod.GET, "/v1/api/individual/**").hasAuthority("INDIVIDUAL");
+//                    request.requestMatchers(HttpMethod.POST, "/v1/api/individual/**").hasAuthority("INDIVIDUAL");
+//                    request.requestMatchers(HttpMethod.DELETE, "/v1/api/individual/**").hasAuthority("INDIVIDUAL");
+//                    request.requestMatchers(HttpMethod.PATCH, "/v1/api/individual/**").hasAuthority("INDIVIDUAL");
+//                    request.requestMatchers(HttpMethod.PUT, "/v1/api/individual/**").hasAuthority("INDIVIDUAL");
                     request.anyRequest().hasAuthority("VOLUNTEER");
                 })
                 .authenticationProvider(volunteerDaoAuthProvider())

@@ -21,7 +21,7 @@ public class CreateVolunteerRequestDto {
     private String email;
 
     @NotNull
-    @Size(min = 11, max = 13, message = "Invalid number, no less than 10 and no more than 13")
+    @Size(min = 11, max = 16, message = "Invalid number, no less than 10 and no more than 13")
     private String phone;
 
     @NotNull

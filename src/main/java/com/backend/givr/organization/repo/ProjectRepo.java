@@ -22,7 +22,7 @@ public interface ProjectRepo extends JpaRepository<Project, Long> {
 
     List<Project> findAllByStatus(ProjectStatus projectStatus);
 
-    Page<Project> findAllByStatusAndDeadlineAfter(ProjectStatus projectStatus, LocalDateTime deadline, Pageable pageable);
+    Page<Project> findAllByStatusAndDeadlineAfter(ProjectStatus projectStatus, LocalDate deadline, Pageable pageable);
     @Query("""
             SELECT p from Project p
             WHERE p.deadline < :today

@@ -1,6 +1,7 @@
 package com.backend.givr.shared.service;
 
 import com.backend.givr.shared.dtos.MediaUploadResponse;
+import com.backend.givr.shared.enums.MediaUploadPurpose;
 import com.cloudinary.Cloudinary;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -42,14 +43,17 @@ public class CloudinaryService {
     /**
      * Generates a signature for frontend client for upload of files
      */
-    public MediaUploadResponse generateSignedUploadKey(String subFolder){
+    public MediaUploadResponse generateSignedUploadKey(MediaUploadPurpose purpose){
         final long timestamp = Instant.now().getEpochSecond();
-        final long expiresAt = Instant.now().plusSeconds(20 * 60).getEpochSecond();
-        final String folder = String.format("%s/%s", "/givr", subFolder);
+        final long expiresAt = Instant.now().plusSeconds(5 * 60).getEpochSecond();
+        final String folder = purpose.getFolder();
+
+        final String uploadPreset = purpose.getUploadPreset();
 
         final Map<String, Object> params = Map.of(
                 "timestamp", timestamp,
-                "folder", folder
+                "folder", folder,
+                "upload_preset", uploadPreset
         );
 
         final String signature = cloudinary.apiSignRequest(params, cloudinaryApiSecret, 2);
@@ -57,7 +61,8 @@ public class CloudinaryService {
         return new MediaUploadResponse(
                 signature, timestamp,
                 expiresAt, cloudinaryApiKey,
-                cloudinaryCloudName, folder
+                cloudinaryCloudName, folder,
+                uploadPreset, purpose.getResourceType()
         );
 
     }

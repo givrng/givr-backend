@@ -19,7 +19,7 @@ public class Initiative extends Project {
     private final List<InitiativeItem> initiativeServices = new ArrayList<>();
 
     @Setter
-    @OneToOne(mappedBy = "initiative", optional = false)
+    @OneToOne( optional = false)
     private Media media;
 
 }

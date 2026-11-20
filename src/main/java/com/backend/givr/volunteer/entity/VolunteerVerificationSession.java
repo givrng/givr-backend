@@ -49,4 +49,15 @@ public class VolunteerVerificationSession {
         this.individualLogo = verificationDto.individualLogo();
         this.dateOfBirth = verificationDto.dateOfBirth();
     }
+
+    public void update(VolunteerVerificationDto verificationDto){
+        this.idNumber = verificationDto.idNumber();
+        this.idType = verificationDto.idType();
+        verificationStatus = VerificationStatus.PENDING;
+        this.firstname = verificationDto.firstname();
+        this.lastname = verificationDto.lastname();
+        this.middleName = verificationDto.middleName();
+        this.individualLogo = verificationDto.individualLogo();
+        this.dateOfBirth = verificationDto.dateOfBirth();
+    }
 }

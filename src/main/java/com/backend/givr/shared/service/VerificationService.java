@@ -136,11 +136,19 @@ public class VerificationService {
 
         if(optionalVerificationSession.isPresent() && volunteer.getVerificationStatus() != null){
             throw new VerificationPaymentProcessedException("Verification has been paid for, await verification update from admin");
-        }
+        }else if(optionalVerificationSession.isPresent())
+            return processCheckoutUrl(volunteer);
 
-        VolunteerVerificationSession verificationSession = new VolunteerVerificationSession(verificationDto, volunteer);
-        volunteer.getVerificationSessions().add(verificationSession);
-        volunteerRepo.save(volunteer);
+
+        var volunteerSession = volunteerVerificationSessionService.getVerificationSessionByVolunteer(volunteer);
+        VolunteerVerificationSession session;
+        if(volunteerSession.isPresent()){
+            session = volunteerSession.get();
+            session.update(verificationDto);
+        }
+        session = new VolunteerVerificationSession(verificationDto, volunteer);
+
+        volunteerVerificationSessionService.save(session);
         return processCheckoutUrl(volunteer);
     }
 

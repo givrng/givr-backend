@@ -18,11 +18,8 @@ public class Initiative extends Project {
     @OneToMany(mappedBy = "initiative", cascade = {CascadeType.PERSIST, CascadeType.REFRESH})
     private final List<InitiativeItem> initiativeServices = new ArrayList<>();
 
-    @OneToOne(mappedBy = "initiative", cascade = CascadeType.ALL, optional = false)
+    @Setter
+    @OneToOne(mappedBy = "initiative", optional = false)
     private Media media;
 
-    public void setMedia(Media media){
-        this.media = media;
-        media.setInitiative(this);
-    }
 }

@@ -16,10 +16,6 @@ public class Media extends BaseEntity {
     @Enumerated(EnumType.STRING)
     private MediaType mediaType;
 
-    @OneToOne(optional = false, fetch =  FetchType.LAZY)
-    @JoinColumn(name = "initiative_id")
-    @Setter
-    private Initiative initiative;
 
     @Enumerated(EnumType.STRING)
     private MediaStatus status;

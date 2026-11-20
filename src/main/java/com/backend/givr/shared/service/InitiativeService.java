@@ -53,11 +53,14 @@ public class InitiativeService {
         List<InitiativeItem> items = createInitiativeItems(initiativeRequestDto.getInitiativeItemList(), initiative);
         List<InitiativeItem> services = createInitiativeItems(initiativeRequestDto.getInitiativeItemList(), initiative);
 
-        MediaDto media = initiativeRequestDto.getMedia();
+        MediaDto mediaDto = initiativeRequestDto.getMedia();
+        Media media = new Media(mediaDto.mediaUrl());
+        media = mediaRepo.save(media);
 
         initiative.getInitiativeItems().addAll(items);
         initiative.getInitiativeServices().addAll(services);
-        initiative.setMedia(new Media(media.mediaUrl(), initiative));
+
+        initiative.setMedia(media);
 
 
         Creator creator = creatorService.createOrReturnCreator(individual);

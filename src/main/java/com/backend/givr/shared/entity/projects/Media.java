@@ -6,6 +6,7 @@ import com.backend.givr.shared.enums.MediaType;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @NoArgsConstructor
 @Entity
@@ -16,16 +17,16 @@ public class Media extends BaseEntity {
     private MediaType mediaType;
 
     @OneToOne(optional = false, fetch =  FetchType.LAZY)
-    @JoinColumn(name = "initiative_id", nullable = false)
+    @JoinColumn(name = "initiative_id")
+    @Setter
     private Initiative initiative;
 
     @Enumerated(EnumType.STRING)
     private MediaStatus status;
 
-    public Media(String url, Initiative initiative){
+    public Media(String url){
         this.mediaType = MediaType.Video;
         this.status = MediaStatus.Pending_Approval;
-        this.initiative = initiative;
         this.url = url;
     }
 

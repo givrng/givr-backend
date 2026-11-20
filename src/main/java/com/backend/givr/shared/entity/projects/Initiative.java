@@ -19,6 +19,10 @@ public class Initiative extends Project {
     private final List<InitiativeItem> initiativeServices = new ArrayList<>();
 
     @OneToOne(mappedBy = "initiative", cascade = CascadeType.ALL, optional = false)
-    @Setter
     private Media media;
+
+    public void setMedia(Media media){
+        this.media = media;
+        media.setInitiative(this);
+    }
 }

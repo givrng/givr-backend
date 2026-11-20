@@ -1,43 +1,58 @@
 package com.backend.givr.shared.enums;
 
 
+import java.util.List;
+
 public enum MediaUploadPurpose {
     AVATAR(
             "givr/avatar",
             "givr_avatar",
-            "image"
+            "image",
+            List.of("jpg", "jpeg", "png", "webp")
     ),
 
     ID_PHOTO(
             "givr/identity",
             "givr_id_photo",
-            "image"
+            "image",
+            List.of("mp4", "mov", "webm")
     ),
 
-    REPORT_IMAGE(
-            "givr/reports/images",
-            "givr_report_image",
-            "image"
+    CAC_PHOTO(
+            "givr/cac",
+            "givr_cac_upload",
+            "image",
+            List.of("mp4", "mov", "webm")
     ),
 
-    REPORT_VIDEO(
-            "givr/reports/videos",
-            "givr_report_video",
-            "video"
+    INITIATIVE_VIDEO(
+            "givr/initiatives/videos",
+                    "givr_initiative_video",
+                    "video",
+            List.of("mp4", "mov", "webm")
+    ),
+
+    INITIATIVE_FLIER(
+            "givr/initiatives/fliers",
+                    "givr_initiative_flier",
+                    "image",
+            List.of("jpg", "jpeg", "png", "webp")
     );
 
     private final String folder;
     private final String uploadPreset;
     private final String resourceType;
-
+    private final List<String> allowedFormats;
     MediaUploadPurpose(
             String folder,
             String uploadPreset,
-            String resourceType
+            String resourceType,
+            List<String> allowedFormats
     ) {
         this.folder = folder;
         this.uploadPreset = uploadPreset;
         this.resourceType = resourceType;
+        this.allowedFormats = allowedFormats;
     }
 
     public String getFolder() {
@@ -50,5 +65,9 @@ public enum MediaUploadPurpose {
 
     public String getResourceType() {
         return resourceType;
+    }
+
+    public List<String> getAllowedFormats(){
+        return allowedFormats;
     }
 }

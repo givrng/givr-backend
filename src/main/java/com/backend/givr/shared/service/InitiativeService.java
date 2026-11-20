@@ -51,7 +51,7 @@ public class InitiativeService {
         projectService.handleProject(initiative, initiativeRequestDto);
 
         List<InitiativeItem> items = createInitiativeItems(initiativeRequestDto.getInitiativeItemList(), initiative);
-        List<InitiativeItem> services = createInitiativeItems(initiativeRequestDto.getInitiativeItemList(), initiative);
+        List<InitiativeItem> services = createInitiativeItems(initiativeRequestDto.getInitiativeServiceList(), initiative);
 
         MediaDto mediaDto = initiativeRequestDto.getMedia();
         Media media = new Media(mediaDto.mediaUrl());

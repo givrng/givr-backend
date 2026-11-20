@@ -15,14 +15,14 @@ public enum MediaUploadPurpose {
             "givr/identity",
             "givr_id_photo",
             "image",
-            List.of("mp4", "mov", "webm")
+            List.of("jpg", "jpeg", "png", "webp")
     ),
 
     CAC_PHOTO(
             "givr/cac",
             "givr_cac_upload",
             "image",
-            List.of("mp4", "mov", "webm")
+            List.of("jpg", "jpeg", "png", "webp")
     ),
 
     INITIATIVE_VIDEO(

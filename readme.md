@@ -14,21 +14,24 @@ Full technical detail (schemas, params, response codes) lives in the Swagger/Ope
 
 Media is uploaded straight to Cloudinary using a short-lived signature from the backend. The signature endpoints (`GET /individual/media/upload/signature`, `GET /volunteer/media/upload/signature`, and the organization equivalent) all work the same way.
 
-**Request:** `purpose` is **required**. It decides the folder, the upload preset (which limits allowed formats and file size) and the resource type.
+**Request:** `purpose` is **required**. It decides the folder, the upload preset (which limits the allowed file formats) and the resource type.
 
-| `purpose` | Folder | Upload preset | Resource type |
-|---|---|---|---|
-| `AVATAR` | `givr/avatar` | `givr_avatar` | `image` |
-| `ID_PHOTO` | `givr/identity` | `givr_id_photo` | `image` |
-| `REPORT_IMAGE` | `givr/reports/images` | `givr_report_image` | `image` |
-| `REPORT_VIDEO` | `givr/reports/videos` | `givr_report_video` | `video` |
+| `purpose` | Folder | Upload preset | Resource type | Allowed formats |
+|---|---|---|---|---|
+| `AVATAR` | `givr/avatar` | `givr_avatar` | `image` | jpg, jpeg, png, webp |
+| `ID_PHOTO` | `givr/identity` | `givr_id_photo` | `image` | jpg, jpeg, png, webp |
+| `CAC_PHOTO` | `givr/cac` | `givr_cac_upload` | `image` | jpg, jpeg, png, webp |
+| `INITIATIVE_VIDEO` | `givr/initiatives/videos` | `givr_initiative_video` | `video` | mp4, mov, webm |
+| `INITIATIVE_FLIER` | `givr/initiatives/fliers` | `givr_initiative_flier` | `image` | jpg, jpeg, png, webp |
 
-**Response:** `signature`, `timestamp`, `expiresAt`, `apiKey`, `cloudName`, `folder`, `uploadPreset`, `resourceType`.
+**Response:** `signature`, `timestamp`, `expiresAt`, `apiKey`, `cloudName`, `folder`, `uploadPreset`, `resourceType`, `allowedFormat`.
+
+`allowedFormat` is the list of file extensions accepted for that purpose (the same as the table above). Check the selected file against it before uploading, because Cloudinary rejects other formats. It is for client-side validation only and is not part of the signature.
 
 **Using it:** `POST https://api.cloudinary.com/v1_1/{cloudName}/{resourceType}/upload` with the file plus `api_key`, `timestamp`, `signature`, `folder` and `upload_preset`, each exactly as returned. The signature covers `timestamp`, `folder` and `upload_preset`, so changing any of them makes the upload fail.
 
 - Request a new signature for every upload. `expiresAt` is 5 minutes after the signature is issued.
-- A signature only works for the `purpose` it was issued for. Files that don't meet that preset's format and size limits are rejected by Cloudinary.
+- A signature only works for the `purpose` it was issued for. Files in a format outside that purpose's allowed list are rejected by Cloudinary.
 
 ## Individual — Initiatives
 
@@ -43,7 +46,7 @@ Media is uploaded straight to Cloudinary using a short-lived signature from the 
 | `GET /individual/initiative/participants` | List participants across your initiative(s) |
 | `GET /individual/media/upload/signature?purpose=` | Get a signed key for uploading media. See [Media uploads](#media-uploads) |
 
-Initiative responses include `items`, `services` and `media`.
+Initiative responses include `items`, `services` and `media`. Upload the initiative video with `purpose=INITIATIVE_VIDEO` and the optional flier with `purpose=INITIATIVE_FLIER`.
 
 ## Individual — Participation & Applications
 

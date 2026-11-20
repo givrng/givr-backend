@@ -1,9 +1,16 @@
 package com.backend.givr.config;
 
+import com.backend.givr.shared.enums.MediaUploadPurpose;
 import com.cloudinary.Cloudinary;
+import com.cloudinary.api.exceptions.AlreadyExists;
+import com.cloudinary.utils.ObjectUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.ApplicationRunner;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBooleanProperty;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.web.config.EnableSpringDataWebSupport;
@@ -24,6 +31,7 @@ import static org.springframework.data.web.config.EnableSpringDataWebSupport.Pag
 @Configuration
 @EnableAsync
 @EnableSpringDataWebSupport(pageSerializationMode = VIA_DTO)
+@Slf4j
 public class ApplicationConfiguration {
 
     @Value("${cloudinary.cloud-name}")
@@ -73,5 +81,37 @@ public class ApplicationConfiguration {
     @Bean(name = "executorService")
     ExecutorService executorService(){
         return Executors.newVirtualThreadPerTaskExecutor();
+    }
+
+    @Bean
+    @ConditionalOnBooleanProperty(prefix = "cloudinary.preset", name = "sync")
+    public ApplicationRunner createCloudinaryPresets(Cloudinary cloudinary) throws Exception {
+        return args -> {
+            for(MediaUploadPurpose purpose: MediaUploadPurpose.values())
+                sync(purpose, cloudinary);
+        };
+    }
+
+    private void sync(MediaUploadPurpose purpose, Cloudinary cloudinary) throws Exception {
+        final String name = purpose.getUploadPreset();
+        final Map<String, Object> settings = ObjectUtils.asMap(
+                "unsigned", false,                       // signed uploads only
+                "folder", purpose.getFolder(),
+                "allowed_formats", String.join(",", purpose.getAllowedFormats()),
+                "disallow_public_id", true,              // client can't choose the public_id
+                "use_filename", false,
+                "unique_filename", true,
+                "overwrite", false
+        );
+
+        try {
+            final Map<String, Object> createOptions = ObjectUtils.asMap("name", name);
+            createOptions.putAll(settings);
+            cloudinary.api().createUploadPreset(createOptions);
+            log.info("Created Cloudinary upload preset {}", name);
+        } catch (AlreadyExists e) {
+            cloudinary.api().updateUploadPreset(name, settings);
+            log.info("Updated Cloudinary upload preset {}", name);
+        }
     }
 }

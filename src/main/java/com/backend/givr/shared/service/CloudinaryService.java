@@ -3,10 +3,6 @@ package com.backend.givr.shared.service;
 import com.backend.givr.shared.dtos.MediaUploadResponse;
 import com.backend.givr.shared.enums.MediaUploadPurpose;
 import com.cloudinary.Cloudinary;
-import com.cloudinary.api.exceptions.AlreadyExists;
-import com.cloudinary.utils.ObjectUtils;
-import io.netty.util.internal.ObjectUtil;
-import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -26,36 +22,6 @@ public class CloudinaryService {
     private String cloudinaryApiKey;
     @Value("${cloudinary.cloud-name}")
     private String cloudinaryCloudName;
-
-    @PostConstruct
-    private void createPresets() throws Exception {
-        for(MediaUploadPurpose purpose: MediaUploadPurpose.values())
-            sync(purpose);
-    }
-
-    private void sync(MediaUploadPurpose purpose) throws Exception {
-        final String name = purpose.getUploadPreset();
-
-        final Map<String, Object> settings = ObjectUtils.asMap(
-                "unsigned", false,                       // signed uploads only
-                "folder", purpose.getFolder(),
-                "allowed_formats", String.join(",", purpose.getAllowedFormats()),
-                "disallow_public_id", true,              // client can't choose the public_id
-                "use_filename", false,
-                "unique_filename", true,
-                "overwrite", false
-        );
-
-        try {
-            final Map<String, Object> createOptions = ObjectUtils.asMap("name", name);
-            createOptions.putAll(settings);
-            cloudinary.api().createUploadPreset(createOptions);
-            log.info("Created Cloudinary upload preset {}", name);
-        } catch (AlreadyExists e) {
-            cloudinary.api().updateUploadPreset(name, settings);
-            log.info("Updated Cloudinary upload preset {}", name);
-        }
-    }
 
     public String uploadImage(byte[] imageBytes,String folder, Object id) {
         try {

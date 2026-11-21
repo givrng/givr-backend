@@ -76,9 +76,9 @@ public class QoreIdClient implements VerificationClient {
 
             case DL -> String.format("v1/ng/identities/drivers-license/%s", session.getIdNumber());
 
-            case VOTER_CARD -> String.format("v1/ng/identities/vin/%s", session.getIdNumber());
-
-            case PASSPORT -> String.format("v1/ng/identities/passport/%s", session.getIdNumber());
+//            case VOTER_CARD -> String.format("v1/ng/identities/vin/%s", session.getIdNumber());
+//
+//            case PASSPORT -> String.format("v1/ng/identities/passport/%s", session.getIdNumber());
 
             case null, default -> "";
         };
@@ -92,8 +92,8 @@ public class QoreIdClient implements VerificationClient {
         if(expiresAt.isAfter(LocalDateTime.now()))
             authenticate();
 
-        Map<String, Object> payload = session.getIdType() == IDType.VOTER_CARD? Map.of("idNumber", session.getIdNumber(), "firstName", session.getContactFirstname(),"lastName", session.getContactLastname(), "dateOfBirth", session.getDateOfBirth()):
-                Map.of("idNumber", session.getIdNumber(), "firstName", session.getContactFirstname(),"lastName", session.getContactLastname());
+        // session.getIdType() == IDType.VOTER_CARD? Map.of("idNumber", session.getIdNumber(), "firstName", session.getContactFirstname(),"lastName", session.getContactLastname(), "dateOfBirth", session.getDateOfBirth()):
+        Map<String, Object> payload = Map.of("idNumber", session.getIdNumber(), "firstName", session.getContactFirstname(),"lastName", session.getContactLastname());
 
         try{
             var response = fetch(HttpMethod.POST, path, payload, String.class);
@@ -121,9 +121,9 @@ public class QoreIdClient implements VerificationClient {
 
             case DL -> String.format("v1/ng/identities/drivers-license/%s", session.getIdNumber());
 
-            case VOTER_CARD -> String.format("v1/ng/identities/vin/%s", session.getIdNumber());
-
-            case PASSPORT -> String.format("v1/ng/identities/passport/%s", session.getIdNumber());
+//            case VOTER_CARD -> String.format("v1/ng/identities/vin/%s", session.getIdNumber());
+//
+//            case PASSPORT -> String.format("v1/ng/identities/passport/%s", session.getIdNumber());
 
             case null, default -> "";
         };
@@ -134,17 +134,18 @@ public class QoreIdClient implements VerificationClient {
         if(expiresAt == null || accessToken == null)
             authenticate();
 
-        if(expiresAt.isAfter(LocalDateTime.now()))
+        if(expiresAt.isBefore(LocalDateTime.now()))
             authenticate();
 
-        Map<String, Object> payload = session.getIdType() == IDType.VOTER_CARD? Map.of("idNumber", session.getIdNumber(), "firstname", session.getFirstname(),"lastname", session.getLastname(), "middlename", session.getMiddleName()==null?"":session.getMiddleName(), "dateOfBirth", session.getDateOfBirth()):
-                Map.of( "firstname", session.getFirstname(),"lastname", session.getLastname(), "middlename", session.getMiddleName()==null?"":session.getMiddleName());
+        // session.getIdType() == IDType.VOTER_CARD? Map.of("idNumber", session.getIdNumber(), "firstname", session.getFirstname(),"lastname", session.getLastname(), "middlename", session.getMiddleName()==null?"":session.getMiddleName(), "dateOfBirth", session.getDateOfBirth()):
+        Map<String, Object> payload = Map.of( "firstname", session.getFirstname(),"lastname", session.getLastname(), "middlename", session.getMiddleName()==null?"":session.getMiddleName());
 
         try{
             var response = fetch(HttpMethod.POST, path, payload, String.class);
 
             if(response.getStatusCode().is2xxSuccessful()){
                 session.setVerificationStatus(VerificationStatus.VERIFIED);
+                session.getVolunteer().setVerificationStatus(VerificationStatus.VERIFIED);
                 session.getVolunteer().setVerificationStatus(VerificationStatus.VERIFIED);
             }
 

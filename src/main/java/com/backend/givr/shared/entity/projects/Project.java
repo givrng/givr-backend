@@ -28,7 +28,8 @@ import java.util.Set;
 @Setter
 @Entity
 @Inheritance(strategy = InheritanceType.JOINED)
-@SQLRestriction("is_deleted=true")
+@SQLRestriction("is_deleted=false")
+@Table(uniqueConstraints = @UniqueConstraint(name = "unq_creator_title", columnNames = {"creator", "title"}))
 public class Project {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -38,7 +39,7 @@ public class Project {
     @JoinColumn(name = "organization_id")
     protected Organization organization;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false)
     protected String title;
 
     @ManyToOne

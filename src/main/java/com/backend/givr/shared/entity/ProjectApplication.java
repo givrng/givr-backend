@@ -34,10 +34,6 @@ public class ProjectApplication {
     @JoinColumn(nullable = true, name = "organization")
     protected Organization organization;
 
-    @ManyToOne
-    @JoinColumn(nullable = true, name = "creator")
-    protected Creator creator;
-
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     protected ApplicationStatus status;
@@ -70,7 +66,6 @@ public class ProjectApplication {
         this.project = project;
         this.volunteer = volunteer;
         this.status = ApplicationStatus.APPLIED;
-
         this.email = email;
     }
 

@@ -7,6 +7,7 @@ import com.backend.givr.admin.entity.Admin;
 import com.backend.givr.admin.entity.AdminDetails;
 import com.backend.givr.admin.entity.Review;
 import com.backend.givr.admin.enums.AdminRole;
+import com.backend.givr.admin.enums.SessionType;
 import com.backend.givr.admin.mapper.AdminMapper;
 import com.backend.givr.admin.repos.AdminRepo;
 import com.backend.givr.admin.repos.ReviewRepo;
@@ -43,6 +44,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Objects;
+
+import static com.backend.givr.shared.enums.ReviewStatus.Approved;
 
 @Service
 public class AdminService {
@@ -117,31 +120,55 @@ public class AdminService {
     @Transactional
     public ReviewResponseDto createReview(ReviewDto reviewDto, SecurityDetails admin) {
         Admin authAdmin = manager.getReference(Admin.class, admin.getId());
-        OrganizationVerificationSession session = manager.getReference(OrganizationVerificationSession.class, reviewDto.sessionId());
-        Review review = new Review(reviewDto.reason(), reviewDto.isApproved(), authAdmin, session);
-        ReviewStatus status = reviewDto.isApproved()? ReviewStatus.Approved: ReviewStatus.Rejected;
+        String email;
+        Review review;
+        if(reviewDto.type().equals(SessionType.Organization)){
+            OrganizationVerificationSession session = manager.getReference(OrganizationVerificationSession.class, reviewDto.sessionId());
+            Organization organization = session.getOrganization();
+            email = organizationService.getOrganizationEmail(organization);
+            review = createOrgReview(session, reviewDto, authAdmin);
+            switch (review.getStatus()){
+                case Approved -> {
+                    try{
+                        organizationService.updateOrganizationDetails(session, organization);
+                    }catch (DataIntegrityViolationException e){
+                        throw new DuplicateAccountException(e.getLocalizedMessage());
+                    }
+                    emailService.sendVerificationStatusUpdate(organization.getContactFirstname(), email, Approved, review.getReview());
+                }
+                case Rejected -> {
+                    organization.setStatus(VerificationStatus.UNVERIFIED);
+                    emailService.sendVerificationStatusUpdate(organization.getContactFirstname(), email, ReviewStatus.Rejected, review.getReview());
+                }
+            }
+            // Common attributes
+        }else{
+            VolunteerVerificationSession session = manager.getReference(VolunteerVerificationSession.class, reviewDto.sessionId());
+            review = createVolunteerReview(session, reviewDto, authAdmin);
+        }
+
+
+        return mapper.toDto(reviewRepo.save(review));
+    }
+
+    private Review createVolunteerReview(VolunteerVerificationSession session, ReviewDto reviewDto, Admin admin){
+        Review review = new Review(reviewDto.reason(), reviewDto.isApproved(), admin, session);
+        ReviewStatus status = reviewDto.isApproved()? Approved: ReviewStatus.Rejected;
 
         session.setReview(reviewDto.reason());
         session.setReviewStatus(status);
-        // Common attributes
-        Organization organization = session.getOrganization();
-        String email = organizationService.getOrganizationEmail(organization);
 
-        switch (status){
-            case Approved -> {
-                try{
-                    organizationService.updateOrganizationDetails(session, organization);
-                }catch (DataIntegrityViolationException e){
-                    throw new DuplicateAccountException(e.getLocalizedMessage());
-                }
-                emailService.sendVerificationStatusUpdate(organization.getContactFirstname(), email, ReviewStatus.Approved, review.getReview());
-            }
-            case Rejected -> {
-                organization.setStatus(VerificationStatus.UNVERIFIED);
-                emailService.sendVerificationStatusUpdate(organization.getContactFirstname(), email, ReviewStatus.Rejected, review.getReview());
-            }
-        }
-        return mapper.toDto(reviewRepo.save(review));
+        return review;
+    }
+
+    private Review createOrgReview(OrganizationVerificationSession session, ReviewDto reviewDto, Admin admin){
+        Review review = new Review(reviewDto.reason(), reviewDto.isApproved(), admin, session);
+        ReviewStatus status = reviewDto.isApproved()? Approved: ReviewStatus.Rejected;
+
+        session.setReview(reviewDto.reason());
+        session.setReviewStatus(status);
+
+        return review;
     }
 
     public @Nullable ReviewResponseDto getLastSessionReview(Long sessionId) {
@@ -149,6 +176,13 @@ public class AdminService {
         Review review = reviewRepo.findFirstByVerificationSessionOrderByCreatedAt(session).orElseThrow();
 
         return  mapper.toDto(review);
+    }
+
+    public ReviewResponseDto getLastVolunteerSessionReview(Long sessionId){
+        VolunteerVerificationSession session = manager.getReference(VolunteerVerificationSession.class, sessionId);
+        Review review = reviewRepo.findFirstByVolunteerVerificationSessionOrderByCreatedAt(session).orElseThrow();
+
+        return mapper.toDto(review);
     }
 
     public void retryAutomaticVerification(Long sessionId){

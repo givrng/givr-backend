@@ -2,6 +2,8 @@ package com.backend.givr.shared.service;
 
 import com.backend.givr.organization.dtos.ApplicationStats;
 import com.backend.givr.organization.entity.Organization;
+import com.backend.givr.organization.repo.ProjectRepo;
+import com.backend.givr.shared.entity.Creator;
 import com.backend.givr.shared.entity.ProjectApplication;
 import com.backend.givr.organization.repo.ProjectApplicationRepo;
 import com.backend.givr.organization.security.OrganizationDetailsService;
@@ -10,6 +12,7 @@ import com.backend.givr.shared.dtos.ProjectApplicationForm;
 import com.backend.givr.shared.dtos.VolunteerApplicationDto;
 import com.backend.givr.shared.email.EmailService;
 import com.backend.givr.shared.entity.Skill;
+import com.backend.givr.shared.entity.projects.Initiative;
 import com.backend.givr.shared.entity.projects.Project;
 import com.backend.givr.shared.enums.ApplicationStatus;
 import com.backend.givr.shared.exceptions.DuplicateAccountException;
@@ -20,6 +23,7 @@ import com.backend.givr.shared.mapper.SkillMapper;
 import com.backend.givr.volunteer.entity.Volunteer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.persistence.PersistenceContext;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,6 +57,8 @@ public class ApplicationService {
     @Autowired
     private SkillService skillService;
     @Autowired
+    private ProjectRepo projectRepo;
+    @Autowired
     private ParticipationService participationService;
     @Autowired
     private RedisService redisService;
@@ -60,7 +66,9 @@ public class ApplicationService {
     private ObjectMapper objectMapper;
 
     public ProjectApplication apply(Volunteer volunteer, ProjectApplicationForm applicationForm, String email){
-        Project project = em.getReference(Project.class, applicationForm.getProjectId());
+        Project project = projectRepo.findById( applicationForm.getProjectId())
+                .orElseThrow(()-> new EntityNotFoundException("Attempting to apply to a project that does not exist"));
+
         String organizerName = project.getOrganizerName();
 
         if(LocalDateTime.now().isAfter(project.getDeadline().atTime(23, 59, 59)))
@@ -157,9 +165,9 @@ public class ApplicationService {
         return repo.findAllByOrganizationAndStatus(organization, ApplicationStatus.APPLIED).stream().map(VolunteerApplicationDto::new).toList();
     }
 
-    public PagedModel<VolunteerApplicationDto> getInitiativeApplications(Volunteer individual, PageRequest pageRequest){
-        Page<ProjectApplication> page = repo.findAllByCreatorIndividualAndStatus(individual, ApplicationStatus.APPLIED, pageRequest);
-        pageRequest = pageRequest.withSort(Sort.by("appliedAt").descending());
+    public PagedModel<VolunteerApplicationDto> getInitiativeApplications(Creator creator, PageRequest pageRequest){
+        PageRequest request = pageRequest.withSort(Sort.by("appliedAt").descending());
+        Page<ProjectApplication> page = repo.findAllByProjectCreatorAndStatus(creator, ApplicationStatus.APPLIED, request);
 
         PageImpl<VolunteerApplicationDto> volunteerApplicationDtos = new PageImpl<>(page.getContent().stream().map(VolunteerApplicationDto::new).toList(),
                 page.getPageable(), page.getTotalElements());

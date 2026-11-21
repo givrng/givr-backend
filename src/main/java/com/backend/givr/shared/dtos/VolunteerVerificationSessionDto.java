@@ -34,5 +34,6 @@ public class VolunteerVerificationSessionDto {
         this.lastname = session.getLastname();
         this.dateOfBirth = session.getDateOfBirth();
         this.verificationStatus = session.getVerificationStatus();
+        this.individualLogo = session.getIndividualLogo();
     }
 }

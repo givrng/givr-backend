@@ -61,13 +61,10 @@ public class VerificationWorker {
     public void verifyVolunteer(VolunteerVerificationSession verificationSession) {
         try{
             verificationClient.verifyVolunteer(verificationSession);
-            if(verificationSession.getVerificationStatus() == VerificationStatus.VERIFIED){
-//                Volunteer individual = new Individual(verificationSession);
-//                volunteerRepo.save(individual);
-            }
         } catch (JsonProcessingException e) {
             logger.error("Volunteer verification for {} failed because of {}", verificationSession.getVerificationSessionId(), e.getLocalizedMessage());
         }finally {
+            volunteerRepo.save(verificationSession.getVolunteer());
             volunteerVerificationSessionRepo.save(verificationSession);
         }
     }

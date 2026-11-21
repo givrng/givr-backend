@@ -38,6 +38,6 @@ public class VolunteerVerificationSessionService {
         request = request.withSort(Sort.by("createdAt" ).descending());
         if(status == null)
             return repo.findAll(request);
-        return repo.findByVerificationStatus(status, request);
+        return repo.findByReviewStatus(status, request);
     }
 }

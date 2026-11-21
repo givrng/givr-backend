@@ -16,5 +16,5 @@ public interface VolunteerVerificationSessionRepo extends JpaRepository<Voluntee
     Optional<VolunteerVerificationSession> findByVolunteer(Volunteer volunteer);
 
     Optional<VolunteerVerificationSession> findByIdTypeAndIdNumber(IDType type, String idNumber);
-    Page<VolunteerVerificationSession> findByVerificationStatus(ReviewStatus status, Pageable pageable);
+    Page<VolunteerVerificationSession> findByReviewStatus(ReviewStatus status, Pageable pageable);
 }

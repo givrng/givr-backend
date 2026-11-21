@@ -145,10 +145,10 @@ public class VerificationService {
         if(volunteerSession.isPresent()){
             session = volunteerSession.get();
             session.update(verificationDto);
-        }
-        session = new VolunteerVerificationSession(verificationDto, volunteer);
+        }else session = new VolunteerVerificationSession(verificationDto, volunteer);
 
         volunteerVerificationSessionService.save(session);
+
         return processCheckoutUrl(volunteer);
     }
 

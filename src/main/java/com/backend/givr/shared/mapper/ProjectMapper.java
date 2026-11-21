@@ -69,7 +69,6 @@ public interface ProjectMapper {
         }
     }
 
-
     @Mapping(target = "requiredSkills", ignore = true)
     @Mapping(target = "id", source = "projectId")
     @Mapping(source = "deadline", target = "applicationDeadline")
@@ -111,7 +110,8 @@ public interface ProjectMapper {
         dto.setRequiredSkills(project.getRequiredSkills().stream().map(Skill::toString).collect(Collectors.toSet()));
         if(project instanceof Initiative)
             dto.setType(ProjectType.Initiative);
-        dto.setType(ProjectType.Project);
+        else
+            dto.setType(ProjectType.Project);
     }
 
     List<ProjectResponseDto> toDtos(List<Project> projects);
@@ -141,7 +141,7 @@ public interface ProjectMapper {
 
     @AfterMapping
     default void updateRenderProjectDto(Project project, @MappingTarget RenderProjectDto renderProjectDto){
-        String name = project.getOrganization().getOrganizationName();
+        String name = project.getOrganizerName();
         renderProjectDto.setOrganizationName(name);
     }
 

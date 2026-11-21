@@ -42,9 +42,7 @@ public class ProjectRequestDto {
     @NotNull
     private List<String> requiredSkills;
 
-    private LocationDto locationDto;
     private String specialRequirements;
-    private ProjectStatus status;
     private String projectFlierUrl;
 
 }

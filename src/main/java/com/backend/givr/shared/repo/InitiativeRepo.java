@@ -16,6 +16,8 @@ import java.util.List;
 import java.util.Optional;
 
 public interface InitiativeRepo extends JpaRepository<Initiative, Long> {
+    Page<Initiative> findAllByCreator(Creator creator, Pageable pageRequest);
+
     List<Initiative> findAllByCreatorAndStatus(Creator individual, ProjectStatus status);
 
     Page<Initiative> findAllByCreatorAndStatus(Creator individual, ProjectStatus status, Pageable pageable);
@@ -35,6 +37,4 @@ public interface InitiativeRepo extends JpaRepository<Initiative, Long> {
     List<Initiative> findClosingInitiatives(@Param("weekFromToday") LocalDate today);
 
     Optional<Initiative> findByProjectIdAndCreatorIndividual(Long projectId, Volunteer individual);
-
-    Page<Initiative> findAllByCreator(Creator creator, Pageable pageRequest);
 }

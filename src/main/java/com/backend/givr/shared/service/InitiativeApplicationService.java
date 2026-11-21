@@ -6,6 +6,7 @@ import com.backend.givr.shared.dtos.VolunteerApplicationDto;
 import com.backend.givr.shared.entity.Creator;
 import com.backend.givr.shared.entity.InitiativeApplication;
 import com.backend.givr.shared.entity.projects.Donation;
+import com.backend.givr.shared.entity.projects.Initiative;
 import com.backend.givr.shared.entity.projects.InitiativeItem;
 import com.backend.givr.shared.enums.ApplicationStatus;
 import com.backend.givr.shared.enums.DonationStatus;
@@ -34,9 +35,16 @@ public class InitiativeApplicationService {
 
     @Transactional
     public InitiativeApplication apply(Volunteer volunteer, InitiativeApplicationForm applicationForm){
+        if(volunteer.getVerificationStatus() == null )
+            throw new IllegalOperationException("Account not verified, only verified accounts can participate in initiatives");
         if(!volunteer.getVerificationStatus().equals(VerificationStatus.VERIFIED))
             throw new IllegalOperationException("Only verified volunteers can applyForProject to initiatives");
 
+        try{
+            Initiative initiative = initiativeService.getInitiative(applicationForm.getProjectId());
+        }catch (EntityNotFoundException e){
+            throw new IllegalOperationException("Cannot apply to an project via a initiative");
+        }
         // A volunteer could volunteer their time, service, or items
         // time and service are the same
         // Those will require the approval of the organization
@@ -108,7 +116,8 @@ public class InitiativeApplicationService {
 
 
 
-    public PagedModel<VolunteerApplicationDto> getInitiativeApplications(Creator individual, PageRequest request) {
-        return applicationService.getInitiativeApplications(individual.getIndividual(), request);
+    public PagedModel<VolunteerApplicationDto> getInitiativeApplications(String individual, PageRequest request) {
+        Creator creator = creatorService.getCreatorByIndividualId(individual);
+        return applicationService.getInitiativeApplications(creator, request);
     }
 }

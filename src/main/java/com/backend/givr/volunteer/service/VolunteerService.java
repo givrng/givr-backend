@@ -4,6 +4,7 @@ import com.backend.givr.organization.dtos.CheckoutResponse;
 import com.backend.givr.shared.dtos.ProjectResponseDto;
 import com.backend.givr.shared.dtos.*;
 import com.backend.givr.shared.entity.ProjectApplication;
+import com.backend.givr.shared.entity.projects.Initiative;
 import com.backend.givr.shared.entity.projects.Project;
 import com.backend.givr.shared.enums.*;
 import com.backend.givr.shared.service.*;
@@ -185,6 +186,11 @@ public class VolunteerService {
     public void applyToProject(SecurityDetails details, @Valid ProjectApplicationForm applicationForm) {
         Volunteer volunteer = getVolunteer(details.getId());
 
+        Project project = projectService.getProject(applicationForm.getProjectId());
+
+        if(project instanceof Initiative)
+            throw new IllegalOperationException("Cannot apply to an initiative via a project endpoint");
+
         if(volunteer.getPhoneNumber() == null && applicationForm.getPhoneNumber() == null)
             throw new IllegalOperationException("Please provide phone number");
 
@@ -197,6 +203,7 @@ public class VolunteerService {
 
     public void applyToInitiative(VolunteerDetails details, InitiativeApplicationForm applicationForm){
         Volunteer volunteer = getVolunteer(details.getId());
+
         if(volunteer.getPhoneNumber() == null && applicationForm.getPhoneNumber() == null)
             throw new IllegalOperationException("Please provide phone number");
 

@@ -40,6 +40,7 @@ public class VolunteerVerificationSession {
 
     private ReviewStatus reviewStatus;
 
+    private String review;
     private String middleName;
     private String individualLogo;
     private String remark;

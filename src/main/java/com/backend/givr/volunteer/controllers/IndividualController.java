@@ -33,6 +33,16 @@ public class IndividualController {
         return ResponseEntity.ok(service.createInitiative(payload, authContext));
     }
 
+    @GetMapping("/initiative")
+    public ResponseEntity<PagedModel<InitiativeResponseDto>> getInitiatives(
+            @RequestParam(name = "status", defaultValue = "DRAFT") ProjectStatus status,
+            @RequestParam(name = "pageNum", defaultValue = "0") int pageNum,
+            @RequestParam(name = "pageSize", defaultValue = "20") int pageSize,
+            @AuthenticationPrincipal SecurityDetails details){
+        return ResponseEntity.ok(service.getInitiatives(status, pageNum, pageSize, details.getId()));
+    }
+
+
     @GetMapping("/donations")
     public ResponseEntity<PagedModel<DonationDto>> getIndividualDonations(@AuthenticationPrincipal SecurityDetails details,
                                                                           @RequestParam(name = "pageNum", defaultValue = "0") int pageNum,
@@ -46,14 +56,6 @@ public class IndividualController {
         return ResponseEntity.ok(cloudinaryService.generateSignedUploadKey(purpose));
     }
 
-    @GetMapping("/initiative")
-    public ResponseEntity<PagedModel<InitiativeResponseDto>> getInitiatives(
-            @RequestParam(name = "status", defaultValue = "DRAFT") ProjectStatus status,
-            @RequestParam(name = "pageNum", defaultValue = "0") int pageNum,
-            @RequestParam(name = "pageSize", defaultValue = "20") int pageSize,
-            @AuthenticationPrincipal SecurityDetails details){
-        return ResponseEntity.ok(service.getInitiatives(status, pageNum, pageSize, details.getId()));
-    }
 
 
     @PatchMapping("/initiative/{initiativeId}/publish")

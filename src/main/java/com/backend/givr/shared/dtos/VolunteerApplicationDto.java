@@ -10,6 +10,7 @@ import java.util.List;
 @Getter
 @Setter
 public class VolunteerApplicationDto {
+    private Long id;
     private String firstname;
     private String lastname;
     private List<String> skills;

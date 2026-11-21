@@ -68,8 +68,7 @@ public class IndividualService {
     }
 
     public PagedModel<VolunteerApplicationDto> getProjectApplications(SecurityDetails details, PageRequest pageRequest) {
-        Volunteer individual = getIndividual(details.getId());
-        return initiativeApplicationService.getInitiativeApplications(creatorService.createOrReturnCreator(individual), pageRequest);
+        return initiativeApplicationService.getInitiativeApplications(details.getId(), pageRequest);
     }
 
 
@@ -121,6 +120,7 @@ public class IndividualService {
 
         Page<Initiative> initiatives = initiativeService.getAllInitiativeByIndividualAndStatus(volunteer, status, pageRequest);
 
+        System.out.println(initiatives.getContent().size());
         PageImpl<InitiativeResponseDto> page = new PageImpl<>(projectMapper.toInitiativeReponses(initiatives.getContent()),
                 initiatives.getPageable(), initiatives.getTotalElements());
 

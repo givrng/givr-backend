@@ -1,6 +1,7 @@
 package com.backend.givr.organization.repo;
 
 import com.backend.givr.organization.entity.Organization;
+import com.backend.givr.shared.entity.Creator;
 import com.backend.givr.shared.entity.ProjectApplication;
 import com.backend.givr.shared.entity.projects.Project;
 import com.backend.givr.shared.enums.ApplicationStatus;
@@ -21,7 +22,7 @@ public interface ProjectApplicationRepo extends JpaRepository<ProjectApplication
 
     List<ProjectApplication> findAllByOrganizationAndStatus(Organization organization, ApplicationStatus status);
 
-    Page<ProjectApplication> findAllByCreatorIndividualAndStatus(Volunteer individual, ApplicationStatus status, Pageable pageable);
+    Page<ProjectApplication> findAllByProjectCreatorAndStatus(Creator creator, ApplicationStatus status, Pageable pageable);
 
     int countByStatusAndOrganization(ApplicationStatus applicationStatus, Organization organization);
 

@@ -50,15 +50,19 @@ public class InitiativeService {
         initiative.setOrganizerName(String.format("%s %s", individual.getLastname(), individual.getFirstname()));
         projectService.handleProject(initiative, initiativeRequestDto);
 
-        List<InitiativeItem> items = createInitiativeItems(initiativeRequestDto.getInitiativeItemList(), initiative);
-        List<InitiativeItem> services = createInitiativeItems(initiativeRequestDto.getInitiativeServiceList(), initiative);
+        if(initiativeRequestDto.getInitiativeItemList() != null){
+            List<InitiativeItem> items = createInitiativeItems(initiativeRequestDto.getInitiativeItemList(), initiative);
+            initiative.getInitiativeItems().addAll(items);
+        }
+
+        if(initiativeRequestDto.getInitiativeServiceList() != null){
+            List<InitiativeItem> services = createInitiativeItems(initiativeRequestDto.getInitiativeServiceList(), initiative);
+            initiative.getInitiativeServices().addAll(services);
+        }
 
         MediaDto mediaDto = initiativeRequestDto.getMedia();
         Media media = new Media(mediaDto.mediaUrl());
         media = mediaRepo.save(media);
-
-        initiative.getInitiativeItems().addAll(items);
-        initiative.getInitiativeServices().addAll(services);
 
         initiative.setMedia(media);
 

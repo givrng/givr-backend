@@ -16,7 +16,6 @@ public class Media extends BaseEntity {
     @Enumerated(EnumType.STRING)
     private MediaType mediaType;
 
-
     @Enumerated(EnumType.STRING)
     private MediaStatus status;
 

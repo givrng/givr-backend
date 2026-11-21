@@ -12,5 +12,4 @@ import java.util.Optional;
 public interface ReviewRepo extends JpaRepository<Review, Long> {
     Optional<Review> findFirstByVerificationSessionOrderByCreatedAt(OrganizationVerificationSession session);
     Optional<Review> findFirstByVolunteerVerificationSessionOrderByCreatedAt(VolunteerVerificationSession session);
-
 }

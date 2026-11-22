@@ -46,23 +46,23 @@ Almost every endpoint documents only `200 OK`. Error shapes are not specified; s
 
 ## 2. Authentication and account flows
 
-| Method | Path | Description | Body |
-| --- | --- | --- | --- |
-| POST | `/volunteer/auth/signup` | Create volunteer account | `CreateVolunteerRequestDto` |
-| POST | `/organization/auth/signup` | Create organization account | `CreateOrganizationDto` |
-| POST | `/volunteer/otp/request?purpose=` | Send OTP to the volunteer's email | none |
+| Method | Path                                 | Description | Body |
+| --- |--------------------------------------| --- | --- |
+| POST | `/volunteer/auth/signup`             | Create volunteer account | `CreateVolunteerRequestDto` |
+| POST | `/organization/auth/signup`          | Create organization account | `CreateOrganizationDto` |
+| POST | `/volunteer/otp/request?purpose=`    | Send OTP to the volunteer's email | none |
 | POST | `/organization/otp/request?purpose=` | Send OTP to the organization's email | none |
-| PATCH | `/volunteer/verifyOrganization/email` | Confirm volunteer email with OTP | `OtpDto` |
-| PATCH | `/organization/verifyOrganization/email` | Confirm organization email with OTP | `OtpDto` |
-| POST | `/volunteer/logout` | Log out volunteer | none |
-| POST | `/organization/logout` | Log out organization | none |
-| GET | `/volunteer/me/details` | Current volunteer's `userId` and `email` | none |
-| GET | `/organization/me/details` | Current organization's `userId` and `email` | none |
-| GET | `/auth/refresh` | Refresh the auth token | none |
-| POST | `/password/forgot` | Request password-reset OTP | `OtpRequestDto` |
-| POST | `/password/reset` | Reset password using OTP | `PasswordResetDto` |
-| PATCH | `/volunteer/password/update` | Change volunteer password | `PasswordUpdateDto` |
-| PATCH | `/organization/password/update` | Change organization password | `PasswordUpdateDto` |
+| PATCH | `/volunteer/verify/email`            | Confirm volunteer email with OTP | `OtpDto` |
+| PATCH | `/organization/verify/email`         | Confirm organization email with OTP | `OtpDto` |
+| POST | `/volunteer/logout`                  | Log out volunteer | none |
+| POST | `/organization/logout`               | Log out organization | none |
+| GET | `/volunteer/me/details`              | Current volunteer's `userId` and `email` | none |
+| GET | `/organization/me/details`           | Current organization's `userId` and `email` | none |
+| GET | `/auth/refresh`                      | Refresh the auth token | none |
+| POST | `/password/forgot`                   | Request password-reset OTP | `OtpRequestDto` |
+| POST | `/password/reset`                    | Reset password using OTP | `PasswordResetDto` |
+| PATCH | `/volunteer/password/update`         | Change volunteer password | `PasswordUpdateDto` |
+| PATCH | `/organization/password/update`      | Change organization password | `PasswordUpdateDto` |
 
 All paths above are relative to `/v1/api`.
 
@@ -134,7 +134,7 @@ Calling the endpoint again before payment completes returns a fresh `checkoutUrl
 
 ### What verification unlocks
 
-- `POST /volunteer/initiative/applyForProject` is for `VERIFIED` volunteers only. A volunteer with no status fails with "Account not verified, only verified accounts can participate in initiatives". One with another status, such as `PENDING`, fails with "Only verified volunteers can applyForProject to initiatives".
+- `POST /volunteer/initiative/apply` is for `VERIFIED` volunteers only. A volunteer with no status fails with "Account not verified, only verified accounts can participate in initiatives". One with another status, such as `PENDING`, fails with "Only verified volunteers can apply to initiatives".
 - Creating and managing initiatives (`/individual/*`) is for verified volunteers.
 - Status values: `PENDING` means a session was submitted or resubmitted and the check has not finished; `VERIFIED` means the ID check passed. `UNVERIFIED` and the `AUTOMATIC_VERIFICATION_*` values belong to the organization flow.
 
@@ -192,11 +192,11 @@ Prefix: `/v1/api/volunteer`
 
 ### Applying and participating
 
-| Method | Path | Description | Request |
-| --- | --- | --- | --- |
-| POST | `/projects/applyForProject` | Apply to a regular project (initiative IDs are rejected) | `ProjectApplicationForm` |
-| POST | `/initiative/applyForProject` | Apply to an initiative (time and/or items); verified volunteers only (section 3), and project IDs are rejected | `InitiativeApplicationForm` |
-| GET | `/volunteering` | List own participations | returns `ParticipationDto[]` |
+| Method | Path                            | Description | Request |
+| --- |---------------------------------| --- | --- |
+| POST | `/projects/apply`               | Apply to a regular project (initiative IDs are rejected) | `ProjectApplicationForm` |
+| POST | `/initiative/apply`             | Apply to an initiative (time and/or items); verified volunteers only (section 3), and project IDs are rejected | `InitiativeApplicationForm` |
+| GET | `/volunteering`                 | List own participations | returns `ParticipationDto[]` |
 | DELETE | `/volunteering/{participationId}` | Withdraw from / reject a participation | none |
 | POST | `/volunteering/{participationId}/review` | Rate a completed project | `RatingDTO` |
 | GET | `/chat/{projectId}/history?cursor=&size=` | Project chat history | returns `PagedModelGivrMessage` |
@@ -204,7 +204,7 @@ Prefix: `/v1/api/volunteer`
 ### Example: apply to a project
 
 ```http
-POST /v1/api/volunteer/projects/applyForProject
+POST /v1/api/volunteer/projects/apply
 
 {
   "projectId": 42,
@@ -300,23 +300,24 @@ Prefix: `/v1/api/individual`
 
 Initiative creation and management are for volunteers whose `verificationStatus` is `VERIFIED` (section 3).
 
-| Method | Path | Description | Request | Response |
-| --- | --- | --- | --- | --- |
-| GET | `/initiative?status=&pageNum=&pageSize=` | List own initiatives. `status`: `DRAFT` (default), `OPEN`, `CLOSE`, `ONGOING`, `COMPLETED`, `ALL` | none | `PagedModelInitiativeResponseDto` |
-| POST | `/initiative` | Create an initiative | `InitiativeRequestDto` | `InitiativeResponseDto[]` |
-| PATCH | `/initiative/{initiativeId}` | Update an initiative | `InitiativeRequestDto` | `InitiativeResponseDto` |
-| DELETE | `/initiative/{initiativeId}` | Delete an initiative | none | none |
-| PATCH | `/initiative/{initiativeId}/publish` | Publish | none | none |
-| PATCH | `/initiative/{initiative}/completed` | Mark completed | none | none |
-| GET | `/initiative/participants` | List participants | none | `ParticipationDto[]` |
-| PATCH | `/initiative/participant` | Update participant status | `UpdateParticipantDto` | none |
-| GET | `/initiative/applications?pageNum=&pageSize=` | Volunteer applications | none | `PagedModelVolunteerApplicationDto` |
-| PATCH | `/initiative/applications/{id}/accept` | Accept an application | none | none |
-| PATCH | `/projects/applications/{id}/reject` | Reject an application | none | none |
-| GET | `/initiative/donations?pageNum=&pageSize=` | List donations | none | `PagedModelDonationDto` |
-| GET | `/initiative/donations/{donationId}` | Donation detail | none | `DonationDto` |
-| PATCH | `/initiative/donations/{donationId}` | Update donation status | `DonationUpdateDto` | `DonationDto` |
-| GET | `/media/upload/signature` | Signed media-upload params | none | `MediaUploadResponse` |
+| Method | Path                                          | Description                                                                                       | Request                | Response                            |
+|--------|-----------------------------------------------|---------------------------------------------------------------------------------------------------|------------------------|-------------------------------------|
+| GET    | `/initiative?status=&pageNum=&pageSize=`      | List own initiatives. `status`: `DRAFT` (default), `OPEN`, `CLOSE`, `ONGOING`, `COMPLETED`, `ALL` | none                   | `PagedModelInitiativeResponseDto`   |
+| POST   | `/initiative`                                 | Create an initiative                                                                              | `InitiativeRequestDto` | `InitiativeResponseDto[]`           |
+| PATCH  | `/initiative/{initiativeId}`                  | Update an initiative                                                                              | `InitiativeRequestDto` | `InitiativeResponseDto`             |
+| DELETE | `/initiative/{initiativeId}`                  | Delete an initiative                                                                              | none                   | none                                |
+| PATCH  | `/initiative/{initiativeId}/publish`          | Publish                                                                                           | none                   | none                                |
+| PATCH  | `/initiative/{initiative}/completed`          | Mark completed                                                                                    | none                   | none                                |
+| GET    | `/initiative/participants`                    | List participants                                                                                 | none                   | `ParticipationDto[]`                |
+| PATCH  | `/initiative/participant`                     | Update participant status                                                                         | `UpdateParticipantDto` | none                                |
+| GET    | `/initiative/applications?pageNum=&pageSize=` | Volunteer applications                                                                            | none                   | `PagedModelVolunteerApplicationDto` |
+| PATCH  | `/initiative/applications/{id}/accept`        | Accept an application                                                                             | none                   | none                                |
+| PATCH  | `/initiative/applications/{id}/reject`        | Reject an application                                                                             | none                   | none                                |
+| GET    | `/initiative/donations?pageNum=&pageSize=`    | List donations made to account owner initiatives                                                  | none                   | `PagedModelDonationDto`             |
+| GET    | `/initiative/donations/{donationId}`          | Donation detail                                                                                   | none                   | `DonationDto`                       |
+| GET    | `/individual/donations?pageNum=&pageSize=`    | Lists donations made by account owner                                                             | none                   | `PagedModelDonationDto`             |
+| PATCH  | `/initiative/donations/{donationId}`          | Update donation status                                                                            | `DonationUpdateDto`    | `DonationDto`                       |
+| GET    | `/media/upload/signature`                     | Signed media-upload params                                                                        | none                   | `MediaUploadResponse`               |
 
 Initiatives extend the project model with `initiativeItemList`, `initiativeServiceList` (both `InitiativeResourceDto[]`) and a required `media` object (`{ mediaType: "Video", mediaUrl }`).
 
@@ -327,8 +328,8 @@ Prefix: `/v1/api/admin`. Admin login is OTP-based.
 | Method | Path | Description | Request | Response |
 | --- | --- | --- | --- | --- |
 | POST | `/auth/request-otp` | Request an admin OTP | `AdminAuthDto` (`email`) | none |
-| POST | `/auth/verifyOrganization-otp` | Authenticate with OTP | `AdminAuthDto` (`email`, `otp`) | none |
-| GET | `/verifyOrganization` | Check admin session/authorization | none | none |
+| POST | `/auth/verify-otp` | Authenticate with OTP | `AdminAuthDto` (`email`, `otp`) | none |
+| GET | `/verify` | Check admin session/authorization | none | none |
 | DELETE | \`\` | Remove (log out) the admin | none | none |
 | GET | `/verifications/organization?pageNum=&pageSize=&status=` | List organization verification sessions (paged, 30 per page by default); `status`: `Approved`, `Rejected`, `Pending` | none | `PagedModelVerificationSessionDto` |
 | GET | `/verifications/individual?pageNum=&pageSize=&status=` | List volunteer verification sessions (paged, 30 per page by default, newest first) | none | `PagedModelVolunteerVerificationSessionDto` |
@@ -350,7 +351,7 @@ POST /v1/api/admin/review
 
 | Method | Path | Description | Response |
 | --- | --- | --- | --- |
-| GET | `/v1/api/certificates/verifyOrganization/{certId}` | Verify a volunteer certificate by ID | `VolunteerCertificateVerificationDTO` |
+| GET | `/v1/api/certificates/verify/{certId}` | Verify a volunteer certificate by ID | `VolunteerCertificateVerificationDTO` |
 
 ## 9. Data models
 
@@ -430,11 +431,11 @@ POST /v1/api/admin/review
 
 ## 10. Typical flows
 
-**Volunteer onboarding:** `POST /volunteer/auth/signup` → `POST /volunteer/otp/request?purpose=EMAIL_VERIFICATION` → `PATCH /volunteer/verifyOrganization/email` → `POST /volunteer/profile/initiate/verification` (see section 3; redirect to `checkoutUrl`).
+**Volunteer onboarding:** `POST /volunteer/auth/signup` → `POST /volunteer/otp/request?purpose=EMAIL_VERIFICATION` → `PATCH /volunteer/verify/email` → `POST /volunteer/profile/initiate/verification` (see section 3; redirect to `checkoutUrl`).
 
 **Organization lifecycle:** signup and email OTP → `POST /organization/verification/initiate` → admin reviews via `/admin/review` → `POST /organization/projects` → `PATCH .../publish` → review applicants (`accept`/`reject`) → `PATCH .../completed`.
 
-**Certificates:** organization sets participant to `COMPLETED` (`PATCH /organization/projects/participant`) → admin lists `/admin/certificate/pending` → approves one or a batch → volunteer certificate appears on `VolunteerProfile.certificates` → anyone can check it with `GET /certificates/verifyOrganization/{certId}`.
+**Certificates:** organization sets participant to `COMPLETED` (`PATCH /organization/projects/participant`) → admin lists `/admin/certificate/pending` → approves one or a batch → volunteer certificate appears on `VolunteerProfile.certificates` → anyone can check it with `GET /certificates/verify/{certId}`.
 
 **Initiative donation:** volunteer applies with `items` → individual accepts the application → donation status moves `Pending_acceptance` → `Promised_Accepted` → `Promise_Fulfilled` (or `Promise_Rejected`) via `PATCH /individual/initiative/donations/{donationId}`.
 

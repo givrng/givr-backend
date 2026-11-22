@@ -6,7 +6,6 @@ import com.backend.givr.shared.enums.MediaUploadPurpose;
 import com.backend.givr.shared.enums.ProjectStatus;
 import com.backend.givr.shared.interfaces.SecurityDetails;
 import com.backend.givr.shared.service.CloudinaryService;
-import com.backend.givr.shared.service.ParticipationService;
 import com.backend.givr.volunteer.service.IndividualService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -25,7 +24,6 @@ import java.util.List;
 @PreAuthorize("hasAuthority('INDIVIDUAL')")
 public class IndividualController {
     private final IndividualService service;
-    private final ParticipationService participationService;
     private final CloudinaryService cloudinaryService;
     // Initiative
     @PostMapping("/initiative")
@@ -126,7 +124,7 @@ public class IndividualController {
     }
 
     @DeleteMapping("/initiative/{initiativeId}")
-    private ResponseEntity<Void> deleteProject(@PathVariable("initiativeId") Long projectId, @AuthenticationPrincipal SecurityDetails details){
+    public ResponseEntity<Void> deleteProject(@PathVariable("initiativeId") Long projectId, @AuthenticationPrincipal SecurityDetails details){
         service.deleteInitiative(projectId, details.getId());
         return ResponseEntity.noContent().build();
     }

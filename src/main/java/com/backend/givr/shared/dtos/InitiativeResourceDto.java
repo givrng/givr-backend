@@ -1,8 +1,12 @@
 package com.backend.givr.shared.dtos;
 
-public record InitiativeResourceDto(
-        String resource,
-        String resourceId,
-        int quantity
-) {
+import lombok.AllArgsConstructor;
+import lombok.Data;
+
+@Data
+@AllArgsConstructor
+public class InitiativeResourceDto{
+    private String resource;
+    private String resourceId;
+    private int quantity;
 }

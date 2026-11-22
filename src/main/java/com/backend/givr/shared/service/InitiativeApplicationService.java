@@ -52,8 +52,8 @@ public class InitiativeApplicationService {
         InitiativeApplication application = new InitiativeApplication();
         if(applicationForm.getServices()!= null && !applicationForm.getServices().isEmpty()){
             List<InitiativeItem> items = applicationForm.getServices().stream().map((item)->{
-                InitiativeItem service = initiativeService.getInitiativeItem(item.resourceId());
-                var donation = service.addDonation(volunteer, item.quantity());
+                InitiativeItem service = initiativeService.getInitiativeItem(item.getResourceId());
+                var donation = service.addDonation(volunteer, item.getQuantity());
                 application.getServices().add(donation);
                 return service;
             }).toList();
@@ -63,8 +63,8 @@ public class InitiativeApplicationService {
 
         if(applicationForm.getItems()!= null && !applicationForm.getItems().isEmpty()){
             List<InitiativeItem> items = applicationForm.getItems().stream().map((item)->{
-                InitiativeItem initiativeItem = initiativeService.getInitiativeItem(item.resourceId());
-                var donation = initiativeItem.addDonation(volunteer, item.quantity());
+                InitiativeItem initiativeItem = initiativeService.getInitiativeItem(item.getResourceId());
+                var donation = initiativeItem.addDonation(volunteer, item.getQuantity());
                 application.getItems().add(donation);
                 return initiativeItem;
             }).toList();

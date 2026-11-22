@@ -11,6 +11,7 @@ import com.backend.givr.shared.entity.projects.Resource;
 import com.backend.givr.shared.entity.projects.Initiative;
 import com.backend.givr.shared.entity.projects.InitiativeItem;
 import com.backend.givr.shared.enums.ProjectStatus;
+import com.backend.givr.shared.enums.ResourceKind;
 import com.backend.givr.shared.exceptions.IllegalOperationException;
 import com.backend.givr.shared.mapper.ProjectMapper;
 import com.backend.givr.shared.repo.InitiativeItemRepo;
@@ -51,12 +52,12 @@ public class InitiativeService {
         projectService.handleProject(initiative, initiativeRequestDto);
 
         if(initiativeRequestDto.getInitiativeItemList() != null){
-            List<InitiativeItem> items = createInitiativeItems(initiativeRequestDto.getInitiativeItemList(), initiative);
+            List<InitiativeItem> items = createInitiativeItems(initiativeRequestDto.getInitiativeItemList(), ResourceKind.ITEM, initiative);
             initiative.getInitiativeItems().addAll(items);
         }
 
         if(initiativeRequestDto.getInitiativeServiceList() != null){
-            List<InitiativeItem> services = createInitiativeItems(initiativeRequestDto.getInitiativeServiceList(), initiative);
+            List<InitiativeItem> services = createInitiativeItems(initiativeRequestDto.getInitiativeServiceList(), ResourceKind.SERVICE, initiative);
             initiative.getInitiativeServices().addAll(services);
         }
 
@@ -141,7 +142,7 @@ public class InitiativeService {
     private void updateInitiativeResources(List<InitiativeItem> resources, InitiativeRequestDto requestDto){
         Initiative initiative = resources.getFirst().getInitiative();
         resources.clear();
-        List<InitiativeItem> items = createInitiativeItems(requestDto.getInitiativeServiceList(), initiative);
+        List<InitiativeItem> items = createInitiativeItems(requestDto.getInitiativeServiceList(), ResourceKind.ITEM, initiative);
         resources.addAll(items);
     }
 
@@ -153,12 +154,12 @@ public class InitiativeService {
                 });
     }
 
-    private List<InitiativeItem> createInitiativeItems(List<InitiativeResourceDto> resources, Initiative initiative){
+    private List<InitiativeItem> createInitiativeItems(List<InitiativeResourceDto> resources, ResourceKind kind, Initiative initiative){
         return resources.stream().map(service->{
-            var resource = createOrReturnResource(service.resource());
-            var quantity = service.quantity();
+            var resource = createOrReturnResource(service.getResource());
+            var quantity = service.getQuantity();
 
-            return new InitiativeItem(resource, quantity, initiative);
+            return new InitiativeItem(resource, quantity, initiative, kind);
         }).toList();
     }
 
@@ -187,11 +188,9 @@ public class InitiativeService {
     public InitiativeResourceResponseDto getInitiativeResources(Long initiativeId) {
         Initiative initiative = getInitiative(initiativeId);
         Media media = initiative.getMedia();
-        List<InitiativeResourceDto> items = initiative.getInitiativeItems().stream()
-                .map(item-> new InitiativeResourceDto(item.getResource().getName(), item.getResource().getId(), item.getQuantityRequested())).toList();
+        List<InitiativeResourceDto> items = mapper.toResourcesDto(initiative.getInitiativeItems());
 
-        List<InitiativeResourceDto> services = initiative.getInitiativeServices().stream()
-                .map(item-> new InitiativeResourceDto(item.getResource().getName(), item.getResource().getId(), item.getQuantityRequested())).toList();
+        List<InitiativeResourceDto> services = mapper.toResourcesDto(initiative.getInitiativeServices());
 
         return new InitiativeResourceResponseDto(
                 new MediaDto(media.getMediaType(), media.getUrl()),

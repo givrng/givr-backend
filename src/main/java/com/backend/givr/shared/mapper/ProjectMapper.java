@@ -4,12 +4,10 @@ import com.backend.givr.organization.dtos.ProjectApplicationDto;
 import com.backend.givr.shared.dtos.*;
 import com.backend.givr.organization.entity.Category;
 import com.backend.givr.shared.entity.Participation;
-import com.backend.givr.shared.entity.projects.Donation;
-import com.backend.givr.shared.entity.projects.Initiative;
+import com.backend.givr.shared.entity.projects.*;
 import com.backend.givr.shared.entity.ProjectApplication;
 import com.backend.givr.organization.mappings.OrganizationMapper;
 import com.backend.givr.shared.entity.Skill;
-import com.backend.givr.shared.entity.projects.Project;
 import com.backend.givr.shared.enums.ProjectType;
 import com.backend.givr.volunteer.dtos.ProjectResponseDTOv;
 import com.backend.givr.volunteer.dtos.ProjectViewResponse;
@@ -82,6 +80,8 @@ public interface ProjectMapper {
     @Mapping(target = "requiredSkills", ignore = true)
     @Mapping(target = "id", source = "projectId")
     @Mapping(source = "deadline", target = "applicationDeadline")
+    @Mapping(source = "initiativeServices", target = "services")
+    @Mapping(source = "initiativeItems", target = "items")
     InitiativeResponseDto toInitiative(Initiative project);
 
     @Mapping(target = "requiredSkills", ignore = true)
@@ -147,5 +147,14 @@ public interface ProjectMapper {
 
     List<InitiativeResponseDto> toInitiativeReponses(List<Initiative> initiatives);
 
-    // Organization Participation
+    @Mapping(source = "id", target = "resourceId")
+    @Mapping(target = "resource", ignore = true)
+    @Mapping(target = "quantity", source = "quantityRequested")
+    InitiativeResourceDto toResourceDto(InitiativeItem resource);
+
+    List<InitiativeResourceDto> toResourcesDto(List<InitiativeItem> items);
+    @AfterMapping
+    default void updateResource(InitiativeItem resource, @MappingTarget InitiativeResourceDto resourceDto){
+        resourceDto.setResource(resource.getResource().getName());
+    }
 }

@@ -2,6 +2,7 @@ package com.backend.givr.shared.entity.projects;
 
 import com.backend.givr.shared.entity.BaseEntity;
 import com.backend.givr.shared.enums.DonationStatus;
+import com.backend.givr.shared.enums.ResourceKind;
 import com.backend.givr.volunteer.entity.Volunteer;
 import jakarta.persistence.*;
 import lombok.EqualsAndHashCode;
@@ -23,13 +24,18 @@ public class InitiativeItem extends BaseEntity {
     @ManyToOne(optional = false)
     private Initiative initiative;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private ResourceKind kind;
+
     @OneToMany(mappedBy = "item", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private List<Donation> donations;
 
-    public InitiativeItem(Resource commodity, int quantity, Initiative initiative){
+    public InitiativeItem(Resource commodity, int quantity, Initiative initiative, ResourceKind kind){
         this.resource = commodity;
         this.quantityRequested = quantity;
         this.initiative = initiative;
+        this.kind = kind;
     }
 
     public Donation addDonation(Volunteer volunteer, int quantity){

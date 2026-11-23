@@ -1,5 +1,5 @@
 package com.backend.givr.shared.enums;
 
 public enum ProjectType {
-    Project, Initiative
+    Organization, Individual
 }

@@ -3,10 +3,12 @@ package com.backend.givr.organization.dtos;
 import com.backend.givr.shared.enums.IDType;
 import com.backend.givr.shared.enums.VerificationStatus;
 import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.validator.constraints.URL;
 
 import java.util.List;
 
@@ -40,8 +42,12 @@ public class OrganizationUpdateDto {
     private String contactMiddleName;
     private String contactPersonProfileUrl;
     private String dateOfBirth;
-    @Size(min = 11, max = 13, message = "Invalid phone number")
+    @Size(min = 11, max = 16, message = "Invalid phone number")
     private String phoneNumber;
 
     private ContactVerification contactVerification;
+
+    @NotBlank(message = "Callback url is required")
+    @URL(message = "Callback must be a valid url")
+    private String callbackUrl;
 }

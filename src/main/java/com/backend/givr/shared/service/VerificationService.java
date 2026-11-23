@@ -120,7 +120,7 @@ public class VerificationService {
         }
 
         VerificationPayment payment = new VerificationPayment(BigDecimal.valueOf(amount), String.format("Verification of %s account", organization.getOrganizationId()), organization);
-
+        payment.setCallbackUrl(organizationUpdateDto.getCallbackUrl());
         String email = detailsService.getEmail(organization);
         var checkoutUrl = merchant.initializePayment( email, payment);
         paymentRepo.save(payment);
@@ -137,7 +137,7 @@ public class VerificationService {
         if(optionalVerificationSession.isPresent() && volunteer.getVerificationStatus() != null){
             throw new VerificationPaymentProcessedException("Verification has been paid for, await verification update from admin");
         }else if(optionalVerificationSession.isPresent())
-            return processCheckoutUrl(volunteer);
+            return processCheckoutUrl(volunteer, verificationDto.callbackUrl());
 
 
         var volunteerSession = volunteerVerificationSessionService.getVerificationSessionByVolunteer(volunteer);
@@ -149,17 +149,19 @@ public class VerificationService {
 
         volunteerVerificationSessionService.save(session);
 
-        return processCheckoutUrl(volunteer);
+        return processCheckoutUrl(volunteer, verificationDto.callbackUrl());
     }
 
-    private CheckoutResponse processCheckoutUrl(Volunteer volunteer){
+    private CheckoutResponse processCheckoutUrl(Volunteer volunteer, String callbackUrl){
         VerificationPayment payment = new VerificationPayment(BigDecimal.valueOf(amount), String.format("Verification of %s account", volunteer.getVolunteerId()), volunteer);
 
+        payment.setCallbackUrl(callbackUrl);
         String email = volunteer.getEmail();
         var checkout = merchant.initializePayment(email, payment);
         paymentRepo.save(payment);
         return new CheckoutResponse(checkout);
     }
+
     @Async
     public void initiateVerification(String body){
         try{

@@ -55,6 +55,9 @@ public class VerificationPayment {
     @Enumerated(EnumType.STRING)
     private Merchant merchant;
 
+    @Transient
+    @Setter
+    private String callbackUrl;
     private LocalDateTime updateAt;
 
     @PrePersist

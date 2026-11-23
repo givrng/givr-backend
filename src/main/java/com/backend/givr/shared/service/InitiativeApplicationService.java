@@ -2,6 +2,7 @@ package com.backend.givr.shared.service;
 
 import com.backend.givr.shared.dtos.DonationUpdateDto;
 import com.backend.givr.shared.dtos.InitiativeApplicationForm;
+import com.backend.givr.shared.dtos.InitiativeResourceDto;
 import com.backend.givr.shared.dtos.VolunteerApplicationDto;
 import com.backend.givr.shared.entity.Creator;
 import com.backend.givr.shared.entity.InitiativeApplication;
@@ -22,6 +23,7 @@ import org.springframework.data.web.PagedModel;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -50,30 +52,42 @@ public class InitiativeApplicationService {
         // Those will require the approval of the organization
         // Items do not require organization approval
         InitiativeApplication application = new InitiativeApplication();
-        if(applicationForm.getServices()!= null && !applicationForm.getServices().isEmpty()){
-            List<InitiativeItem> items = applicationForm.getServices().stream().map((item)->{
-                InitiativeItem service = initiativeService.getInitiativeItem(item.getResourceId());
-                var donation = service.addDonation(volunteer, item.getQuantity());
-                application.getServices().add(donation);
-                return service;
-            }).toList();
 
-            initiativeService.updateInitiativeItems(items);
+        switch (applicationForm.getApplicationType()){
+            case Items_Only -> {
+                List<InitiativeItem> items = processItems(application, applicationForm.getItems(), volunteer, true);
+                initiativeService.updateInitiativeItems(items);
+            }
+            case Time -> {
+                List<InitiativeItem> items = processItems(application, applicationForm.getServices(), volunteer, false);
+                initiativeService.updateInitiativeItems(items);
+            }
+            case Items_and_time -> {
+                List<InitiativeItem> items = processItems(application, applicationForm.getItems(), volunteer, true);
+                List<InitiativeItem> services = processItems(application, applicationForm.getServices(), volunteer, false);
+                List<InitiativeItem> collection = new ArrayList<>(items);
+                collection.addAll(services);
+                initiativeService.updateInitiativeItems(collection);
+            }
         }
 
-        if(applicationForm.getItems()!= null && !applicationForm.getItems().isEmpty()){
-            List<InitiativeItem> items = applicationForm.getItems().stream().map((item)->{
-                InitiativeItem initiativeItem = initiativeService.getInitiativeItem(item.getResourceId());
-                var donation = initiativeItem.addDonation(volunteer, item.getQuantity());
-                application.getItems().add(donation);
-                return initiativeItem;
-            }).toList();
-
-            initiativeService.updateInitiativeItems(items);
-        }
         var projectApplication = applicationService.apply(volunteer, applicationForm, volunteer.getEmail());
         application.setProjectApplication(projectApplication);
         return repo.save(application);
+    }
+
+    private List<InitiativeItem> processItems(InitiativeApplication application, List<InitiativeResourceDto> items, Volunteer volunteer, boolean updateItems){
+        return updateItems ? items.stream().map((item)->{
+            InitiativeItem initiativeItem = initiativeService.getInitiativeItem(item.getResourceId());
+            var donation = initiativeItem.addDonation(volunteer, item.getQuantity());
+            application.getItems().add(donation);
+            return initiativeItem;
+        }).toList() : items.stream().map((item)->{
+            InitiativeItem initiativeItem = initiativeService.getInitiativeItem(item.getResourceId());
+            var donation = initiativeItem.addDonation(volunteer, item.getQuantity());
+            application.getServices().add(donation);
+            return initiativeItem;
+        }).toList() ;
     }
 
     public void updateApplicationStatus(String applicationId, ApplicationStatus status){

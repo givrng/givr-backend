@@ -22,7 +22,7 @@ public class Initiative extends Project {
     private final List<InitiativeItem> initiativeServices = new ArrayList<>();
 
     @Setter
-    @OneToOne( optional = false)
+    @OneToOne( optional = false, cascade = CascadeType.ALL)
     private Media media;
 
 }

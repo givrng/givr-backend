@@ -50,7 +50,8 @@ public class PaystackClient implements PaymentMerchant {
                 "amount", verificationPayment.getAmount().multiply(BigDecimal.valueOf(100)),
                 "email", email,
                 "channels", List.of("card", "bank", "ussd", "bank_transfer"),
-                "currency", "NGN"
+                "currency", "NGN",
+                "callback_url", verificationPayment.getCallbackUrl()
         );
         ResponseEntity<String> response = fetch(HttpMethod.POST, "/transaction/initialize", payload, String.class);
 

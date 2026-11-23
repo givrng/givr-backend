@@ -81,7 +81,7 @@ public class OrganizationController {
     }
 
     @PostMapping("/verification/initiate")
-    public ResponseEntity<CheckoutResponse> initiateOrganizationVerification(@RequestBody OrganizationUpdateDto organizationDto, @AuthenticationPrincipal SecurityDetails details)  {
+    public ResponseEntity<CheckoutResponse> initiateOrganizationVerification(@Valid @RequestBody OrganizationUpdateDto organizationDto, @AuthenticationPrincipal SecurityDetails details)  {
         return ResponseEntity.ok(service.initiateOrganizationVerification(organizationDto, details));
     }
 

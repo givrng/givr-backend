@@ -3,6 +3,7 @@ package com.backend.givr.shared.entity;
 import com.backend.givr.shared.entity.projects.Donation;
 import com.backend.givr.shared.entity.projects.InitiativeItem;
 import com.backend.givr.shared.entity.projects.Project;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
@@ -22,8 +23,8 @@ public class InitiativeApplication extends BaseEntity {
     @OneToOne
     private ProjectApplication projectApplication;
 
-    @OneToMany
+    @OneToMany(cascade = CascadeType.ALL)
     private final List<Donation> items = new ArrayList<>();
-    @OneToMany
+    @OneToMany(cascade = CascadeType.ALL)
     private final List<Donation> services = new ArrayList<>();
 }

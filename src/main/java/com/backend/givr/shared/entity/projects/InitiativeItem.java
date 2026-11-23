@@ -28,7 +28,7 @@ public class InitiativeItem extends BaseEntity {
     @Column(nullable = false)
     private ResourceKind kind;
 
-    @OneToMany(mappedBy = "item", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "item", fetch = FetchType.EAGER)
     private List<Donation> donations;
 
     public InitiativeItem(Resource commodity, int quantity, Initiative initiative, ResourceKind kind){

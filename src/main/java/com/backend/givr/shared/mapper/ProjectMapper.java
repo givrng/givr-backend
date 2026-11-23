@@ -109,9 +109,9 @@ public interface ProjectMapper {
     default void mapSkills(Project project, @MappingTarget ProjectResponseDto dto){
         dto.setRequiredSkills(project.getRequiredSkills().stream().map(Skill::toString).collect(Collectors.toSet()));
         if(project instanceof Initiative)
-            dto.setType(ProjectType.Initiative);
+            dto.setType(ProjectType.Individual);
         else
-            dto.setType(ProjectType.Project);
+            dto.setType(ProjectType.Organization);
     }
 
     List<ProjectResponseDto> toDtos(List<Project> projects);

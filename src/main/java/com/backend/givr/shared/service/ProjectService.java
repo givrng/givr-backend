@@ -140,16 +140,19 @@ public class ProjectService {
 
     @Transactional
     protected Project updateProject(Project project, ProjectRequestDto projectRequestDto){
-
+        boolean sendNewListing = false;
         if(!project.getTitle().equals(projectRequestDto.getTitle()) || !project.getDescription().equals(projectRequestDto.getDescription()))
             worker.createProjectCard(project);
 
-        handleProject(project, projectRequestDto);
         if(project.getStartDate().isBefore(LocalDate.parse(projectRequestDto.getStartDate())) ) {
             project.setStatus(ProjectStatus.OPEN);
-            worker.sendProjectListing(project).subscribe();
+            sendNewListing = true;
         }
         mapper.updateProject(projectRequestDto, project);
+        handleProject(project, projectRequestDto);
+
+        if(sendNewListing)
+            worker.sendProjectListing(project).subscribe();
 
         return project;
     }

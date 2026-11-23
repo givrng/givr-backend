@@ -33,5 +33,6 @@ public class VolunteerApplicationDto {
         this.additionalInfo = application.getAdditionalInfo();
         this.profileUrl = application.getVolunteer().getProfileUrl();
         projectApplied = new ProjectAppliedDto(application);
+        this.id = application.getId();
     }
 }

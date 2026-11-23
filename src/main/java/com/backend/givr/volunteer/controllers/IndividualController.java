@@ -7,6 +7,8 @@ import com.backend.givr.shared.enums.ProjectStatus;
 import com.backend.givr.shared.interfaces.SecurityDetails;
 import com.backend.givr.shared.service.CloudinaryService;
 import com.backend.givr.volunteer.service.IndividualService;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -25,7 +27,8 @@ import java.util.List;
 public class IndividualController {
     private final IndividualService service;
     private final CloudinaryService cloudinaryService;
-    // Initiative
+    private final ObjectMapper objectMapper;
+    // Individual
     @PostMapping("/initiative")
     ResponseEntity<List<InitiativeResponseDto>> createInitiative(@RequestBody InitiativeRequestDto payload, @AuthenticationPrincipal SecurityDetails authContext){
         return ResponseEntity.ok(service.createInitiative(payload, authContext));
@@ -74,7 +77,7 @@ public class IndividualController {
     }
 
     @PatchMapping("/initiative/{initiativeId}")
-    public ResponseEntity<InitiativeResponseDto> updateProject(@PathVariable("projectId") Long projectId, @RequestBody InitiativeRequestDto projectRequestDto, @AuthenticationPrincipal SecurityDetails details){
+    public ResponseEntity<InitiativeResponseDto> updateProject(@PathVariable("initiativeId") Long projectId, @RequestBody InitiativeRequestDto projectRequestDto, @AuthenticationPrincipal SecurityDetails details) throws JsonProcessingException {
         return ResponseEntity.accepted().body(service.updateProject(projectId, projectRequestDto, details.getId()));
     }
 

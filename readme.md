@@ -38,7 +38,7 @@ Some endpoints name the parameters differently: organization participants use `p
 
 ### Responses
 
-Almost every endpoint documents only `200 OK`. Error shapes are not specified; see section 11.
+Almost every endpoint documents only `200 OK`. Error shapes are not specified.
 
 ### OTP purposes
 
@@ -107,23 +107,30 @@ Only two ID types are accepted for `idType`, for volunteers and for an organizat
 | `NIN` | National Identification Number | The only type usable in testing (section 12) |
 | `DL` | Driver's licence | Not usable in testing |
 
+### Callback URL
+
+Every verification initialization requires a `callbackUrl`, for volunteers and organizations alike: a valid URL in your app (for example, a "verification complete" page) that the user is sent back to after the payment checkout. It is passed to the payment provider when the checkout is created, so each call can use a different value.
+
+- It is required in the request body of `POST /volunteer/profile/initiate/verification` and `POST /organization/verification/initiate`. A missing, blank or malformed value fails validation.
+- The redirect only means the user has left the payment page. It does not mean verification has passed; read the status from the profile endpoints described below.
+
 ### Volunteer verification
 
 The volunteer pays a verification fee, then the ID is checked automatically with the ID provider (QoreID).
 
 1. Log in as the volunteer and collect the ID details. The names must match the ID.
 2. Optional: get an upload signature (`GET /volunteer/media/upload/signature`), upload a photo, and send its URL as `individualLogo`.
-3. Call `POST /volunteer/profile/initiate/verification` with a `VolunteerVerificationDto`. The server saves a verification session and returns `{ "checkoutUrl": "..." }`.
-4. Send the user to `checkoutUrl` to pay. The fee amount is set in server configuration.
+3. Call `POST /volunteer/profile/initiate/verification` with a `VolunteerVerificationDto`, including a `callbackUrl` (see above). The server saves a verification session and returns `{ "checkoutUrl": "..." }`.
+4. Send the user to `checkoutUrl` to pay. The fee amount is set in server configuration. After checkout, the user is redirected to `callbackUrl`.
 5. Once payment is confirmed, the backend runs the ID check asynchronously. A successful QoreID response marks both the session and the volunteer `VERIFIED`.
 6. Poll `GET /volunteer/profile` and read `verificationStatus`. It is absent before the first attempt, and `VERIFIED` is the only value that unlocks initiatives.
 
-Calling the endpoint again before payment completes returns a fresh `checkoutUrl`. Once a payment exists and the volunteer already has a `verificationStatus`, the call fails with "Verification has been paid for, await verification update from admin".
+Calling the endpoint again before payment completes returns a fresh `checkoutUrl`, created with the `callbackUrl` from the new request. Once a payment exists and the volunteer already has a `verificationStatus`, the call fails with "Verification has been paid for, await verification update from admin".
 
 ### Organization verification
 
 1. Sign up and complete the profile with `PATCH /organization/profile`: name, `cacRegNumber`, `cacDocUrl`, address and contact details.
-2. Call `POST /organization/verification/initiate` with an `OrganizationUpdateDto` that includes `contactVerification` (`idType` of `NIN` or `DL`, `idNumber`, `usrImgUrl`). It returns a `checkoutUrl` for the fee.
+2. Call `POST /organization/verification/initiate` with an `OrganizationUpdateDto` that includes `contactVerification` (`idType` of `NIN` or `DL`, `idNumber`, `usrImgUrl`) and a `callbackUrl` (see above). It returns a `checkoutUrl` for the fee; after checkout the user is redirected to `callbackUrl`.
 3. The ID check runs automatically with the contact person's ID number and names, using the `AUTOMATIC_VERIFICATION_*` statuses.
 4. An admin lists sessions with `GET /admin/verifications/organization?status=Pending`, then approves or rejects (type "Organization") with `POST /admin/review`. `PATCH /admin/review/{sessionId}/retry` re-runs the automatic check.
 5. Read the outcome from `GET /organization/profile`: `organization.status` and `organization.reviewStatus`.
@@ -150,7 +157,8 @@ Content-Type: application/json
   "firstname": "Ada",
   "middleName": "Chioma",
   "lastname": "Obi",
-  "dateOfBirth": "1995-04-12"
+  "dateOfBirth": "1995-04-12",
+  "callbackUrl": "https://app.example.com/verification/complete"
 }
 ```
 
@@ -173,7 +181,7 @@ Prefix: `/v1/api/volunteer`
 | GET | `/profile` | Get own profile | none | `VolunteerProfile` |
 | PATCH | `/profile` | Update profile | `UpdateVolunteerDto` | `VolunteerProfile` |
 | GET | `/profile/image?userId=` | Get a profile image URL | query `userId` (required) | URL string |
-| POST | `/profile/initiate/verification` | Start ID verification; returns a checkout/verification URL | `VolunteerVerificationDto` | `CheckoutResponse` |
+| POST | `/profile/initiate/verification` | Start ID verification; returns a checkout/verification URL. `callbackUrl` is required (section 3) | `VolunteerVerificationDto` | `CheckoutResponse` |
 | GET | `/dashboard` | Dashboard summary | none | `VolunteerDashboard` |
 | GET | `/media/upload/signature` | Signed params for direct media upload (cloud storage) | none | `MediaUploadResponse` |
 
@@ -195,7 +203,7 @@ Prefix: `/v1/api/volunteer`
 | Method | Path                            | Description | Request |
 | --- |---------------------------------| --- | --- |
 | POST | `/projects/apply`               | Apply to a regular project (initiative IDs are rejected) | `ProjectApplicationForm` |
-| POST | `/initiative/apply`             | Apply to an initiative (time and/or items); verified volunteers only (section 3), and project IDs are rejected | `InitiativeApplicationForm` |
+| POST | `/initiative/apply`             | Apply to an initiative (time and/or items); `applicationType` selects which of `items` and `services` is read (section 9); verified volunteers only (section 3), and project IDs are rejected | `InitiativeApplicationForm` |
 | GET | `/volunteering`                 | List own participations | returns `ParticipationDto[]` |
 | DELETE | `/volunteering/{participationId}` | Withdraw from / reject a participation | none |
 | POST | `/volunteering/{participationId}/review` | Rate a completed project | `RatingDTO` |
@@ -219,7 +227,7 @@ POST /v1/api/volunteer/projects/apply
 ### Example: apply to an initiative with items
 
 ```http
-POST /v1/api/volunteer/initiative/applyForProject
+POST /v1/api/volunteer/initiative/apply
 
 {
   "projectId": 7,
@@ -243,7 +251,7 @@ Prefix: `/v1/api/organization`
 | PATCH | `/profile` | Update organization profile | `OrganizationUpdateDto` | `OrganizationProfileDto` |
 | GET | `/profile/image?userId=` | Profile image URL | query `userId` | string |
 | GET | `/profile/email/exists?email=` | Check whether an email is registered | query `email` | `EmailExists` |
-| POST | `/verification/initiate` | Submit CAC/contact details and start verification | `OrganizationUpdateDto` | `CheckoutResponse` |
+| POST | `/verification/initiate` | Submit CAC/contact details and start verification. `callbackUrl` is required (section 3) | `OrganizationUpdateDto` | `CheckoutResponse` |
 | GET | `/dashboard` | Dashboard: projects grouped by status, rating, application stats | none | `OrganizationDashboard` |
 | GET | `/media/upload/signature` | Signed media-upload params | none | `MediaUploadResponse` |
 
@@ -319,7 +327,7 @@ Initiative creation and management are for volunteers whose `verificationStatus`
 | PATCH  | `/initiative/donations/{donationId}`          | Update donation status                                                                            | `DonationUpdateDto`    | `DonationDto`                       |
 | GET    | `/media/upload/signature`                     | Signed media-upload params                                                                        | none                   | `MediaUploadResponse`               |
 
-Initiatives extend the project model with `initiativeItemList`, `initiativeServiceList` (both `InitiativeResourceDto[]`) and a required `media` object (`{ mediaType: "Video", mediaUrl }`).
+Initiatives extend the project model with `initiativeItemList`, `initiativeServiceList` (both `InitiativeResourceDto[]`) and a required `media` object (`{ mediaType: "Video", mediaUrl }`). When an initiative is updated, a non-empty `media.mediaUrl` replaces its current media, so include the `media` object in update requests.
 
 ## 7. Admin endpoints
 
@@ -363,21 +371,23 @@ POST /v1/api/admin/review
 
 **UpdateVolunteerDto**: `firstname`, `middleName`, `lastname`, `profileUrl`, `phoneNumber` (11-13), `skills[]`, `location` (`LocationDto`), `email`.
 
-**VolunteerVerificationDto** (required: `firstname`, `lastname`, `idType`, `idNumber`) `idType` (`DL` or `NIN`; see section 3), `idNumber`, `firstname`, `middleName`, `lastname`, `dateOfBirth` (date; stored but not sent to the ID provider), `individualLogo`.
+**VolunteerVerificationDto** (required: `firstname`, `lastname`, `idType`, `idNumber`, `callbackUrl`) `idType` (`DL` or `NIN`; see section 3), `idNumber`, `firstname`, `middleName`, `lastname`, `dateOfBirth` (date; stored but not sent to the ID provider), `individualLogo`, `callbackUrl` (valid URL the user is redirected to after payment; see section 3).
 
-**OrganizationUpdateDto**: `name`, `category[]`, `location`, `profileUrl`, `status`, `cacRegNumber`, `description`, `website`, `address`, `cacDocUrl`, `email`, `contactFirstname`, `contactLastname`, `contactMiddleName`, `contactPersonProfileUrl`, `dateOfBirth`, `phoneNumber` (11-13), `contactVerification` (`idType`, `idNumber`, `usrImgUrl`).
+**OrganizationUpdateDto**: `name`, `category[]`, `location`, `profileUrl`, `status`, `cacRegNumber`, `description`, `website`, `address`, `cacDocUrl`, `email`, `contactFirstname`, `contactLastname`, `contactMiddleName`, `contactPersonProfileUrl`, `dateOfBirth`, `phoneNumber` (11-13), `contactVerification` (`idType`, `idNumber`, `usrImgUrl`), `callbackUrl` (required to initialize verification with `POST /organization/verification/initiate`; must be a valid URL; see section 3).
 
 **ProjectRequestDto** / **InitiativeRequestDto**: `title`, `description`, `categories[]`, `maxVolunteers` (min 1), `location`, `address`, `startDate`, `endDate`, `applicationDeadline`, `attendanceHours` (`from`, `to`), `requiredSkills[]`, `specialRequirements`, `projectFlierUrl`. `locationDto` and `status` were removed from the request. Initiatives add `initiativeItemList[]`, `initiativeServiceList[]` and a required `media` object, and a new initiative always starts as `DRAFT`. Title uniqueness is now per creator, not global.
 
 **ProjectApplicationForm** (required: `projectId`, `reason`, `aboutMe`, `isAvailable`) `projectId`, `reason`, `aboutMe`, `isAvailable`, `mySkills[]`, `additionalInfo`, `phoneNumber` (11-16).
 
-**InitiativeApplicationForm**: everything in `ProjectApplicationForm` plus `applicationType` (`Items_Only`, `Items_and_time`, `Time`), `items[]`, `services[]` (each `InitiativeResourceDto`: `resource`, `resourceId`, `quantity`).
+**InitiativeApplicationForm**: everything in `ProjectApplicationForm` plus `applicationType` (required: `Items_Only`, `Items_and_time`, `Time`), `items[]`, `services[]` (each `InitiativeResourceDto`: `resource`, `resourceId`, `quantity`). `applicationType` decides which lists are read: `Items_Only` reads `items`, `Time` reads `services`, and `Items_and_time` reads both. Send the list or lists that the chosen type reads; any other list is ignored.
 
 **Other request bodies:** `RatingDTO` (`rating`: double), `OtpDto` (`otp`), `OtpRequestDto` (`email`, `role`), `PasswordResetDto` (`email`, `role`, `newPassword`, `otp`; `otp` required), `PasswordUpdateDto` (`otp`, `password`, `rePassword`), `UpdateParticipantDto` (`id`, `status`), `BroadcastMsgDto` (`projectId`, `message`), `DonationUpdateDto` (`donationId`, `status`; both required), `ReviewDto` (`sessionId`, `isApproved`, `reason`, `type`: `Organization` or `Individual`; all required), `BatchCertificateRequest` (`participants`: int64\[\]), `AdminAuthDto` (`email`, `otp`).
 
 ### Responses
 
-**ProjectResponseDto**: `id`, `title`, `organization` (`OrganizationDto`), `description`, `categories[]`, `maxVolunteers`, `location`, `startDate`, `endDate`, `applicationDeadline`, `attendanceHours`, `requiredSkills[]`, `specialRequirements`, `totalApplicants`, `status`, `createdAt`, `updatedAt`, `address`, `broadcastEnabled`, `rating`, `projectFlierUrl`, `projectCardUrl`, `type` (`Project` or `Initiative`). `InitiativeResponseDto` has the same shape.
+**ProjectResponseDto**: `id`, `title`, `organization` (`OrganizationDto`), `description`, `categories[]`, `maxVolunteers`, `location`, `startDate`, `endDate`, `applicationDeadline`, `attendanceHours`, `requiredSkills[]`, `specialRequirements`, `totalApplicants`, `status`, `createdAt`, `updatedAt`, `address`, `broadcastEnabled`, `rating`, `projectFlierUrl`, `projectCardUrl`, `type` (`Organization` or `Individual`). `InitiativeResponseDto` has the same shape.
+
+`type` says who created the listing: `Organization` for an organization's project and `Individual` for an initiative created by a volunteer. These values replace the earlier `Project` and `Initiative`, so clients that branch on `type` must be updated.
 
 **VolunteerProfile**: `id`, `firstname`, `middleName`, `lastname`, `profileUrl`, `phoneNumber`, `skills[]`, `location`, `certificates[]` (`VolunteerCertificateDto`), `email`, `emailEditable`, `emailIsVerified`, `phoneIsVerified`, `createdAt`, `verificationStatus`.
 
@@ -393,9 +403,9 @@ POST /v1/api/admin/review
 
 **VolunteerDashboard**: `firstname`, `profileCompleted`, `projectApplications[]` (`status`, `appliedAt`).
 
-**VolunteerApplicationDto**: `id`, `firstname`, `lastname`, `skills[]`, `reason`, `isAvailable`, `specialSkills[]`, `aboutVolunteer`, `additionalInfo`, `profileUrl`, `projectApplied` (`id`, `volunteer`, `status`, `title`, `appliedAt`).
+**VolunteerApplicationDto**: `id`, `firstname`, `lastname`, `skills[]`, `reason`, `isAvailable`, `specialSkills[]`, `aboutVolunteer`, `additionalInfo`, `profileUrl`, `projectApplied` (`id`, `volunteer`, `status`, `title`, `appliedAt`). `id` is now populated with the application's ID.
 
-**DonationDto**: `id`, `itemName`, `initiative`, `status`, `quantityDonated`.
+**DonationDto**: `id`, `itemName`, `donor` (`VolunteerDto`, the volunteer who made the donation), `initiative`, `status`, `quantityDonated`.
 
 **GivrMessage**: `msgId`, `content`, `projectId`, `sentBy`, `username`, `role`, `sentAt`, `savedAt`.
 
@@ -426,14 +436,14 @@ POST /v1/api/admin/review
 | Admin `role` | `SUPER_ADMIN`, `ADMIN` |
 | `idType` | `DL`, `NIN` (only these two are accepted) |
 | `applicationType` | `Items_Only`, `Items_and_time`, `Time` |
-| Resource `type` | `Project`, `Initiative` |
+| Resource `type` | `Organization`, `Individual` |
 | Media `mediaType` | `Video` |
 
 ## 10. Typical flows
 
-**Volunteer onboarding:** `POST /volunteer/auth/signup` → `POST /volunteer/otp/request?purpose=EMAIL_VERIFICATION` → `PATCH /volunteer/verify/email` → `POST /volunteer/profile/initiate/verification` (see section 3; redirect to `checkoutUrl`).
+**Volunteer onboarding:** `POST /volunteer/auth/signup` → `POST /volunteer/otp/request?purpose=EMAIL_VERIFICATION` → `PATCH /volunteer/verify/email` → `POST /volunteer/profile/initiate/verification` (see section 3; include `callbackUrl` and redirect to `checkoutUrl`).
 
-**Organization lifecycle:** signup and email OTP → `POST /organization/verification/initiate` → admin reviews via `/admin/review` → `POST /organization/projects` → `PATCH .../publish` → review applicants (`accept`/`reject`) → `PATCH .../completed`.
+**Organization lifecycle:** signup and email OTP → `POST /organization/verification/initiate` (include `callbackUrl`) → admin reviews via `/admin/review` → `POST /organization/projects` → `PATCH .../publish` → review applicants (`accept`/`reject`) → `PATCH .../completed`.
 
 **Certificates:** organization sets participant to `COMPLETED` (`PATCH /organization/projects/participant`) → admin lists `/admin/certificate/pending` → approves one or a batch → volunteer certificate appears on `VolunteerProfile.certificates` → anyone can check it with `GET /certificates/verify/{certId}`.
 

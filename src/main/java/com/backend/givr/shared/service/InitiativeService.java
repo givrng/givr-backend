@@ -63,7 +63,6 @@ public class InitiativeService {
 
         MediaDto mediaDto = initiativeRequestDto.getMedia();
         Media media = new Media(mediaDto.mediaUrl());
-        media = mediaRepo.save(media);
 
         initiative.setMedia(media);
 
@@ -88,9 +87,10 @@ public class InitiativeService {
     }
 
     public void updateInitiativeItems(List<InitiativeItem> items){
-        itemRepo.saveAll(items);
+        itemRepo.saveAllAndFlush(items);
     }
 
+    @Transactional
     public Initiative updateInitiative(Long initiativeId, Volunteer individual, InitiativeRequestDto requestDto){
         Initiative initiative = repo.findById(initiativeId).orElseThrow(()-> new EntityNotFoundException("Initiative does not exist"));
 
@@ -103,6 +103,10 @@ public class InitiativeService {
 
         if(requestDto.getInitiativeItemList() != null && !requestDto.getInitiativeItemList().isEmpty())
             updateInitiativeResources(initiative.getInitiativeItems(), requestDto);
+
+        if(requestDto.getMedia().mediaUrl() != null && !requestDto.getMedia().mediaUrl().isEmpty()){
+            initiative.setMedia(new Media(requestDto.getMedia().mediaUrl()));
+        }
 
         projectService.updateProject(initiative, requestDto);
         return initiative;

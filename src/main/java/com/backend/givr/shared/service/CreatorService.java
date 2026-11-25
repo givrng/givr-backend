@@ -6,6 +6,8 @@ import com.backend.givr.shared.repo.CreatorRepo;
 import com.backend.givr.volunteer.entity.Volunteer;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -13,8 +15,12 @@ import org.springframework.stereotype.Service;
 public class CreatorService {
     private final CreatorRepo repo;
 
+    @Value(value = "${givr.creator.individual.freeProjectCount}")
+    private Integer freeInitiativeCount;
+
+
     public Creator createOrReturnCreator(Volunteer individual){
-        return repo.findByIndividual(individual).orElseGet(()-> repo.save(new Creator(individual)));
+        return repo.findByIndividual(individual).orElseGet(()-> repo.save(new Creator(individual, freeInitiativeCount)));
     }
 
     public Creator getCreatorByIndividualId(String individualId){

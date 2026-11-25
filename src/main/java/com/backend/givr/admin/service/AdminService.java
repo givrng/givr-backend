@@ -1,38 +1,39 @@
 package com.backend.givr.admin.service;
 
-import com.backend.givr.admin.dtos.AdminAuthDto;
-import com.backend.givr.admin.dtos.ReviewDto;
-import com.backend.givr.admin.dtos.ReviewResponseDto;
+import com.backend.givr.admin.dtos.*;
 import com.backend.givr.admin.entity.Admin;
 import com.backend.givr.admin.entity.AdminDetails;
+import com.backend.givr.admin.entity.ProjectReview;
 import com.backend.givr.admin.entity.Review;
 import com.backend.givr.admin.enums.AdminRole;
 import com.backend.givr.admin.enums.SessionType;
 import com.backend.givr.admin.mapper.AdminMapper;
 import com.backend.givr.admin.repos.AdminRepo;
+import com.backend.givr.admin.repos.ProjectReviewRepo;
 import com.backend.givr.admin.repos.ReviewRepo;
 import com.backend.givr.organization.entity.Organization;
 import com.backend.givr.organization.service.OrganizationService;
+import com.backend.givr.shared.dtos.InitiativeResponseDto;
 import com.backend.givr.shared.dtos.VerificationSessionDto;
 import com.backend.givr.shared.dtos.VolunteerVerificationSessionDto;
 import com.backend.givr.shared.email.EmailService;
 import com.backend.givr.shared.entity.OrganizationVerificationSession;
-import com.backend.givr.shared.enums.AccountType;
-import com.backend.givr.shared.enums.OtpPurpose;
-import com.backend.givr.shared.enums.VerificationStatus;
+import com.backend.givr.shared.entity.projects.Project;
+import com.backend.givr.shared.enums.*;
 import com.backend.givr.shared.exceptions.DuplicateAccountException;
 import com.backend.givr.shared.interfaces.SecurityDetails;
+import com.backend.givr.shared.mapper.ProjectMapper;
 import com.backend.givr.shared.otp.OTPService;
+import com.backend.givr.shared.service.InitiativeService;
 import com.backend.givr.shared.service.VerificationService;
-import com.backend.givr.shared.enums.ReviewStatus;
 import com.backend.givr.shared.service.VerificationWorker;
 import com.backend.givr.volunteer.entity.VolunteerVerificationSession;
 import com.backend.givr.volunteer.service.VolunteerVerificationSessionService;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.constraints.Email;
+import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.Nullable;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -41,39 +42,32 @@ import org.springframework.data.web.PagedModel;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.validation.annotation.Validated;
 
-import java.util.List;
 import java.util.Objects;
 
 import static com.backend.givr.shared.enums.ReviewStatus.Approved;
 
 @Service
+@RequiredArgsConstructor
 public class AdminService {
-    @Autowired
-    private AdminRepo repo;
+    private final AdminRepo repo;
 
-    @Autowired
-    private AdminDetailsService service;
-    @Autowired
-    private ReviewRepo reviewRepo;
+    private final AdminDetailsService service;
+    private final ReviewRepo reviewRepo;
+    private final ProjectReviewRepo projectReviewRepo;
 
-    @Autowired
-    private OrganizationService organizationService;
-    @Autowired
-    private AdminMapper mapper;
-    @Autowired
-    private EntityManager manager;
+    private final OrganizationService organizationService;
+    private final AdminMapper mapper;
+    private final ProjectMapper projectMapper;
+    private final EntityManager manager;
 
-    @Autowired
-    private EmailService emailService;
-    @Autowired
-    private OTPService otpService;
-    @Autowired
-    private VerificationService verificationService;
-    @Autowired
-    private VerificationWorker verificationWorker;
-    @Autowired
-    private VolunteerVerificationSessionService volunteerVerificationSessionService;
+    private final EmailService emailService;
+    private final OTPService otpService;
+    private final VerificationService verificationService;
+    private final VerificationWorker verificationWorker;
+    private final InitiativeService initiativeService;
+    private final VolunteerVerificationSessionService volunteerVerificationSessionService;
 
     @Async
     public void requestOtp(String email){
@@ -151,13 +145,29 @@ public class AdminService {
         return mapper.toDto(reviewRepo.save(review));
     }
 
+    @Transactional
+    public ProjectReviewResponseDto createProjectReview(ProjectReviewDto reviewDto, AdminDetails details){
+        Project project = initiativeService.getInitiative(reviewDto.projectId());
+        ReviewStatus status = reviewDto.isApproved()? Approved: ReviewStatus.Rejected;
+        Admin admin = manager.getReference(Admin.class, details.getId());
+
+        if(reviewDto.isApproved()){
+            project.setReviewStatus(status);
+            emailService.sendProjectReviewStatusUpdate(project.getOrganizerName(),
+                    project.getCreator().getIndividual().getEmail(), status, reviewDto.reason());
+        }else {
+            project.setReviewStatus(status);
+            emailService.sendProjectReviewStatusUpdate(project.getOrganizerName(),
+                    project.getCreator().getIndividual().getEmail(), status, reviewDto.reason());
+        }
+
+        return mapper.toDto(createProjectReview(reviewDto, project, admin));
+    }
+
     private Review createVolunteerReview(VolunteerVerificationSession session, ReviewDto reviewDto, Admin admin){
         Review review = new Review(reviewDto.reason(), reviewDto.isApproved(), admin, session);
-        ReviewStatus status = reviewDto.isApproved()? Approved: ReviewStatus.Rejected;
-
         session.setReview(reviewDto.reason());
-        session.setReviewStatus(status);
-
+        session.setReviewStatus(review.getStatus());
         return review;
     }
 
@@ -171,6 +181,15 @@ public class AdminService {
         return review;
     }
 
+    private ProjectReview createProjectReview(@Validated ProjectReviewDto reviewDto, Project project, Admin reviewer){
+        ReviewStatus status = reviewDto.isApproved()? Approved: ReviewStatus.Rejected;
+        return projectReviewRepo.save(new ProjectReview(
+                reviewDto.reason(),
+                status,
+                project,
+                reviewer
+        ));
+    }
     public @Nullable ReviewResponseDto getLastSessionReview(Long sessionId) {
         OrganizationVerificationSession session = manager.getReference(OrganizationVerificationSession.class, sessionId);
         Review review = reviewRepo.findFirstByVerificationSessionOrderByCreatedAt(session).orElseThrow();
@@ -188,5 +207,9 @@ public class AdminService {
     public void retryAutomaticVerification(Long sessionId){
         OrganizationVerificationSession session = verificationService.getVerificationSession(sessionId);
         verificationWorker.verifyContactPersonInformation(session);
+    }
+
+    public @Nullable PagedModel<InitiativeResponseDto> getInitiatives(ProjectStatus projectStatus, PageRequest pageRequest) {
+        return initiativeService.getAllInitiativeByStatus(projectStatus, pageRequest);
     }
 }

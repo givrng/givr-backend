@@ -5,6 +5,7 @@ import com.backend.givr.shared.entity.projects.Initiative;
 import com.backend.givr.shared.enums.ProjectStatus;
 import com.backend.givr.volunteer.entity.Volunteer;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -37,4 +38,8 @@ public interface InitiativeRepo extends JpaRepository<Initiative, Long> {
     List<Initiative> findClosingInitiatives(@Param("weekFromToday") LocalDate today);
 
     Optional<Initiative> findByProjectIdAndCreatorIndividual(Long projectId, Volunteer individual);
+
+    int countByCreatorAndStatusNot(Creator creator, ProjectStatus projectStatus);
+
+    Page<Initiative> findAllByStatus(ProjectStatus projectStatus, PageRequest pageRequest);
 }

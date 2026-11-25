@@ -1,5 +1,6 @@
 package com.backend.givr.shared.service;
 
+import com.backend.givr.config.properties.VerificationFeeProperties;
 import com.backend.givr.organization.dtos.CheckoutResponse;
 import com.backend.givr.organization.dtos.OrganizationUpdateDto;
 import com.backend.givr.organization.entity.Organization;
@@ -10,26 +11,25 @@ import com.backend.givr.organization.security.OrganizationDetailsService;
 import com.backend.givr.organization.security.PaymentService;
 import com.backend.givr.shared.entity.Location;
 import com.backend.givr.shared.entity.OrganizationVerificationSession;
+
+import com.backend.givr.shared.entity.projects.Project;
 import com.backend.givr.shared.enums.IDType;
 import com.backend.givr.shared.exceptions.DuplicateAccountException;
 import com.backend.givr.shared.exceptions.VerificationPaymentProcessedException;
 import com.backend.givr.shared.mapper.VerificationMapper;
 import com.backend.givr.shared.repo.OrganizationVerificationSessionRepo;
-import com.backend.givr.shared.email.EmailService;
 import com.backend.givr.shared.enums.ReviewStatus;
+import com.backend.givr.shared.repo.ProjectPaymentReceiptRepo;
 import com.backend.givr.volunteer.dtos.VolunteerVerificationDto;
 import com.backend.givr.volunteer.entity.Volunteer;
 import com.backend.givr.volunteer.entity.VolunteerVerificationSession;
-import com.backend.givr.volunteer.repo.VolunteerRepo;
 import com.backend.givr.volunteer.service.VolunteerVerificationSessionService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -37,48 +37,30 @@ import org.springframework.data.domain.Sort;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.client.RestTemplate;
-
-import javax.swing.text.html.Option;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class VerificationService {
 
-    @Autowired
-    private EmailService emailService;
-    @Autowired
-    private ObjectMapper objectMapper;
-    @Autowired
-    private RestTemplate restTemplate;
-    @Autowired
-    private PaystackClient merchant;
-    @Autowired
-    private LocationService locationService;
-    @Autowired
-    private OrganizationDetailsService detailsService;
-    @Autowired
-    private OrganizationRepo organizationRepo;
-    @Autowired
-    private VerificationPaymentRepo paymentRepo;
-    @Autowired
-    private OrganizationVerificationSessionRepo verificationSessionRepo;
-    @Autowired
-    private VolunteerRepo volunteerRepo;
-    @Autowired
-    private VolunteerVerificationSessionService volunteerVerificationSessionService;
+    private final ObjectMapper objectMapper;
+    private final PaystackClient merchant;
+    private final LocationService locationService;
+    private final OrganizationDetailsService detailsService;
+    private final OrganizationRepo organizationRepo;
+    private final VerificationPaymentRepo paymentRepo;
+    private final OrganizationVerificationSessionRepo verificationSessionRepo;
+    private final VolunteerVerificationSessionService volunteerVerificationSessionService;
+    private final ProjectPaymentReceiptRepo projectPaymentReceiptRepo;
+    private final PaymentService paymentService;
 
-    @Autowired
-    private PaymentService paymentService;
 
-    @Autowired
-    private VerificationMapper mapper;
+    private final VerificationMapper mapper;
 
-    @Value("${givr.verification.amount}")
-    private Double amount;
+    private final VerificationFeeProperties verificationFee;
 
 
     public @Nullable Page<OrganizationVerificationSession> getVerificationSessions(ReviewStatus status, PageRequest request) {
@@ -102,6 +84,7 @@ public class VerificationService {
             return null;
 
         Location location = locationService.createLocation(organizationUpdateDto.getLocation());
+        BigDecimal amount = BigDecimal.valueOf(verificationFee.organizationVerificationFee());
 
         String claimedCacRegNumber = organizationUpdateDto.getCacRegNumber().trim().toUpperCase();
         if(organizationRepo.existsByCacRegNumber(claimedCacRegNumber))
@@ -119,7 +102,7 @@ public class VerificationService {
             verificationSessionRepo.save(session);
         }
 
-        VerificationPayment payment = new VerificationPayment(BigDecimal.valueOf(amount), String.format("Verification of %s account", organization.getOrganizationId()), organization);
+        VerificationPayment payment = new VerificationPayment(amount, String.format("Verification of %s account", organization.getOrganizationId()), organization);
         payment.setCallbackUrl(organizationUpdateDto.getCallbackUrl());
         String email = detailsService.getEmail(organization);
         var checkoutUrl = merchant.initializePayment( email, payment);
@@ -127,18 +110,22 @@ public class VerificationService {
         return new CheckoutResponse(checkoutUrl);
     }
 
+
+
     @Transactional
     public CheckoutResponse createVolunteerVerificationSession(VolunteerVerificationDto verificationDto, Volunteer volunteer){
+
+        var amount = verificationFee.individualVerificationFee();
 
         IDType type = verificationDto.idType();
         String number = verificationDto.idNumber().toUpperCase().trim();
         Optional<VolunteerVerificationSession> optionalVerificationSession = volunteerVerificationSessionService.findByIdTypAndNumber(type, number);
 
+        String description = String.format("Verification of %s account", volunteer.getVolunteerId());
         if(optionalVerificationSession.isPresent() && volunteer.getVerificationStatus() != null){
             throw new VerificationPaymentProcessedException("Verification has been paid for, await verification update from admin");
         }else if(optionalVerificationSession.isPresent())
-            return processCheckoutUrl(volunteer, verificationDto.callbackUrl());
-
+            return processCheckoutUrl(volunteer, amount,description, verificationDto.callbackUrl());
 
         var volunteerSession = volunteerVerificationSessionService.getVerificationSessionByVolunteer(volunteer);
         VolunteerVerificationSession session;
@@ -149,11 +136,13 @@ public class VerificationService {
 
         volunteerVerificationSessionService.save(session);
 
-        return processCheckoutUrl(volunteer, verificationDto.callbackUrl());
+        return processCheckoutUrl(volunteer, amount, description, verificationDto.callbackUrl());
     }
 
-    private CheckoutResponse processCheckoutUrl(Volunteer volunteer, String callbackUrl){
-        VerificationPayment payment = new VerificationPayment(BigDecimal.valueOf(amount), String.format("Verification of %s account", volunteer.getVolunteerId()), volunteer);
+    private CheckoutResponse processCheckoutUrl(Volunteer volunteer, Double amount, String description, String callbackUrl){
+
+        VerificationPayment payment = createVerificationPayment(amount,  description,
+                volunteer);
 
         payment.setCallbackUrl(callbackUrl);
         String email = volunteer.getEmail();
@@ -161,6 +150,17 @@ public class VerificationService {
         paymentRepo.save(payment);
         return new CheckoutResponse(checkout);
     }
+
+    private VerificationPayment createVerificationPayment(Double amount, String description, Object reason){
+        if( reason instanceof Volunteer volunteer)
+            return new VerificationPayment(BigDecimal.valueOf(amount), description, volunteer);
+        else if(reason instanceof Organization organization)
+            return new VerificationPayment(BigDecimal.valueOf(amount), description, organization);
+        else if (reason instanceof Project project)
+            return new VerificationPayment(BigDecimal.valueOf(amount), description, project);
+        throw new IllegalArgumentException("Unknown Verification reason");
+    }
+
 
     @Async
     public void initiateVerification(String body){

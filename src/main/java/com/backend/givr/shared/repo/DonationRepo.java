@@ -2,6 +2,7 @@ package com.backend.givr.shared.repo;
 
 import com.backend.givr.shared.entity.Creator;
 import com.backend.givr.shared.entity.projects.Donation;
+import com.backend.givr.shared.enums.DonationStatus;
 import com.backend.givr.volunteer.entity.Volunteer;
 import jakarta.persistence.LockModeType;
 import jakarta.validation.constraints.NotBlank;
@@ -19,4 +20,6 @@ public interface DonationRepo extends JpaRepository<Donation, String> {
     Optional<Donation> findByIdAndItemInitiativeCreator(@NotBlank String id, Creator creator);
 
     Page<Donation> findAllByItemInitiativeCreator(Creator creator, PageRequest pageRequest);
+
+    Page<Donation> findAllByItemInitiativeCreatorAndStatus(Creator creator, DonationStatus status, PageRequest pageRequest);
 }

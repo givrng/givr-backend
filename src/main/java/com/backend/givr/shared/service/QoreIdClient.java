@@ -36,6 +36,8 @@ public class QoreIdClient implements VerificationClient {
     private RestTemplate restTemplate;
     @Autowired
     private ObjectMapper mapper;
+    @Autowired
+    private CreatorService creatorService;
 
     // Provide environment variables for injected properties and decorate class as a service
     @Value("${qore.id.clientId}")
@@ -147,6 +149,7 @@ public class QoreIdClient implements VerificationClient {
                 session.setVerificationStatus(VerificationStatus.VERIFIED);
                 session.getVolunteer().setVerificationStatus(VerificationStatus.VERIFIED);
                 session.getVolunteer().setVerificationStatus(VerificationStatus.VERIFIED);
+                creatorService.createOrReturnCreator(session.getVolunteer());
             }
 
         }catch (HttpClientErrorException e){

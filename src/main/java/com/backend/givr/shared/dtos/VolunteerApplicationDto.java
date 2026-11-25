@@ -1,5 +1,6 @@
 package com.backend.givr.shared.dtos;
 
+import com.backend.givr.shared.entity.InitiativeApplication;
 import com.backend.givr.shared.entity.ProjectApplication;
 import com.backend.givr.shared.entity.Skill;
 import lombok.Getter;
@@ -10,7 +11,7 @@ import java.util.List;
 @Getter
 @Setter
 public class VolunteerApplicationDto {
-    private Long id;
+    private String applicationId;
     private String firstname;
     private String lastname;
     private List<String> skills;
@@ -33,6 +34,6 @@ public class VolunteerApplicationDto {
         this.additionalInfo = application.getAdditionalInfo();
         this.profileUrl = application.getVolunteer().getProfileUrl();
         projectApplied = new ProjectAppliedDto(application);
-        this.id = application.getId();
+        this.applicationId = String.valueOf(application.getId());
     }
 }

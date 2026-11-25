@@ -1,5 +1,6 @@
 package com.backend.givr.shared.dtos;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -12,9 +13,9 @@ import java.util.List;
 @Setter
 public class InitiativeRequestDto extends ProjectRequestDto {
     // Items
-    private List<InitiativeResourceDto> initiativeItemList;
+    private List<@Valid InitiativeResourceDto> initiativeItemList;
     // Service
-    private List<InitiativeResourceDto> initiativeServiceList;
+    private List<@Valid InitiativeResourceDto> initiativeServiceList;
     // Media
     @NotNull
     private MediaDto media;

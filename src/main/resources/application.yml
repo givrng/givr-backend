@@ -62,8 +62,13 @@ spring:
             redirect-uri: "{baseUrl}/v1/api/volunteer/oauth2/code/google"
 givr:
   baseUrl: ${API_BASEURL}
+  creator:
+    individual:
+      freeProjectCount: 1
   verification:
-    amount: 2000.00
+    organization_verification_fee: 2000.00
+    individual_verification_fee: 3000.00
+    initiative_creation_fee: 3000.00
   allowed:
     origins: ${ALLOWED_ORIGINS}
     admins: ${ALLOWED_ADMINS}

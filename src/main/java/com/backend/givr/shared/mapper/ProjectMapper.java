@@ -3,6 +3,7 @@ package com.backend.givr.shared.mapper;
 import com.backend.givr.organization.dtos.ProjectApplicationDto;
 import com.backend.givr.shared.dtos.*;
 import com.backend.givr.organization.entity.Category;
+import com.backend.givr.shared.entity.Creator;
 import com.backend.givr.shared.entity.Participation;
 import com.backend.givr.shared.entity.projects.*;
 import com.backend.givr.shared.entity.ProjectApplication;
@@ -35,19 +36,23 @@ public interface ProjectMapper {
     @Mapping(target = "media", ignore = true)
     Initiative toInitiative(InitiativeRequestDto initiativeRequestDto);
 
+    @Mapping(source = "url", target = "mediaUrl")
+    MediaDto toMediaDto(Media media);
+
     @Mapping(source = "quantity", target = "quantityDonated")
     DonationDto toDonationDto(Donation donation);
 
-    List<DonationDto> toDonationDtos(List<Donation> donations);
-
-    default void updateDonationItemName(Donation donation, @MappingTarget DonationDto dto){
-        dto.setItemName(donation.getItem().getResource().getName());
-        dto.setInitiative(toInitiative(donation.getItem().getInitiative()));
+    @AfterMapping
+    default void updateDonationDto(Donation donation, @MappingTarget DonationDto donationDto){
+        donationDto.setInitiative(donation.getItem().getInitiative().toMinimalDto());
+        donationDto.setItemName(donation.getItem().getResource().getName());
     }
+
+    List<DonationDto> toDonationDtos(List<Donation> donations);
 
 
     default List<Category> toCategories (List<String> cats){
-        return cats.stream().map(Category::new).toList();
+        return cats == null? null: cats.stream().map(Category::new).toList();
     }
 
     default List<String> toCategoriesString(List<Category> categoryList){
@@ -57,11 +62,12 @@ public interface ProjectMapper {
     @AfterMapping
     default void mapDates(ProjectRequestDto projectRequestDto, @MappingTarget Project project) {
         try{
-
-            project.setStartDate(LocalDate.parse(projectRequestDto.getStartDate()));
-            project.setDeadline(LocalDate.parse(projectRequestDto.getApplicationDeadline()));
-            project.setEndDate(LocalDate.parse(projectRequestDto.getEndDate()));
-
+            if(projectRequestDto.getStartDate() !=null)
+                project.setStartDate(LocalDate.parse(projectRequestDto.getStartDate()));
+            if(projectRequestDto.getApplicationDeadline()!=null)
+                project.setDeadline(LocalDate.parse(projectRequestDto.getApplicationDeadline()));
+            if(projectRequestDto.getEndDate() != null)
+                project.setEndDate(LocalDate.parse(projectRequestDto.getEndDate()));
         }catch (DateTimeParseException e){
             System.out.println(e.getLocalizedMessage());
         }
@@ -96,12 +102,12 @@ public interface ProjectMapper {
 
     @AfterMapping
     default void updateVolunteerAndOrganization(Project project, @MappingTarget ProjectResponseDto projectDto){
-        projectDto.setTotalApplicants(project.getVolunteerCount());
+        projectDto.setTotalParticipants(project.getVolunteerCount());
     }
+
     @AfterMapping
     default void updateProjectResponseV(Project project, @MappingTarget ProjectResponseDTOv projectDto){
-        projectDto.setTotalApplicants(project.getVolunteerCount());
-
+        projectDto.setTotalParticipants(project.getVolunteerCount());
         projectDto.setRequiredSkills(project.getRequiredSkills().stream().map(Skill::toString).collect(Collectors.toSet()));
     }
 
@@ -157,4 +163,17 @@ public interface ProjectMapper {
     default void updateResource(InitiativeItem resource, @MappingTarget InitiativeResourceDto resourceDto){
         resourceDto.setResource(resource.getResource().getName());
     }
+
+    @Mapping(target = "initiative", ignore = true)
+    InitiativeItemDto toInitiativeItemDto(InitiativeItem item);
+
+    @AfterMapping
+    default void updateInitiativeItemDto(InitiativeItem item, @MappingTarget InitiativeItemDto dto){
+        dto.setInitiative(item.getInitiative().toMinimalDto());
+    }
+
+    List<InitiativeItemDto> toInitiativeItemDtos(List<InitiativeItem> items);
+
+    CreatorDto toCreatorDto(Creator creator);
+
 }

@@ -21,5 +21,6 @@ public class VolunteerDto {
     private String email;
     private LocationDto location;
     private List<SkillDto> skills;
+    private String profileUrl;
     private VerificationStatus verificationStatus;
 }

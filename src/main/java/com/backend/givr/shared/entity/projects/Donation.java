@@ -21,9 +21,17 @@ public class Donation extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     private InitiativeItem item;
 
-    private int quantity;
+    private Integer quantity;
 
     @Enumerated(EnumType.STRING)
     @Setter
     private DonationStatus status;
+
+    public void increateTotalDonated() {
+        item.updateTotalDonated(quantity);
+    }
+
+    public void reduceTotalDonated(){
+        item.updateTotalDonated(-quantity);
+    }
 }

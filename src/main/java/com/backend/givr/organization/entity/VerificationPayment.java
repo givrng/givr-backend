@@ -1,6 +1,7 @@
 package com.backend.givr.organization.entity;
 
 import com.backend.givr.shared.dtos.TransactionStatus;
+import com.backend.givr.shared.entity.projects.Project;
 import com.backend.givr.shared.enums.Merchant;
 import com.backend.givr.shared.enums.PaymentMethod;
 import com.backend.givr.volunteer.entity.Volunteer;
@@ -27,6 +28,9 @@ public class VerificationPayment {
     private Organization organization;
     @ManyToOne
     private Volunteer volunteer;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    private Project project;
 
     @Enumerated(EnumType.STRING)
     private TransactionStatus status;
@@ -86,6 +90,15 @@ public class VerificationPayment {
         this.merchant = Merchant.PAYSTACK;
         this.volunteer = volunteer;
         this.transactionRef = String.format("VOL_%s", UUID.randomUUID());
+    }
+
+    public VerificationPayment(BigDecimal amount, String description, Project project){
+        this.status = TransactionStatus.PENDING;
+        this.amount = amount;
+        this.description = description;
+        this.merchant = Merchant.PAYSTACK;
+        this.project = project;
+        this.transactionRef = String.format("Project_%s", UUID.randomUUID());
     }
 
     public void updateStatus(TransactionStatus status){

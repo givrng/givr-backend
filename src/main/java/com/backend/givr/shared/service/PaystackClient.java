@@ -36,8 +36,6 @@ public class PaystackClient implements PaymentMerchant {
     @Autowired
     private RestTemplate requestHandler;
 
-    private final Logger logger = LoggerFactory.getLogger(PaystackClient.class);
-
     @Override
     public String authenticate() throws JsonProcessingException, BadRequestException {
         return "";
@@ -46,6 +44,9 @@ public class PaystackClient implements PaymentMerchant {
 
     @Override
     public String initializePayment( String email, VerificationPayment verificationPayment) {
+        System.out.println(verificationPayment.getAmount().toPlainString());
+        System.out.println(verificationPayment.getCallbackUrl());
+
         Map<String, Object> payload = Map.of(
                 "amount", verificationPayment.getAmount().multiply(BigDecimal.valueOf(100)),
                 "email", email,
@@ -64,7 +65,7 @@ public class PaystackClient implements PaymentMerchant {
                 return checkoutUrl;
             }else throw new FailedToInitiatePaymentException("Failed to initialize paystack payment");
         }catch ( JsonProcessingException e){
-            logger.error("Failed to parse paystack response, {}", e.getLocalizedMessage());
+            log.error("Failed to parse paystack response, {}", e.getLocalizedMessage());
         }
         return null;
     }

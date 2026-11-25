@@ -1,5 +1,6 @@
 package com.backend.givr.config;
 
+import com.backend.givr.config.properties.VerificationFeeProperties;
 import com.backend.givr.shared.enums.MediaUploadPurpose;
 import com.cloudinary.Cloudinary;
 import com.cloudinary.api.exceptions.AlreadyExists;
@@ -11,6 +12,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBooleanProperty;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.web.config.EnableSpringDataWebSupport;
@@ -32,6 +34,7 @@ import static org.springframework.data.web.config.EnableSpringDataWebSupport.Pag
 @EnableAsync
 @EnableSpringDataWebSupport(pageSerializationMode = VIA_DTO)
 @Slf4j
+@EnableConfigurationProperties(value = {VerificationFeeProperties.class})
 public class ApplicationConfiguration {
 
     @Value("${cloudinary.cloud-name}")

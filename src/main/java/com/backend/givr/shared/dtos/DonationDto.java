@@ -9,7 +9,8 @@ public class DonationDto {
     private String id;
     private String itemName;
     private VolunteerDto donor;
-    private InitiativeResponseDto initiative;
+    private MinimalInitiativeDto initiative;
     private DonationStatus status;
     private int quantityDonated;
+
 }

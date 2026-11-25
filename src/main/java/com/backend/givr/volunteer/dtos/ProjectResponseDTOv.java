@@ -29,7 +29,7 @@ public class ProjectResponseDTOv {
     private AttendanceHours attendanceHours;
     private Set<String> requiredSkills;
     private String specialRequirements;
-    private int totalApplicants;
+    private int totalParticipants;
     private ProjectStatus status;
     private ZonedDateTime createdAt;
     private ZonedDateTime updatedAt;

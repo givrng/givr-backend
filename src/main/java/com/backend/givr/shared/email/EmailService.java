@@ -138,6 +138,12 @@ public class EmailService {
         sendEmail(html, email, "Account verification update");
     }
 
+    @Async
+    public void sendProjectReviewStatusUpdate(@NotBlank String name, String email, ReviewStatus reviewStatus, String reason){
+        String html = emailTemplateService.projectReviewUpdate(name, reviewStatus, reason);
+        sendEmail(html, email, "Your project review update");
+    }
+
     @Transactional
     @Async
     public void sendParticipationUpdate(Volunteer volunteer, Project project, ParticipationStatus status){

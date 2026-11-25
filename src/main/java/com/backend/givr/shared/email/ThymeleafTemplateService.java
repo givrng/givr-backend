@@ -176,5 +176,20 @@ public class ThymeleafTemplateService {
         context.setVariable("firstName", firstName);
         return engine.process("email/notification",context);
     }
+
+    public String projectReviewUpdate(@NotBlank String name, ReviewStatus reviewStatus, String reason) {
+        Context context = new Context();
+        String action = switch (reviewStatus){
+            case Approved -> "Log into your dashboard and publish your project";
+            case Rejected -> "Review the reason and update your project accordingly";
+            case null, default -> "";
+        };
+
+        context.setVariable("name", name);
+        context.setVariable("status", reviewStatus);
+        context.setVariable("action", action);
+        return engine.process("email/projectReviewUpdate", context);
+
+    }
 }
 

@@ -1,6 +1,7 @@
 package com.backend.givr.volunteer.mappings;
 
 import com.backend.givr.organization.dtos.LocationDto;
+import com.backend.givr.shared.dtos.CreatorDto;
 import com.backend.givr.shared.entity.Location;
 import com.backend.givr.shared.entity.Skill;
 import com.backend.givr.shared.mapper.CertificateMapper;

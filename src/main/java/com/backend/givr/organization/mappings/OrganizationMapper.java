@@ -27,7 +27,7 @@ public interface OrganizationMapper {
 
     @AfterMapping
     default void updateVolunteerAndOrganization(Project project, @MappingTarget ProjectResponseDto projectDto){
-        projectDto.setTotalApplicants(project.getVolunteerCount());
+        projectDto.setTotalParticipants(project.getVolunteerCount());
     }
 
     @Mapping(target = "name", source = "organizationName")

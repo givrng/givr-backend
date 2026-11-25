@@ -1,12 +1,11 @@
 package com.backend.givr.admin.controller;
 
-import com.backend.givr.admin.dtos.AdminAuthDto;
-import com.backend.givr.admin.dtos.BatchCertificateRequest;
-import com.backend.givr.admin.dtos.ReviewDto;
-import com.backend.givr.admin.dtos.ReviewResponseDto;
+import com.backend.givr.admin.dtos.*;
 import com.backend.givr.admin.entity.AdminDetails;
 import com.backend.givr.admin.service.AdminService;
+import com.backend.givr.shared.dtos.InitiativeResponseDto;
 import com.backend.givr.shared.dtos.VolunteerVerificationSessionDto;
+import com.backend.givr.shared.enums.ProjectStatus;
 import com.backend.givr.shared.service.ParticipationService;
 import com.backend.givr.shared.dtos.ParticipationDto;
 import com.backend.givr.shared.dtos.VerificationSessionDto;
@@ -60,6 +59,21 @@ public class AdminController {
                                                                                               @RequestParam(name = "pageSize", defaultValue = "30") int pageSize){
         PageRequest pageRequest = PageRequest.of(pageNum, pageSize);
         return ResponseEntity.ok(service.getVolunteerVerificationSession(status, pageRequest));
+    }
+
+    @GetMapping("/verifications/initiatives")
+    public ResponseEntity<PagedModel<InitiativeResponseDto>> getDraftInitiativesForApproval(
+            @RequestParam(value = "status", required = false) ProjectStatus projectStatus,
+            @RequestParam(name = "pageNum", defaultValue = "0") int pageNum,
+            @RequestParam(name = "pageSize", defaultValue = "30") int pageSize
+            ){
+        PageRequest pageRequest = PageRequest.of(pageNum, pageSize);
+        return ResponseEntity.ok(service.getInitiatives(projectStatus, pageRequest));
+    }
+
+    @PatchMapping("/verifications/initiatives/{projectId}/review")
+    public ResponseEntity<ProjectReviewResponseDto> reviewInitiative(@RequestBody ProjectReviewDto review, @AuthenticationPrincipal AdminDetails details){
+        return ResponseEntity.accepted().body(service.createProjectReview(review, details));
     }
 
     @PostMapping("/auth/request-otp")

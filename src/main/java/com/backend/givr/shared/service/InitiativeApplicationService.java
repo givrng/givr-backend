@@ -6,6 +6,7 @@ import com.backend.givr.shared.dtos.InitiativeResourceDto;
 import com.backend.givr.shared.dtos.VolunteerApplicationDto;
 import com.backend.givr.shared.entity.Creator;
 import com.backend.givr.shared.entity.InitiativeApplication;
+import com.backend.givr.shared.entity.ProjectApplication;
 import com.backend.givr.shared.entity.projects.Donation;
 import com.backend.givr.shared.entity.projects.Initiative;
 import com.backend.givr.shared.entity.projects.InitiativeItem;
@@ -16,6 +17,7 @@ import com.backend.givr.shared.exceptions.IllegalOperationException;
 import com.backend.givr.shared.repo.DonationRepo;
 import com.backend.givr.shared.repo.InitiativeApplicationRepo;
 import com.backend.givr.volunteer.entity.Volunteer;
+import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -34,6 +36,7 @@ public class InitiativeApplicationService {
     private final ApplicationService applicationService;
     private final InitiativeApplicationRepo repo;
     private final DonationRepo donationRepo;
+    private final EntityManager manager;
 
     @Transactional
     public InitiativeApplication apply(Volunteer volunteer, InitiativeApplicationForm applicationForm){
@@ -44,6 +47,8 @@ public class InitiativeApplicationService {
 
         try{
             Initiative initiative = initiativeService.getInitiative(applicationForm.getProjectId());
+            if(initiative.getCreator().getIndividual().equals(volunteer))
+                throw new IllegalOperationException("Illegal operation, initiative creator cannot apply");
         }catch (EntityNotFoundException e){
             throw new IllegalOperationException("Cannot apply to an project via a initiative");
         }
@@ -90,10 +95,10 @@ public class InitiativeApplicationService {
         }).toList() ;
     }
 
-    public void updateApplicationStatus(String applicationId, ApplicationStatus status){
-        InitiativeApplication application = repo.findById(applicationId)
+    public void updateApplicationStatus(Long applicationId, ApplicationStatus status){
+        ProjectApplication projectApplication = manager.getReference(ProjectApplication.class, applicationId );
+        InitiativeApplication application = repo.findByProjectApplication(projectApplication)
                 .orElseThrow(()-> new EntityNotFoundException("Initiative application does not exist"));
-
         applicationService.changeApplicationStatus(application.getProjectApplication(), status);
     }
 
@@ -108,16 +113,27 @@ public class InitiativeApplicationService {
 
         switch (status){
             case Promised_Accepted -> {
+                if(!donation.getStatus().equals(DonationStatus.Pending_acceptance))
+                    throw new IllegalOperationException("Illegal operation, cannot accept a donation that is not pending acceptance");
                 donation.setStatus(status);
+                donation.increateTotalDonated();
                 // notify donor of promise acceptance
             }
 
             case Promise_Fulfilled -> {
+                if(!donation.getStatus().equals(DonationStatus.Promised_Accepted))
+                    throw new IllegalOperationException("Illegal operation, donation must be accepted first before marking as fulfilled");
+
                 donation.setStatus(status);
                 // Notify user of donation
             }
 
             case Promise_Rejected -> {
+                if(donation.getStatus().equals(DonationStatus.Promise_Fulfilled))
+                    throw new IllegalOperationException("Illegal operation, cannot reject an already fulfilled donation");
+
+                if(donation.getStatus().equals(DonationStatus.Promised_Accepted))
+                    donation.reduceTotalDonated();
                 donation.setStatus(status);
                 // Notify donor of promise rejection
             }
@@ -128,7 +144,9 @@ public class InitiativeApplicationService {
         return donationRepo.save(donation);
     }
 
+    private void rejectSelfApplication(){
 
+    }
 
     public PagedModel<VolunteerApplicationDto> getInitiativeApplications(String individual, PageRequest request) {
         Creator creator = creatorService.getCreatorByIndividualId(individual);

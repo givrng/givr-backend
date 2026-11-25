@@ -14,8 +14,8 @@ import java.time.ZoneId;
 @NoArgsConstructor
 @Entity
 @Getter
-@Table(check = @CheckConstraint(name = "check_no_two_sessions", constraint = "verificationSession IS NOT null AND volunteerVerificationSession IS null OR " +
-        "volunteerVerificationSession IS NOT null and AND verificationSession is null"))
+@Table(check = @CheckConstraint(name = "check_no_two_sessions", constraint = "verification_session IS NOT null AND volunteer_verification_session IS null OR " +
+        "volunteer_verification_session IS NOT null AND verification_session is null"))
 public class Review {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -30,9 +30,11 @@ public class Review {
     private Admin reviewedBy;
 
     @ManyToOne
+    @JoinColumn(name = "verification_session")
     private OrganizationVerificationSession verificationSession;
 
     @ManyToOne
+    @JoinColumn(name = "volunteer_verification_session")
     private VolunteerVerificationSession volunteerVerificationSession;
     @Enumerated(EnumType.STRING)
     @Setter

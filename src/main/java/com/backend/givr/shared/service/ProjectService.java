@@ -74,7 +74,8 @@ public class ProjectService {
 
     public PagedModel<ProjectResponseDto> getAllProjectsForVolunteer(PageRequest pageRequest){
         pageRequest = pageRequest.withSort(Sort.by("deadline").ascending());
-        LocalDate now = LocalDate.now(ZoneId.of("Africa/Lagos"));
+        LocalDate now = LocalDate.from(LocalDate.now(ZoneId.of("Africa/Lagos"))
+                .atTime(LocalTime.now(ZoneId.of("Africa/Lagos"))));
         Page<Project> result = repo.findAllByStatusAndDeadlineAfter(ProjectStatus.OPEN, now, pageRequest);
 
         PageImpl<ProjectResponseDto> responseDtos = new PageImpl<>(mapper.toDtos(result.getContent()), result.getPageable(), result.getTotalElements());
@@ -118,10 +119,13 @@ public class ProjectService {
         if(!projectDatesValid(project))
             throw new InconsistentProjectDatesException("BaseProject dates are invalid. Start and end dates cannot be in the past, the application deadline must be before the start date, and the start date must be before the end date.");
         Location savedLocation = locationService.createLocation(projectRequestDto.getLocation());
-        project.setLocation(savedLocation);
+
+        if(savedLocation != null)
+            project.setLocation(savedLocation);
 
         var updatedSkills = skillService.updateSkills(projectRequestDto.getRequiredSkills());
-        project.setRequiredSkills(updatedSkills);
+        if(updatedSkills!=null)
+            project.setRequiredSkills(updatedSkills);
     }
 
     public void createProject(ProjectRequestDto projectRequestDto, Organization organization){
@@ -141,10 +145,13 @@ public class ProjectService {
     @Transactional
     protected Project updateProject(Project project, ProjectRequestDto projectRequestDto){
         boolean sendNewListing = false;
-        if(!project.getTitle().equals(projectRequestDto.getTitle()) || !project.getDescription().equals(projectRequestDto.getDescription()))
+        var updatedTitle = projectRequestDto.getTitle();
+        var updatedDescription = projectRequestDto.getDescription();
+        var updatedStartDate = projectRequestDto.getStartDate();
+        if((updatedTitle != null && !project.getTitle().equals(projectRequestDto.getTitle())) || (updatedDescription!=null &&!project.getDescription().equals(projectRequestDto.getDescription())))
             worker.createProjectCard(project);
 
-        if(project.getStartDate().isBefore(LocalDate.parse(projectRequestDto.getStartDate())) ) {
+        if(updatedStartDate != null && project.getStartDate().isBefore(LocalDate.parse(projectRequestDto.getStartDate())) ) {
             project.setStatus(ProjectStatus.OPEN);
             sendNewListing = true;
         }
@@ -175,12 +182,12 @@ public class ProjectService {
         LocalDate endDate = project.getEndDate();
         LocalDate deadline = project.getDeadline();
 
-        boolean startDateValid = startDate.isAfter(today);
-        boolean endDateValid = endDate.isAfter(today);
-        boolean dateRangeValid = !startDate.isAfter(endDate);
-        boolean deadlineValid = !deadline.isAfter(startDate);
+        boolean startDateValid = startDate != null && startDate.isAfter(today);
+        boolean endDateValid = endDate!= null && endDate.isAfter(today);
+        boolean dateRangeValid = startDate !=null && endDate !=null && !startDate.isAfter(endDate);
+        boolean deadlineValid = deadline !=null && startDate!=null && !deadline.isAfter(startDate);
 
-        if (startDate.isEqual(endDate))
+        if (startDate !=null && endDate !=null && startDate.isEqual(endDate))
             project.setReviewable(true);
 
         return startDateValid

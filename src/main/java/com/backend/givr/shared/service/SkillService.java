@@ -17,6 +17,8 @@ public class SkillService {
     private SkillRepo repo;
 
     public Set<Skill> updateSkills(List<String> skills){
+        if(skills == null || skills.isEmpty())
+            return null;
         List<Skill> existingSkills = repo.findByNameIn(skills);
 
         // If all skills exist in the database, save

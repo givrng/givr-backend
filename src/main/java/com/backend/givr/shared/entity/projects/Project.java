@@ -3,11 +3,9 @@ package com.backend.givr.shared.entity.projects;
 import com.backend.givr.organization.entity.AttendanceHours;
 import com.backend.givr.organization.entity.Category;
 import com.backend.givr.organization.entity.Organization;
-import com.backend.givr.shared.entity.Creator;
-import com.backend.givr.shared.entity.Location;
-import com.backend.givr.shared.entity.ProjectApplication;
-import com.backend.givr.shared.entity.Skill;
+import com.backend.givr.shared.entity.*;
 import com.backend.givr.shared.enums.ProjectStatus;
+import com.backend.givr.shared.enums.ReviewStatus;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
@@ -75,6 +73,10 @@ public class Project {
     @Column(nullable = false)
     protected LocalDate deadline;
 
+    @OneToOne(mappedBy = "project")
+    @JoinColumn(name = "receipt_id")
+    protected ProjectPaymentReceipt creationReceipt;
+
     protected String address;
 
     @Embedded
@@ -93,6 +95,9 @@ public class Project {
     protected String organizerName;
 
     protected Boolean reviewable;
+
+    @Enumerated(EnumType.STRING)
+    protected ReviewStatus reviewStatus;
 
     protected boolean isDeleted = false;
     protected Double rating;

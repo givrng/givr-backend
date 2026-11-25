@@ -8,18 +8,23 @@ import jakarta.persistence.*;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+import org.hibernate.annotations.SQLRestriction;
 
 import java.util.List;
+import java.util.stream.Stream;
 
 @Entity
 @NoArgsConstructor
 @Getter
 @EqualsAndHashCode(of = "resource", callSuper = true)
+@Table(uniqueConstraints = @UniqueConstraint(name = "unq_resource_initiative", columnNames = {"resource", "initiative", "kind"}))
 public class InitiativeItem extends BaseEntity {
     @ManyToOne
     private Resource resource;
 
-    private int quantityRequested;
+    @Setter
+    private Integer quantityRequested;
 
     @ManyToOne(optional = false)
     private Initiative initiative;
@@ -27,6 +32,8 @@ public class InitiativeItem extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private ResourceKind kind;
+
+    private Integer totalDonated;
 
     @OneToMany(mappedBy = "item", fetch = FetchType.EAGER)
     private List<Donation> donations;
@@ -39,9 +46,17 @@ public class InitiativeItem extends BaseEntity {
     }
 
     public Donation addDonation(Volunteer volunteer, int quantity){
-        int totalDonated = donations.stream()
-                .filter(donation -> donation.getStatus().equals(DonationStatus.Promise_Fulfilled))
-                .mapToInt(Donation::getQuantity).sum();
+        int totalDonated = switch (kind){
+            // Donations for items are calculated based on fulfilled promises
+            // This is because I assumed items will be sent to the organizer beforehand
+            case ITEM -> filterDonationsBy(DonationStatus.Promise_Fulfilled)
+                    .mapToInt(Donation::getQuantity).sum();
+
+            // Donations for services will be calculated on the basis of accepted promises
+            // Assumption made here is that a service can only be fulfilled on the day of the initiative
+            case SERVICE -> filterDonationsBy(DonationStatus.Promised_Accepted)
+                    .mapToInt(Donation::getQuantity).sum();
+        };
 
         if(totalDonated == quantityRequested)
             return null;
@@ -62,4 +77,15 @@ public class InitiativeItem extends BaseEntity {
         }
         return null;
     }
+
+    public void updateTotalDonated(int numberDonated){
+        this.totalDonated += numberDonated;
+    }
+
+    private Stream<Donation> filterDonationsBy(DonationStatus status){
+        return donations.stream()
+                .filter(donation -> donation.getStatus().equals(status));
+    }
+
+
 }

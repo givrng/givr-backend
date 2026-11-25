@@ -22,11 +22,25 @@ public class Creator {
     @OneToOne
     private Organization organization;
 
-    public Creator(Volunteer individual){
+    private Integer freeProjectCount;
+
+    public Creator(Volunteer individual, int freeInitiativeCount){
         this.individual = individual;
+        this.freeProjectCount = freeInitiativeCount;
     }
 
     public Creator(Organization organization){
         this.organization = organization;
+        this.freeProjectCount = 0;
+    }
+
+    public void useFreeProject(){
+        if(freeProjectCount == null)
+            freeProjectCount = 0;
+        else freeProjectCount -= 1;
+    }
+
+    public boolean hasFreeProject(){
+        return freeProjectCount != null && freeProjectCount > 0;
     }
 }

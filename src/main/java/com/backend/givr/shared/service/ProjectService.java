@@ -87,7 +87,7 @@ public class ProjectService {
     }
 
     public Project getProject(Long projectId){
-        return repo.findById(projectId).orElseThrow();
+        return repo.findByProjectIdAndStatusNot(projectId, ProjectStatus.DRAFT).orElseThrow(()->new EntityNotFoundException("Project does not exist"));
     }
 
     public String getProjectTitle(Long projectId) {

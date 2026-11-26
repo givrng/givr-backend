@@ -48,7 +48,7 @@ public class IndividualService {
         return volunteerRepo.findById(volunteerId).orElseThrow(()->new EntityNotFoundException("Account does not exist"));
     }
 
-    public List<InitiativeResponseDto> createInitiative(InitiativeRequestDto payload, SecurityDetails authContext) {
+    public InitiativeResponseDto createInitiative(InitiativeRequestDto payload, SecurityDetails authContext) {
         if(payload == null)
             throw new IllegalArgumentException("Null project DTO null accepted");
 
@@ -57,7 +57,7 @@ public class IndividualService {
             throw new IllegalOperationException("Volunteer account must be verified to create an initiative");
 
         var initiative = initiativeService.createInitiative(payload, individual);
-        return projectMapper.toInitiativeReponses(initiativeService.getAllInitiativeByIndividualAndStatus(initiative.getCreator(), ProjectStatus.DRAFT));
+        return projectMapper.toInitiative(initiative);
     }
     
     public InitiativeResponseDto updateProject(Long projectId, InitiativeRequestDto projectRequestDto, String individualId) {

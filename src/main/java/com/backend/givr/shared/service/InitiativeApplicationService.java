@@ -104,6 +104,7 @@ public class InitiativeApplicationService {
 
     /*
     * Rules for donation need to be defined*/
+    @Transactional
     public Donation updateUpdateDonation(DonationUpdateDto donationUpdateDto, String individualId){
         String donationId = donationUpdateDto.donationId();
         DonationStatus status = donationUpdateDto.status();

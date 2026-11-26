@@ -33,7 +33,7 @@ public class InitiativeItem extends BaseEntity {
     @Column(nullable = false)
     private ResourceKind kind;
 
-    private Integer totalDonated;
+    private Integer totalDonated = 0;
 
     @OneToMany(mappedBy = "item", fetch = FetchType.EAGER)
     private List<Donation> donations;
@@ -79,7 +79,10 @@ public class InitiativeItem extends BaseEntity {
     }
 
     public void updateTotalDonated(int numberDonated){
-        this.totalDonated += numberDonated;
+        if(this.totalDonated == null)
+            this.totalDonated = numberDonated;
+        else
+            this.totalDonated += numberDonated;
     }
 
     private Stream<Donation> filterDonationsBy(DonationStatus status){

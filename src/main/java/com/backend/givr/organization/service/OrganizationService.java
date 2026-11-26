@@ -291,7 +291,6 @@ public class OrganizationService {
         }
         if(organizationDto.getProfileUrl()!=null)
             organization.setProfileUrl(organizationDto.getProfileUrl());
-        System.out.println();
         repo.save(organization);
         return toProfile(organization, details);
     }

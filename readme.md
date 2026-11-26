@@ -38,7 +38,7 @@ Some endpoints name the parameters differently: organization participants use `p
 
 ### Responses
 
-Almost every endpoint documents only `200 OK`. Error shapes are not specified.
+Almost every endpoint documents only `200 OK`. Error shapes are not specified. Looking up a project by ID treats `DRAFT` projects as not found ("Project does not exist").
 
 ### OTP purposes
 
@@ -137,7 +137,7 @@ Calling the endpoint again before payment completes returns a fresh `checkoutUrl
 
 ### Admin view of volunteer sessions
 
-`GET /admin/verifications/individual` lists volunteer verification sessions, paged and newest first, as `VolunteerVerificationSessionDto`. Admins record a decision with POST /admin/review and type "Individual". That stores the reason and sets the session's reviewStatus, but it does not change the volunteer's verificationStatus or send an email; VERIFIED still comes from the QoreID result. No endpoint reads a volunteer session's review back.
+`GET /admin/verifications/individual` lists volunteer verification sessions, paged, as `VolunteerVerificationSessionDto` (no longer sorted newest first). Admins record a decision with POST /admin/review and type "Individual". That stores the reason and sets the session's reviewStatus, but it does not change the volunteer's verificationStatus or send an email; VERIFIED still comes from the QoreID result. No endpoint reads a volunteer session's review back.
 
 ### What verification unlocks
 
@@ -308,27 +308,28 @@ Prefix: `/v1/api/individual`
 
 Initiative creation and management are for volunteers whose `verificationStatus` is `VERIFIED` (section 3).
 
-| Method | Path                                               | Description                                                                                                                                                       | Request                | Response                            |
-|--------|----------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------|-------------------------------------|
-| GET    | `/initiative?status=&pageNum=&pageSize=`           | List own initiatives. `status`: `DRAFT` (default), `OPEN`, `CLOSE`, `ONGOING`, `COMPLETED`, `ALL`                                                                 | none                   | `PagedModelInitiativeResponseDto`   |
-| POST   | `/initiative`                                      | Create an initiative. It starts as `DRAFT` with `reviewStatus` `Pending`                                                                                          | `InitiativeRequestDto` | `InitiativeResponseDto[]`           |
-| PATCH  | `/initiative/{initiativeId}`                       | Update an initiative                                                                                                                                              | `InitiativeRequestDto` | `InitiativeResponseDto`             |
-| DELETE | `/initiative/{initiativeId}`                       | Delete an initiative                                                                                                                                              | none                   | none                                |
-| PATCH  | `/initiative/publish`                              | Publish an admin-approved initiative. `202` when published, `201` with the checkout URL in the `Location` header when a fee is due (see Publishing an initiative) | `PublishProjectDto`    | none                                |
-| PATCH  | `/initiative/{initiative}/completed`               | Mark completed                                                                                                                                                    | none                   | none                                |
-| GET    | `/initiative/participants`                         | List participants                                                                                                                                                 | none                   | `ParticipationDto[]`                |
-| PATCH  | `/initiative/participant`                          | Update participant status                                                                                                                                         | `UpdateParticipantDto` | none                                |
-| GET    | `/initiative/applications?pageNum=&pageSize=`      | Volunteer applications                                                                                                                                            | none                   | `PagedModelVolunteerApplicationDto` |
-| PATCH  | `/initiative/applications/{id}/accept`             | Accept an application. `{id}` is the numeric `applicationId`                                                                                                      | none                   | none                                |
-| PATCH  | `/initiative/applications/{id}/reject`             | Reject an application. `{id}` is the numeric `applicationId`                                                                                                      | none                   | none                                |
-| GET    | `/initiative/donations?status=&pageNum=&pageSize=` | List donations made to account owner initiatives (30 per page). Optional `status` filter. The donor is hidden until the donation is accepted                      | none                   | `PagedModelDonationDto`             |
-| GET    | `/initiative/{initiativeId}/donations`             | Every item and service an initiative requests, each with its donations. Creator only                                                                              | none                   | `InitiativeItemDto[]`               |
-| GET    | `/initiative/donations/{donationId}`               | Donation detail                                                                                                                                                   | none                   | `DonationDto`                       |
-| GET    | `/donations?status=&pageNum=&pageSize=`            | Donations on the account owner's initiatives (20 per page), with the donor always included. Optional `status` filter                                              | none                   | `PagedModelDonationDto`             |
-| PATCH  | `/initiative/donations/{donationId}`               | Update donation status. Transitions are enforced (see Donations)                                                                                                  | `DonationUpdateDto`    | `DonationDto`                       |
-| GET    | `/media/upload/signature`                          | Signed media-upload params                                                                                                                                        | none                   | `MediaUploadResponse`               |
+| Method | Path                                               | Description                                                                                                                                               | Request                | Response                            |
+|--------|----------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------|-------------------------------------|
+| GET    | `/initiative?status=&pageNum=&pageSize=`           | List own initiatives. `status`: `DRAFT` (default), `OPEN`, `CLOSE`, `ONGOING`, `COMPLETED`, `ALL`                                                         | none                   | `PagedModelInitiativeResponseDto`   |
+| POST   | `/initiative`                                      | Create an initiative and return it. It starts as `DRAFT` with `reviewStatus` `Pending`                                                                    | `InitiativeRequestDto` | `InitiativeResponseDto`             |
+| GET    | `/initiative/{initiativeId}`                       | Get an initiative by ID. A `DRAFT` initiative owned by another creator is reported as not found ("Initiative does not exist")                             | none                   | `InitiativeResponseDto`             |
+| PATCH  | `/initiative/{initiativeId}`                       | Update an initiative. Only `DRAFT` initiatives can be updated                                                                                             | `InitiativeRequestDto` | `InitiativeResponseDto`             |
+| DELETE | `/initiative/{initiativeId}`                       | Delete an initiative at any status. It is soft-deleted and its title becomes `<title>-DEL-<timestamp>`                                                    | none                   | none                                |
+| PATCH  | `/initiative/publish`                              | Publish an admin-approved initiative. `202` with no body when published, `201` with a `CheckoutResponse` when a fee is due (see Publishing an initiative) | `PublishProjectDto`    | `CheckoutResponse` (`201` only)     |
+| PATCH  | `/initiative/{initiative}/completed`               | Mark completed                                                                                                                                            | none                   | none                                |
+| GET    | `/initiative/participants`                         | List participants                                                                                                                                         | none                   | `ParticipationDto[]`                |
+| PATCH  | `/initiative/participant`                          | Update participant status                                                                                                                                 | `UpdateParticipantDto` | none                                |
+| GET    | `/initiative/applications?pageNum=&pageSize=`      | Volunteer applications                                                                                                                                    | none                   | `PagedModelVolunteerApplicationDto` |
+| PATCH  | `/initiative/applications/{id}/accept`             | Accept an application. `{id}` is the numeric `applicationId`                                                                                              | none                   | none                                |
+| PATCH  | `/initiative/applications/{id}/reject`             | Reject an application. `{id}` is the numeric `applicationId`                                                                                              | none                   | none                                |
+| GET    | `/initiative/donations?status=&pageNum=&pageSize=` | List donations made to account owner initiatives (30 per page). Optional `status` filter. The donor is hidden until the donation is accepted              | none                   | `PagedModelDonationDto`             |
+| GET    | `/initiative/{initiativeId}/donations`             | Every item and service an initiative requests, each with its donations. Creator only                                                                      | none                   | `InitiativeItemDto[]`               |
+| GET    | `/initiative/donations/{donationId}`               | Donation detail                                                                                                                                           | none                   | `DonationDto`                       |
+| GET    | `/donations?status=&pageNum=&pageSize=`            | Donations on the account owner's initiatives (20 per page), with the donor always included. Optional `status` filter                                      | none                   | `PagedModelDonationDto`             |
+| PATCH  | `/initiative/donations/{donationId}`               | Update donation status. Transitions are enforced (see Donations)                                                                                          | `DonationUpdateDto`    | `DonationDto`                       |
+| GET    | `/media/upload/signature`                          | Signed media-upload params                                                                                                                                | none                   | `MediaUploadResponse`               |
 
-Initiatives extend the project model with `initiativeItemList`, `initiativeServiceList` (both `InitiativeResourceDto[]`, each `quantity` at least 1) and a required `media` object (`{ mediaType: "Video", mediaUrl }`). When an initiative is updated, a non-empty `media.mediaUrl` replaces its current media; the update logic leaves the media unchanged when `media` is absent or its URL is empty.
+Initiatives extend the project model with `initiativeItemList`, `initiativeServiceList` (both `InitiativeResourceDto[]`, each `quantity` at least 1) and a required `media` object (`{ mediaType: "Video", mediaUrl }`). When an initiative is updated, a non-empty `media.mediaUrl` replaces its current media; the update logic leaves the media unchanged when `media` is absent or its URL is empty. Only `DRAFT` initiatives can be updated; any other status fails with "Only draft projects can be updated".
 
 `{id}` in the accept and reject paths is the `applicationId` from `VolunteerApplicationDto`. It is numeric; earlier versions used a string ID.
 
@@ -343,7 +344,7 @@ A new initiative is `DRAFT` with `reviewStatus` `Pending`. It goes live in these
 | Status | Body | Meaning |
 | --- | --- | --- |
 | `202 Accepted` | none | Published. The initiative is now `OPEN`. This happens when the creator still has a free publish, or the creation fee was already paid. |
-| `201 Created` | none | A fee is due. The Paystack checkout URL is in the `Location` header, not in a `CheckoutResponse` body. Send the user there; afterwards they are redirected to `callbackUrl`. |
+| `201 Created` | `CheckoutResponse` | A fee is due. `checkoutUrl` is the Paystack checkout page; send the user there. Afterwards they are redirected to `callbackUrl`. |
 
 4. Once Paystack confirms the payment, the server publishes the initiative itself. Do not call publish again; read `status` from `GET /initiative` to confirm. The redirect to `callbackUrl` only means the user left the checkout. Calling publish again after an abandoned or failed checkout returns a fresh checkout URL.
 
@@ -367,8 +368,8 @@ Prefix: `/v1/api/admin`. Admin login is OTP-based.
 | GET | `/verify` | Check admin session/authorization | none | none |
 | DELETE | \`\` | Remove (log out) the admin | none | none |
 | GET | `/verifications/organization?pageNum=&pageSize=&status=` | List organization verification sessions (paged, 30 per page by default); `status`: `Approved`, `Rejected`, `Pending` | none | `PagedModelVerificationSessionDto` |
-| GET | `/verifications/individual?pageNum=&pageSize=&status=` | List volunteer verification sessions (paged, 30 per page by default, newest first) | none | `PagedModelVolunteerVerificationSessionDto` |
-| GET | `/verifications/initiatives?pageNum=&pageSize=&status=` | List initiatives for review (paged, 30 per page by default, newest first). `status` is a project status such as `DRAFT`, not a review status; pass it explicitly | none | `PagedModelInitiativeResponseDto` |
+| GET | `/verifications/individual?pageNum=&pageSize=&status=` | List volunteer verification sessions (paged, 30 per page by default; no longer sorted newest first) | none | `PagedModelVolunteerVerificationSessionDto` |
+| GET | `/verifications/initiatives?pageNum=&pageSize=&status=` | List initiatives for review (paged, 30 per page by default, newest first). `status` is a project status such as `DRAFT`, not a review status; `ALL` lists every status. Send it explicitly | none | `PagedModelInitiativeResponseDto` |
 | PATCH | `/verifications/initiatives/{initiativeId}/review` | Approve or reject an initiative. Returns `202 Accepted`. The initiative is identified by `projectId` in the body; the path value is not used | `ProjectReviewDto` | `ProjectReviewResponseDto` |
 | POST | `/review` | Approve or reject a verification session; type selects Organization or Individual | `ReviewDto` | `ReviewResponseDto` |
 | GET | `/review/{sessionId}` | Latest review for an organization session | none | `ReviewResponseDto` |
@@ -429,7 +430,7 @@ The review is stored, the initiative's `reviewStatus` becomes `Approved` or `Rej
 
 `type` says who created the listing: `Organization` for an organization's project and `Individual` for an initiative created by a volunteer. These values replace the earlier `Project` and `Initiative`, so clients that branch on `type` must be updated.
 
-**VolunteerProfile**: `id`, `firstname`, `middleName`, `lastname`, `profileUrl`, `phoneNumber`, `skills[]`, `location`, `certificates[]` (`VolunteerCertificateDto`), `email`, `emailEditable`, `emailIsVerified`, `phoneIsVerified`, `createdAt`, `verificationStatus`.
+**VolunteerProfile**: `id`, `firstname`, `middleName`, `lastname`, `profileUrl`, `phoneNumber` (11-16 chars), `skills[]`, `location`, `certificates[]` (`VolunteerCertificateDto`), `email`, `emailEditable`, `emailIsVerified`, `phoneIsVerified`, `createdAt`, `verificationStatus`.
 
 **VolunteerCertificateDto**: `certId`, `certUrl`, `organizationName`, `projectTitle`, `issuedAt`.
 
@@ -481,7 +482,7 @@ The review is stored, the initiative's `reviewStatus` becomes `Approved` or `Rej
 | `role` | `ORGANIZATION`, `VOLUNTEER`, `ADMIN` |
 | Admin `role` | `SUPER_ADMIN`, `ADMIN` |
 | `idType` | `DL`, `NIN` (only these two are accepted) |
-| `applicationType` | `Items_Only`, `Items_and_time`, `Time` |
+| `applicationType` | `Items_Only`, `Items_and_time`, `Time`, `Regular` |
 | Resource `type` | `Organization`, `Individual` |
 | Resource `kind` | `ITEM`, `SERVICE` |
 | Media `mediaType` | `Video` |
@@ -494,7 +495,7 @@ The review is stored, the initiative's `reviewStatus` becomes `Approved` or `Rej
 
 **Certificates:** organization sets participant to `COMPLETED` (`PATCH /organization/projects/participant`) → admin lists `/admin/certificate/pending` → approves one or a batch → volunteer certificate appears on `VolunteerProfile.certificates` → anyone can check it with `GET /certificates/verify/{certId}`.
 
-**Initiative lifecycle:** `POST /individual/initiative` (`DRAFT`, review `Pending`) → admin lists `GET /admin/verifications/initiatives?status=DRAFT` and reviews with `PATCH /admin/verifications/initiatives/{initiativeId}/review` → creator is emailed → `PATCH /individual/initiative/publish` → `202` (published) or `201` with the checkout URL in `Location` → payment confirmed → initiative is `OPEN`.
+**Initiative lifecycle:** `POST /individual/initiative` (`DRAFT`, review `Pending`) → admin lists `GET /admin/verifications/initiatives?status=DRAFT` and reviews with `PATCH /admin/verifications/initiatives/{initiativeId}/review` → creator is emailed → `PATCH /individual/initiative/publish` → `202` (published) or `201` with a `CheckoutResponse` (`checkoutUrl`) → payment confirmed → initiative is `OPEN`.
 
 **Initiative donation:** volunteer applies with `items` → individual accepts the application → donation status moves `Pending_acceptance` → `Promised_Accepted` → `Promise_Fulfilled` (or `Promise_Rejected`) via `PATCH /individual/initiative/donations/{donationId}`. The steps must follow that order, and a fulfilled donation cannot be rejected.
 

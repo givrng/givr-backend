@@ -1,6 +1,7 @@
 package com.backend.givr.volunteer.controllers;
 
 import com.backend.givr.config.properties.VerificationFeeProperties;
+import com.backend.givr.organization.dtos.CheckoutResponse;
 import com.backend.givr.organization.dtos.UpdateParticipantDto;
 import com.backend.givr.shared.dtos.*;
 import com.backend.givr.shared.enums.DonationStatus;
@@ -16,6 +17,8 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.web.PagedModel;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -32,16 +35,16 @@ public class IndividualController {
     private final IndividualService service;
     private final CloudinaryService cloudinaryService;
     private final InitiativeService initiativeService;
-    private final VerificationFeeProperties feeProperties;
+
     // Individual
     @PostMapping("/initiative")
-    ResponseEntity<List<InitiativeResponseDto>> createInitiative(@RequestBody InitiativeRequestDto payload, @AuthenticationPrincipal SecurityDetails authContext){
+    ResponseEntity<InitiativeResponseDto> createInitiative(@RequestBody InitiativeRequestDto payload, @AuthenticationPrincipal SecurityDetails authContext){
         return ResponseEntity.ok(service.createInitiative(payload, authContext));
     }
 
-    @GetMapping("/payments/fees")
-    public ResponseEntity<VerificationFeeProperties> getPaymentFees(){
-        return ResponseEntity.ok(feeProperties);
+    @GetMapping("/initiative/{initiativeId}")
+    public ResponseEntity<InitiativeResponseDto> getInitiative(@PathVariable(name = "initiativeId") Long id, @AuthenticationPrincipal SecurityDetails details){
+        return ResponseEntity.ok(initiativeService.getInitiativeDto(id, details));
     }
 
     @GetMapping("/initiative")
@@ -52,7 +55,6 @@ public class IndividualController {
             @AuthenticationPrincipal SecurityDetails details){
         return ResponseEntity.ok(service.getInitiatives(status, pageNum, pageSize, details.getId()));
     }
-
 
     @GetMapping("/donations")
     public ResponseEntity<PagedModel<DonationDto>> getIndividualDonations(@AuthenticationPrincipal SecurityDetails details,
@@ -69,11 +71,11 @@ public class IndividualController {
     }
 
     @PatchMapping("/initiative/publish")
-    public ResponseEntity<Void> publishProject(@RequestBody @Valid PublishProjectDto publishProjectDto, @AuthenticationPrincipal SecurityDetails details){
+    public ResponseEntity<CheckoutResponse> publishProject(@RequestBody @Valid PublishProjectDto publishProjectDto, @AuthenticationPrincipal SecurityDetails details){
         var checkout = initiativeService.initializePublishProject(publishProjectDto, details);
         if(checkout == null)
             return ResponseEntity.accepted().build();
-        return ResponseEntity.created(URI.create(checkout.checkoutUrl())).build();
+        return ResponseEntity.status(HttpStatus.CREATED).body(checkout);
     }
 
     @GetMapping("/initiative/participants")

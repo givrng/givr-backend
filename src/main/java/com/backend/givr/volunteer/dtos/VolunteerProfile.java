@@ -23,7 +23,7 @@ public class VolunteerProfile {
     private String lastname;
 
     private URL profileUrl;
-    @Size(min = 11, max = 13)
+    @Size(min = 11, max = 16)
     private String phoneNumber;
     private List<String> skills;
     private LocationDto location;

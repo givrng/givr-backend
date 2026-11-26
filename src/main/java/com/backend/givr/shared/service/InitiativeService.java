@@ -34,9 +34,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
 import java.util.Locale;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 
 
@@ -141,6 +143,23 @@ public class InitiativeService {
         return repo.findById(initiativeId).orElseThrow(()-> new EntityNotFoundException("Initiative does not exist"));
     }
 
+    public Initiative getInitiativeByStatusNot(Long initiativeId, ProjectStatus status){
+        return repo.findByProjectIdAndStatusNot(initiativeId, status).orElseThrow(()->new EntityNotFoundException("Initiative does not exist"));
+    }
+
+    public InitiativeResponseDto getInitiativeDto(Long initiativeId, SecurityDetails details){
+        var initiative = getInitiative(initiativeId);
+        ProjectStatus status = initiative.getStatus();
+
+        if(status.equals(ProjectStatus.DRAFT) )
+            if(initiative.getCreator().getIndividual().getVolunteerId().equals(details.getId()))
+                return mapper.toInitiative(initiative);
+            else
+                throw new EntityNotFoundException("Initiative does not exist");
+
+        return mapper.toInitiative(initiative);
+    }
+
     public Initiative getInitiativeByIdAndCreator(Long initiativeId, Creator creator){
         return  repo.findByProjectIdAndCreator(initiativeId, creator).orElseThrow(()-> new EntityNotFoundException("Entity does not exist or belong to individual"));
     }
@@ -187,17 +206,12 @@ public class InitiativeService {
         Creator creator = creatorService.createOrReturnCreator(individual);
         Initiative initiative = repo.findByProjectIdAndCreator(initiativeId, creator)
                 .orElseThrow(()-> new EntityNotFoundException("Initiative not found"));
+        String deleteTitle = String.format("DEL-%s", LocalDateTime.now());
+        String newTitle = String.format("%s-%s", initiative.getTitle(), deleteTitle);
 
-        switch (initiative.getStatus()){
-            case DRAFT -> {
-                repo.delete(initiative);
-            }
-            case OPEN -> {
-                initiative.setDeleted(true);
-                repo.save(initiative);
-            }
-            default -> throw new IllegalOperationException("Only DRAFT or OPEN initiatives can be deleted");
-        }
+        initiative.setTitle(newTitle);
+        initiative.setDeleted(true);
+        repo.save(initiative);
     }
 
     public InitiativeItem getInitiativeItem(String resourceId){
@@ -285,7 +299,10 @@ public class InitiativeService {
 
     public PagedModel<InitiativeResponseDto> getAllInitiativeByStatus(ProjectStatus projectStatus, PageRequest pageRequest) {
         pageRequest = pageRequest.withSort(Sort.by("createdAt").descending());
-        Page<Initiative> initiativePage = repo.findAllByStatus(projectStatus, pageRequest);
+        Page<Initiative> initiativePage = switch (projectStatus){
+            case ALL -> repo.findAll(pageRequest);
+            case COMPLETED, OPEN, CLOSE, ONGOING, DRAFT -> repo.findAllByStatus(projectStatus, pageRequest);
+        };
 
         PageImpl<InitiativeResponseDto> initiativeResponseDtos = new PageImpl<>(
                 mapper.toInitiativeReponses(initiativePage.getContent()),

@@ -9,9 +9,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
-import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -54,4 +52,6 @@ public interface ProjectRepo extends JpaRepository<Project, Long> {
     List<Project> findAllByOrganizationAndStatus(Organization organization, ProjectStatus status);
 
     List<Project> findAllByOrganizationAndStatusNot(Organization organization, ProjectStatus projectStatus);
+
+    Optional<Project> findByProjectIdAndStatusNot(Long projectId, ProjectStatus status);
 }

@@ -156,6 +156,9 @@ public class InitiativeService {
         if(!initiative.getCreator().getIndividual().equals(individual))
             throw new IllegalOperationException("Cannot update an initiative that is not own by account");
 
+        if(!initiative.getStatus().equals(ProjectStatus.DRAFT))
+            throw new IllegalOperationException("Only draft projects can be updated");
+
         if(requestDto.getInitiativeServiceList() != null && !requestDto.getInitiativeServiceList().isEmpty()){
             updateInitiativeResources(initiative.getInitiativeServices(), initiative, ResourceKind.SERVICE, requestDto.getInitiativeServiceList());
         }

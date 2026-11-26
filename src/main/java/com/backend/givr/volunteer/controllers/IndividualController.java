@@ -1,5 +1,6 @@
 package com.backend.givr.volunteer.controllers;
 
+import com.backend.givr.config.properties.VerificationFeeProperties;
 import com.backend.givr.organization.dtos.UpdateParticipantDto;
 import com.backend.givr.shared.dtos.*;
 import com.backend.givr.shared.enums.DonationStatus;
@@ -31,11 +32,16 @@ public class IndividualController {
     private final IndividualService service;
     private final CloudinaryService cloudinaryService;
     private final InitiativeService initiativeService;
-    private final ObjectMapper objectMapper;
+    private final VerificationFeeProperties feeProperties;
     // Individual
     @PostMapping("/initiative")
     ResponseEntity<List<InitiativeResponseDto>> createInitiative(@RequestBody InitiativeRequestDto payload, @AuthenticationPrincipal SecurityDetails authContext){
         return ResponseEntity.ok(service.createInitiative(payload, authContext));
+    }
+
+    @GetMapping("/payments/fees")
+    public ResponseEntity<VerificationFeeProperties> getPaymentFees(){
+        return ResponseEntity.ok(feeProperties);
     }
 
     @GetMapping("/initiative")

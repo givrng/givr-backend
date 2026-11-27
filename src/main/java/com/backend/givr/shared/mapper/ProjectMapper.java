@@ -121,6 +121,8 @@ public interface ProjectMapper {
 
     @AfterMapping
     default void mapSkills(Project project, @MappingTarget ProjectResponseDto dto){
+        if(project.getRequiredSkills()==null)
+            return;
         dto.setRequiredSkills(project.getRequiredSkills().stream().map(Skill::toString).collect(Collectors.toSet()));
         if(project instanceof Initiative)
             dto.setType(ProjectType.Individual);

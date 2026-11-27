@@ -14,6 +14,7 @@ import com.backend.givr.shared.enums.ApplicationStatus;
 import com.backend.givr.shared.enums.CertificationStatus;
 import com.backend.givr.shared.enums.ParticipationStatus;
 import com.backend.givr.shared.enums.ProjectStatus;
+import com.backend.givr.shared.exceptions.DuplicateAccountException;
 import com.backend.givr.shared.exceptions.IllegalOperationException;
 import com.backend.givr.shared.email.EmailService;
 import com.backend.givr.shared.mapper.ProjectMapper;
@@ -27,6 +28,7 @@ import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.*;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.web.PagedModel;
@@ -88,15 +90,11 @@ public class ParticipationService {
         participation.setParticipationStatus(ParticipationStatus.IN_PROGRESS);
 
         try{
-            String contactId = emailService.createContact(email, volunteer.getFirstname(), volunteer.getLastname());
-            participation.setContactId(contactId);
-            participation.setIsUnSubscribed(false);
             repo.save(participation);
-        } catch (ResendException e) {
-            log.error("Failed to create contact, {}", e.getLocalizedMessage());
-            System.err.printf("Failed to create participant because contact was not created. Contact was not created because %S", e.getLocalizedMessage());
             application.setStatus(ApplicationStatus.APPLIED);
-            applicationRepo.save(application);
+        } catch (DataIntegrityViolationException e) {
+            log.error("Failed to create participation because {}", e.getLocalizedMessage());
+            throw new DuplicateAccountException(e.getLocalizedMessage());
         }
     }
 

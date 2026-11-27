@@ -22,7 +22,7 @@ public enum MediaUploadPurpose {
             "givr/cac",
             "givr_cac_upload",
             "image",
-            List.of("jpg", "jpeg", "png", "webp")
+            List.of("jpg", "jpeg", "png", "webp", "pdf")
     ),
 
     INITIATIVE_VIDEO(

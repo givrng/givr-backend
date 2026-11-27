@@ -206,6 +206,9 @@ public class InitiativeService {
         Creator creator = creatorService.createOrReturnCreator(individual);
         Initiative initiative = repo.findByProjectIdAndCreator(initiativeId, creator)
                 .orElseThrow(()-> new EntityNotFoundException("Initiative not found"));
+
+        if(!initiative.getStatus().equals(ProjectStatus.DRAFT))
+            throw new IllegalOperationException("Only drafts can be deleted");
         String deleteTitle = String.format("DEL-%s", LocalDateTime.now());
         String newTitle = String.format("%s-%s", initiative.getTitle(), deleteTitle);
 
@@ -221,6 +224,7 @@ public class InitiativeService {
 
     @Transactional
     private void updateInitiativeResources(List<InitiativeItem> resources,Initiative initiative, ResourceKind kind, List<InitiativeResourceDto> resourceDto){
+        itemRepo.deleteAll(resources);
         resources.clear();
         List<InitiativeItem> items = createInitiativeItems(resourceDto, kind, initiative);
         resources.addAll(items);
@@ -257,19 +261,19 @@ public class InitiativeService {
         return result.get();
     }
 
-    @Scheduled(cron = "0 30 1 * * *", zone = "Africa/Lagos")
-    @Transactional
-    public void updateProjectStatusOnDeadline(){
-        LocalDate today = LocalDate.now(ZoneId.of("Africa/Lagos"));
-        List<Initiative> projects = repo.findExpiredInitiatives(today);
-        List<Initiative> reviewableProjects = repo.findClosingInitiatives(today.plusDays(1));
-        projects.forEach(project -> {
-            if(project.shouldClose(today.atStartOfDay()))
-                project.closeApplication();
-        });
-
-        reviewableProjects.forEach(project -> project.setReviewable(true));
-    }
+//    @Scheduled(cron = "0 30 1 * * *", zone = "Africa/Lagos")
+//    @Transactional
+//    public void updateProjectStatusOnDeadline(){
+//        LocalDate today = LocalDate.now(ZoneId.of("Africa/Lagos"));
+//        List<Initiative> projects = repo.findExpiredInitiatives(today);
+//        List<Initiative> reviewableProjects = repo.findClosingInitiatives(today.plusDays(1));
+//        projects.forEach(project -> {
+//            if(project.shouldClose(today.atStartOfDay()))
+//                project.closeApplication();
+//        });
+//
+//        reviewableProjects.forEach(project -> project.setReviewable(true));
+//    }
 
     public Initiative findInitiativeById(Long projectId) {
         return repo.findById(projectId).orElseThrow(()->new EntityNotFoundException("Initiative does not exist"));

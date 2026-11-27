@@ -174,7 +174,6 @@ public class ProjectService {
             return null;
     }
 
-
     private boolean projectDatesValid(Project project) {
         LocalDate today = LocalDate.now(ZoneId.of("Africa/Lagos"));
 

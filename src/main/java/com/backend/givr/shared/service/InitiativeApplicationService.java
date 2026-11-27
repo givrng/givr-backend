@@ -12,6 +12,7 @@ import com.backend.givr.shared.entity.projects.Initiative;
 import com.backend.givr.shared.entity.projects.InitiativeItem;
 import com.backend.givr.shared.enums.ApplicationStatus;
 import com.backend.givr.shared.enums.DonationStatus;
+import com.backend.givr.shared.enums.ProjectStatus;
 import com.backend.givr.shared.enums.VerificationStatus;
 import com.backend.givr.shared.exceptions.IllegalOperationException;
 import com.backend.givr.shared.repo.DonationRepo;
@@ -111,6 +112,10 @@ public class InitiativeApplicationService {
         Creator creator = creatorService.getCreatorByIndividualId(individualId);
         Donation donation = donationRepo.findByIdAndItemInitiativeCreator(donationId, creator)
                 .orElseThrow(()-> new EntityNotFoundException(String.format("Donation with an id %s does not exist", donationId)));
+
+        List<ProjectStatus> updateRestrictedDonationUpdates = List.of(ProjectStatus.DRAFT, ProjectStatus.CLOSE, ProjectStatus.COMPLETED);
+        if(updateRestrictedDonationUpdates.contains(donation.getItem().getInitiative().getStatus()))
+            throw new IllegalOperationException("Donations can only be updated for OPEN and ONGOING projects ");
 
         switch (status){
             case Promised_Accepted -> {

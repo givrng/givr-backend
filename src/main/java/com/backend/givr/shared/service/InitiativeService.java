@@ -280,7 +280,8 @@ public class InitiativeService {
     }
 
     public InitiativeResourceResponseDto getInitiativeResources(Long initiativeId) {
-        Initiative initiative = getInitiative(initiativeId);
+        Initiative initiative = getInitiativeByStatusNot(initiativeId, ProjectStatus.DRAFT);
+
         Media media = initiative.getMedia();
         List<InitiativeResourceDto> items = mapper.toResourcesDto(initiative.getInitiativeItems());
 

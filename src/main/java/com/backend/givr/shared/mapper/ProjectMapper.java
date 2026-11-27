@@ -9,6 +9,7 @@ import com.backend.givr.shared.entity.projects.*;
 import com.backend.givr.shared.entity.ProjectApplication;
 import com.backend.givr.organization.mappings.OrganizationMapper;
 import com.backend.givr.shared.entity.Skill;
+import com.backend.givr.shared.enums.DonationStatus;
 import com.backend.givr.shared.enums.ProjectType;
 import com.backend.givr.volunteer.dtos.ProjectResponseDTOv;
 import com.backend.givr.volunteer.dtos.ProjectViewResponse;
@@ -46,6 +47,13 @@ public interface ProjectMapper {
     default void updateDonationDto(Donation donation, @MappingTarget DonationDto donationDto){
         donationDto.setInitiative(donation.getItem().getInitiative().toMinimalDto());
         donationDto.setItemName(donation.getItem().getResource().getName());
+
+        DonationStatus donationStatus = donation.getStatus();
+
+        if(!(donationStatus.equals(DonationStatus.Promised_Accepted) || donationStatus.equals(DonationStatus.Promise_Fulfilled))){
+            donationDto.setDonor(null);
+        }
+        
     }
 
     List<DonationDto> toDonationDtos(List<Donation> donations);

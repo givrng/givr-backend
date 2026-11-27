@@ -13,6 +13,7 @@ import com.backend.givr.shared.interfaces.SecurityDetails;
 import com.backend.givr.shared.mapper.ProjectMapper;
 import com.backend.givr.shared.repo.DonationRepo;
 import com.backend.givr.shared.service.*;
+import com.backend.givr.volunteer.dtos.FreeInitiativeCount;
 import com.backend.givr.volunteer.entity.Volunteer;
 import com.backend.givr.volunteer.repo.VolunteerRepo;
 import jakarta.persistence.EntityManager;
@@ -118,11 +119,11 @@ public class IndividualService {
     }
 
     public PagedModel<DonationDto> getPersonalDonations(String id, DonationStatus status, PageRequest pageRequest) {
-        Creator creator = creatorService.getCreatorByIndividualId(id);
+        Volunteer creator = getIndividual(id);
         pageRequest = pageRequest.withSort(Sort.by("createdAt").descending());
 
-        Page<Donation> donationsPage = status == null? donationRepo.findAllByItemInitiativeCreator(creator, pageRequest):
-                donationRepo.findAllByItemInitiativeCreatorAndStatus(creator, status, pageRequest);
+        Page<Donation> donationsPage = status == null? donationRepo.findAllByDonor(creator, pageRequest):
+                donationRepo.findAllByDonorAndStatus(creator, status, pageRequest);
 
         PageImpl<DonationDto> donationDtoPage = new PageImpl<>(projectMapper.toDonationDtos(donationsPage.getContent()),
                 donationsPage.getPageable(), donationsPage.getTotalElements());
@@ -137,14 +138,7 @@ public class IndividualService {
         Page<Donation> donationsPage = status == null? donationRepo.findAllByItemInitiativeCreator(creator, pageRequest):
                 donationRepo.findAllByItemInitiativeCreatorAndStatus(creator, status, pageRequest);
 
-        List<DonationDto> donationDtos = projectMapper.toDonationDtos(donationsPage.getContent()).stream().map(donation->{
-            DonationStatus donationStatus = donation.getStatus();
-            if(!(donationStatus.equals(DonationStatus.Promised_Accepted) || donationStatus.equals(DonationStatus.Promise_Fulfilled))){
-                donation.setDonor(null);
-                return donation;
-            }
-            return donation;
-        }).toList();
+        List<DonationDto> donationDtos = projectMapper.toDonationDtos(donationsPage.getContent());
 
         PageImpl<DonationDto> donationDtoPage = new PageImpl<>(donationDtos, donationsPage.getPageable(), donationsPage.getTotalElements());
 
@@ -165,5 +159,9 @@ public class IndividualService {
         resources.addAll(projectMapper.toInitiativeItemDtos(initiative.getInitiativeServices()));
 
         return resources;
+    }
+
+    public FreeInitiativeCount getFreeInitiativeCreationCount(SecurityDetails details) {
+        return new FreeInitiativeCount(creatorService.getCreatorByIndividualId(details.getId()).getFreeProjectCount());
     }
 }

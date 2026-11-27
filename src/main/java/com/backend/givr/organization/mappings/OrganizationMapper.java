@@ -34,6 +34,10 @@ public interface OrganizationMapper {
     OrganizationDto toOrganizationDto (Organization organization);
 
     @Mapping(target = "name", source = "organizationName")
+    PublicOrganizationDto toPublicOrganizationDto (Organization organization);
+
+
+    @Mapping(target = "name", source = "organizationName")
     @Mapping(target = "category", ignore = true)
     OrganizationResponseDTOv toOrganizationResponseDTOv (Organization organization);
 

@@ -6,10 +6,7 @@ import com.backend.givr.shared.entity.Location;
 import com.backend.givr.shared.entity.Skill;
 import com.backend.givr.shared.mapper.CertificateMapper;
 import com.backend.givr.shared.mapper.SkillMapper;
-import com.backend.givr.volunteer.dtos.CreateVolunteerRequestDto;
-import com.backend.givr.volunteer.dtos.UpdateVolunteerDto;
-import com.backend.givr.volunteer.dtos.VolunteerDto;
-import com.backend.givr.volunteer.dtos.VolunteerProfile;
+import com.backend.givr.volunteer.dtos.*;
 import com.backend.givr.volunteer.entity.Volunteer;
 import org.mapstruct.*;
 
@@ -36,4 +33,5 @@ public interface VolunteerMapper {
     VolunteerDto toVolunteerDto (Volunteer volunteer);
     Location toLocation (LocationDto locationDto);
 
+    PublicVolunteerDto toPublicVolunteerDto(Volunteer volunteer);
 }

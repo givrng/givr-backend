@@ -22,4 +22,6 @@ public interface DonationRepo extends JpaRepository<Donation, String> {
     Page<Donation> findAllByItemInitiativeCreator(Creator creator, PageRequest pageRequest);
 
     Page<Donation> findAllByItemInitiativeCreatorAndStatus(Creator creator, DonationStatus status, PageRequest pageRequest);
+
+    Page<Donation> findAllByDonorAndStatus(Volunteer creator, DonationStatus status, PageRequest pageRequest);
 }

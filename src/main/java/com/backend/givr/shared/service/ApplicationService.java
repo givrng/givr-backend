@@ -84,7 +84,8 @@ public class ApplicationService {
 
         if(Objects.nonNull(applicationForm.getMySkills())) {
             Set<Skill> specialSkillSet = skillService.updateSkills(applicationForm.getMySkills());
-            application.setSpecialSkills(specialSkillSet.stream().toList());
+            List<Skill> specialSkillList = specialSkillSet==null? List.of() : specialSkillSet.stream().toList();
+            application.setSpecialSkills(specialSkillList);
         }
         try{
             var projectApplication =  repo.save(application);

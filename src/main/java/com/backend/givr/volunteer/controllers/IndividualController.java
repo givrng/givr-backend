@@ -10,6 +10,7 @@ import com.backend.givr.shared.enums.ProjectStatus;
 import com.backend.givr.shared.interfaces.SecurityDetails;
 import com.backend.givr.shared.service.CloudinaryService;
 import com.backend.givr.shared.service.InitiativeService;
+import com.backend.givr.volunteer.dtos.FreeInitiativeCount;
 import com.backend.givr.volunteer.service.IndividualService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -68,6 +69,11 @@ public class IndividualController {
     @GetMapping("/media/upload/signature")
     public ResponseEntity<MediaUploadResponse> generateUploadSignature(@RequestParam(name = "purpose") MediaUploadPurpose purpose){
         return ResponseEntity.ok(cloudinaryService.generateSignedUploadKey(purpose));
+    }
+
+    @GetMapping("/initiative/free/initiative/count")
+    public ResponseEntity<FreeInitiativeCount> getFreeInitiativeCreationCount(@AuthenticationPrincipal SecurityDetails details){
+        return ResponseEntity.ok(service.getFreeInitiativeCreationCount(details));
     }
 
     @PatchMapping("/initiative/publish")

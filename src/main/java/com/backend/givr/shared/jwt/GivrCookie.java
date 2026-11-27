@@ -55,6 +55,7 @@ public class GivrCookie {
                 .maxAge(JwtUtil.REFRESHEXPIRATION)
                 .sameSite(Cookie.SameSite.NONE.attributeValue())
                 .httpOnly(true)
+                .domain(tokenDomain)
                 .secure(true)
                 .build();
 
